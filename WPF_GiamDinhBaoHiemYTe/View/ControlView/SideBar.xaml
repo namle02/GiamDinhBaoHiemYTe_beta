@@ -1,0 +1,382 @@
+﻿<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.ControlView.SideBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPF_GiamDinhBaoHiem.View.ControlView"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="#1c2939">
+    <ScrollViewer>
+        <StackPanel
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Orientation="Vertical">
+            <!--  Profile  -->
+
+            <Image
+                Height="150"
+                Margin="0,30"
+                Source="/Assets/Male_Logo.png" />
+            <TextBlock
+                Margin="0,0,0,39"
+                HorizontalAlignment="Center"
+                FontSize="25"
+                FontWeight="Bold"
+                Foreground="White"
+                Text="{Binding Greeting}" />
+
+
+            <!--  Navigation Button  -->
+            <!--  Trang chủ  -->
+            <Button
+                Width="350"
+                Height="60"
+                HorizontalContentAlignment="Stretch"
+                Background="#1c2939"
+                BorderThickness="0"
+                Command="{Binding NavigationCommand}"
+                CommandParameter="DashboardPage"
+                Foreground="White"
+                Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                <Button.Content>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <materialDesign:PackIcon
+                            Width="35"
+                            Height="35"
+                            Margin="0,0,10,0"
+                            Kind="Home" />
+                        <TextBlock
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontSize="20"
+                            Text="Trang chủ" />
+                    </Grid>
+                </Button.Content>
+            </Button>
+
+
+            <!--  Quản lý hồ sơ  -->
+            <Expander
+                materialDesign:ExpanderAssist.ExpanderButtonPosition="Start"
+                Background="#1c2939"
+                Foreground="White">
+                <Expander.Header>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Quản lý hồ sơ" />
+                </Expander.Header>
+                <StackPanel Orientation="Vertical">
+                    <!--  Kiểm tra hồ sơ  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="QLHS_TimKiemHoSoPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Kiểm tra hồ sơ" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <!--  Thống kê lỗi  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="QLHS_ThongKeLoiPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Thống kê lỗi" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <!--  Tải báo cáo  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="QLHS_TaiBaoCaoPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Tải báo cáo" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </Expander>
+
+            <!--  Danh mục  -->
+            <Expander
+                materialDesign:ExpanderAssist.ExpanderButtonPosition="Start"
+                Background="#1c2939"
+                Foreground="White">
+                <Expander.Header>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Danh mục" />
+                </Expander.Header>
+                <StackPanel Orientation="Vertical">
+                    <!--  Danh mục điều kiện  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="DM_DieuKienPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Danh mục điều kiện" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <!--  Danh mục thuốc  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="DM_ThuocPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Danh mục thuốc" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <!--  Danh mục bác sĩ  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="DM_BacSiPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Danh mục nhân viên" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <!--  Danh mục dịch vụ  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="DM_DichVuPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Danh mục dịch vụ" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </Expander>
+
+            <!--  Quản trị hệ thống  -->
+            <Expander
+                materialDesign:ExpanderAssist.ExpanderButtonPosition="Start"
+                Background="#1c2939"
+                Foreground="White">
+                <Expander.Header>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Text="Quản trị hệ thống" />
+                </Expander.Header>
+                <StackPanel Orientation="Vertical">
+                    <!--  Hồ sơ nhân viên  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="QTHT_HoSoNhanVienPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Hồ sơ nhân viên" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <!--  Tài khoản  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="QTHT_TaiKhoanPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Tài khoản" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

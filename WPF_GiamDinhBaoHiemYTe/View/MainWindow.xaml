@@ -1,0 +1,95 @@
+﻿<Window
+    x:Class="WPF_GiamDinhBaoHiem.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:control="clr-namespace:WPF_GiamDinhBaoHiem.View.ControlView"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPF_GiamDinhBaoHiem"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Hệ thống Giám định Bảo hiểm Y tế"
+    Width="1400"
+    Height="800"
+    Background="#cfcfcf"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <materialDesign:DrawerHost
+        x:Name="DrawerHost"
+        BorderBrush="{DynamicResource MaterialDesignDivider}"
+        BorderThickness="2"
+        BottomDrawerBackground="{DynamicResource SecondaryHueLightBrush}"
+        BottomDrawerCornerRadius="20 20 0 0">
+        <materialDesign:DrawerHost.Style>
+            <Style BasedOn="{StaticResource {x:Type materialDesign:DrawerHost}}" TargetType="materialDesign:DrawerHost">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsChecked, ElementName=BackgroundToggle}" Value="True">
+                        <Setter Property="OverlayBackground" Value="{DynamicResource PrimaryHueMidBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </materialDesign:DrawerHost.Style>
+        <materialDesign:DrawerHost.LeftDrawerContent>
+            <!--  SideBar control  -->
+            <control:SideBar Width="350" DataContext="{Binding SideBarVM}" />
+        </materialDesign:DrawerHost.LeftDrawerContent>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Header  -->
+            <materialDesign:ColorZone
+                Background="White"
+                Foreground="Black"
+                Mode="Custom">
+                <StackPanel Margin="16" Orientation="Horizontal">
+                    <Button
+                        Width="70"
+                        Height="60"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        Command="{x:Static materialDesign:DrawerHost.OpenDrawerCommand}"
+                        CommandParameter="{x:Static Dock.Left}"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <materialDesign:PackIcon
+                                Width="35"
+                                Height="35"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Kind="Menu" />
+                        </Button.Content>
+                    </Button>
+                    <Image
+                        Width="70"
+                        Height="70"
+                        Source="/Assets/Logo_benh_vien-removebg-preview.png" />
+                    <TextBlock
+                        Width="370"
+                        Margin="16,0"
+                        VerticalAlignment="Center"
+                        FontSize="25"
+                        FontWeight="Bold"
+                        Foreground="#475c70"
+                        Text="HỆ THỐNG QUẢN TRỊ DỮ LIỆU THANH TOÁN BẢO HIỂM Y TẾ"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </materialDesign:ColorZone>
+
+
+            <!--  Content  -->
+            <ContentControl Grid.Row="1" Content="{Binding CurrentPage}" />
+
+
+
+
+            <!--  Footer  -->
+            <Grid
+                Grid.Row="2"
+                Height="60"
+                Background="White" />
+        </Grid>
+    </materialDesign:DrawerHost>
+</Window>

@@ -1,0 +1,26 @@
+﻿<Application
+    x:Class="WPF_GiamDinhBaoHiem.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:WPF_GiamDinhBaoHiem"
+    xmlns:convert="clr-namespace:WPF_GiamDinhBaoHiem.Converter"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Application.Resources>
+        
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme
+                    BaseTheme="Light"
+                    PrimaryColor="BlueGrey"
+                    SecondaryColor="LightGreen" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
+                <ResourceDictionary Source="/DataTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <convert:BooleanToStringConverter x:Key="BooleanToVisibilityConverter" />
+            <convert:FormTitleConverter x:Key="FormTitleConverter" />
+            <convert:FormVisibilityConverter x:Key="FormVisibilityConverter" />
+            <convert:BooleanToStringConverter x:Key="BooleanToStringConverter" />
+            <convert:DateTimeFormatConverter x:Key="DateTimeFormatConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

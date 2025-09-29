@@ -1,0 +1,14 @@
+﻿<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.PageView.QTHT_HoSoNhanVienPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPF_GiamDinhBaoHiem.View.PageView"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock Text="Đây là trang Hồ sơ nhân viên" />
+    </Grid>
+</UserControl>

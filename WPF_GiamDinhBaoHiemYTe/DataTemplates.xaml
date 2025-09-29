@@ -1,0 +1,37 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:page="clr-namespace:WPF_GiamDinhBaoHiem.View.PageView"
+    xmlns:vm="clr-namespace:WPF_GiamDinhBaoHiem.ViewModel.PageViewModel">
+    <DataTemplate DataType="{x:Type vm:DashboardPageVM}">
+        <page:DashboardPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DM_BacSiVM}">
+        <page:DM_BacSiPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DM_DichVuVM}">
+        <page:DM_DichVuPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DM_DieuKienVM}">
+        <page:DM_DieuKienPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DM_ThuocVM}">
+        <page:DM_ThuocPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:QLHS_TaiBaoCaoVM}">
+        <page:QLHS_TaiBaoCaoPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:QLHS_ThongKeLoiPageVM}">
+        <page:QLHS_ThongKeLoiPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:QLHS_TimKiemHoSoVM}">
+        <page:QLHS_TimKiemHoSoPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:QTHT_HoSoNhanVienVM}">
+        <page:QTHT_HoSoNhanVienPage />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:QTHT_TaiKhoanVM}">
+        <page:QTHT_TaiKhoanPage />
+    </DataTemplate>
+
+</ResourceDictionary>

@@ -1,0 +1,102 @@
+﻿<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.PageView.DM_DichVuPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="800"
+    d:DesignWidth="1200"
+    mc:Ignorable="d">
+
+    <Grid Background="{DynamicResource MaterialDesignPaper}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <materialDesign:Card Grid.Row="0" Margin="16,16,16,8" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock
+                        Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        Style="{DynamicResource MaterialDesignHeadline6TextBlock}"
+                        Text="DANH MỤC DỊCH VỤ" />
+                    <TextBlock
+                        Foreground="{DynamicResource MaterialDesignBodyLight}"
+                        Style="{DynamicResource MaterialDesignBody2TextBlock}"
+                        Text="Quản lý thông tin dịch vụ trong hệ thống" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- Nút tác vụ: có thể thêm sau -->
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Search Panel -->
+        <materialDesign:Card Grid.Row="1" Margin="16,8,16,8" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="1" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         materialDesign:HintAssist.Hint="Nhập Mã dịch vụ hoặc Tên dịch vụ"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+                <Button Grid.Column="2" Margin="8,0,0,0"
+                        Command="{Binding SearchCommand}"
+                        Style="{StaticResource MaterialDesignRaisedButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Width="16" Height="16" Margin="0,0,4,0" Kind="Magnify"/>
+                        <TextBlock Text="Tra cứu"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Data Grid -->
+        <materialDesign:Card Grid.Row="2" Margin="16,8,16,8" Padding="16">
+            <DataGrid AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      HeadersVisibility="Column"
+                      RowHeaderWidth="0"
+                      ItemsSource="{Binding Items}"
+                      SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Mã DV" Binding="{Binding MaDichVu}" Width="120"/>
+                    <DataGridTextColumn Header="Tên dịch vụ" Binding="{Binding TenDichVu}" Width="200"/>
+                    <DataGridTextColumn Header="ĐVT" Binding="{Binding DonViTinh}" Width="100"/>
+                    <DataGridTextColumn Header="BHYT" Binding="{Binding BHYT}" Width="80"/>
+                    <DataGridTextColumn Header="Tạm ngưng" Binding="{Binding TamNgung}" Width="90"/>
+                    <DataGridTextColumn Header="Nhóm DV" Binding="{Binding NhomDichVu_Id}" Width="100"/>
+                    <DataGridTextColumn Header="Cấp" Binding="{Binding Cap}" Width="60"/>
+                    <DataGridTextColumn Header="Cấp trên" Binding="{Binding CapTren_Id}" Width="90"/>
+                    <DataGridTextColumn Header="Giá cố định" Binding="{Binding GiaCoDinh}" Width="110"/>
+                    <DataGridTextColumn Header="Có giá DV" Binding="{Binding CoGiaDichVu}" Width="100"/>
+                    <DataGridTextColumn Header="Ngoài BV" Binding="{Binding ThucHienBenNgoai}" Width="90"/>
+                    <DataGridTextColumn Header="Mã QĐ" Binding="{Binding MaQuiDinh}" Width="120"/>
+                    <DataGridTextColumn Header="Tên không dấu" Binding="{Binding TenKhongDau}" Width="180"/>
+                    <DataGridTextColumn Header="Ngày tạo" Binding="{Binding NgayTao, StringFormat=yyyy-MM-dd}" Width="110"/>
+                    <DataGridTextColumn Header="Ngày cập nhật" Binding="{Binding NgayCapNhat, StringFormat=yyyy-MM-dd}" Width="130"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

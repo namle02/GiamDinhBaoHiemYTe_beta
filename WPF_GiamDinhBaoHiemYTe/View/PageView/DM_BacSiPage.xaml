@@ -1,0 +1,269 @@
+<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.PageView.DM_BacSiPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPF_GiamDinhBaoHiem.View.PageView"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="800"
+    d:DesignWidth="1200"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!--  Style cho các button  -->
+        <Style
+            x:Key="ActionButtonStyle"
+            BasedOn="{StaticResource MaterialDesignRaisedButton}"
+            TargetType="Button">
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="36" />
+        </Style>
+
+        <!--  Style cho DataGrid  -->
+        <Style
+            x:Key="MaterialDataGridStyle"
+            BasedOn="{StaticResource MaterialDesignDataGrid}"
+            TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{DynamicResource MaterialDesignPaper}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Header  -->
+        <materialDesign:Card
+            Grid.Row="0"
+            Margin="16,16,16,8"
+            Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock
+                        Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        Style="{DynamicResource MaterialDesignHeadline6TextBlock}"
+                        Text="DANH MỤC BÁC SĨ" />
+                    <TextBlock
+                        Foreground="{DynamicResource MaterialDesignBodyLight}"
+                        Style="{DynamicResource MaterialDesignBody2TextBlock}"
+                        Text="Quản lý thông tin bác sĩ trong hệ thống" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button
+                        Command="{Binding NhapExcelCommand}"
+                        Foreground="{DynamicResource MaterialDesignFlatButtonForeground}"
+                        Style="{StaticResource ActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="16"
+                                Height="16"
+                                Margin="0,0,4,0"
+                                Kind="FileImport" />
+                            <TextBlock Text="Nhập Excel" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Tra cứu đặt cạnh Nhập Excel -->
+                    <Button
+                     
+                        Command="{Binding TimKiemCommand}"
+                        Foreground="White"
+                        Style="{StaticResource ActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Width="16" Height="16" Margin="0,0,4,0" Kind="Magnify"/>
+                            <TextBlock Text="Tra cứu" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        Command="{Binding XuatExcelCommand}"
+                        Foreground="{DynamicResource MaterialDesignFlatButtonForeground}"
+                        Style="{StaticResource ActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                Width="16"
+                                Height="16"
+                                Margin="0,0,4,0"
+                                Kind="FileExport" />
+                            <TextBlock Text="Xuất Excel" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+
+        <!--  Search Panel (nhập ID hoặc Tên; hiển thị một bác sĩ)  -->
+        <materialDesign:Card Grid.Row="1" Margin="16,8,16,8" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="1" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         materialDesign:HintAssist.Hint="Nhập NhanVien_Id hoặc Tên bác sĩ, Enter để tra cứu"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding TimKiemCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
+                <!-- Bỏ nút Tra cứu tại đây, đã chuyển lên header -->
+            </Grid>
+        </materialDesign:Card>
+
+        <!--  Detail Card: đơn giản (giống style Thuốc)  -->
+        <materialDesign:Card Grid.Row="2" Margin="16,8,16,8" Padding="16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="480">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Hàng 1: Mã NV | Tên NV | Ngày sinh -->
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Mã nhân viên"
+                             Text="{Binding NhanVien.MaNhanVien, Mode=TwoWay}"/>
+
+                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Họ tên"
+                             Text="{Binding NhanVien.TenNhanVien, Mode=TwoWay}"/>
+
+                    <DatePicker Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                materialDesign:HintAssist.Hint="Ngày sinh"
+                                SelectedDate="{Binding NhanVien.NgaySinh, Mode=TwoWay}"/>
+                </Grid>
+
+                <!-- Hàng 2: Giới tính | Địa chỉ | Email -->
+                <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Giới tính"
+                             Text="{Binding NhanVien.GioiTinh, Mode=TwoWay}"/>
+
+                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Địa chỉ"
+                             Text="{Binding NhanVien.DiaChi, Mode=TwoWay}"/>
+
+                    <TextBox Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Email"
+                             Text="{Binding NhanVien.Email, Mode=TwoWay}"/>
+                </Grid>
+
+                <!-- Hàng 3: CMND/CCCD | Hộ chiếu -->
+                <Grid Grid.Row="2" Margin="0,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="CMND/CCCD"
+                             Text="{Binding NhanVien.SoCccd, Mode=TwoWay}"/>
+
+                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Hộ chiếu"
+                             Text="{Binding NhanVien.SoHoChieu, Mode=TwoWay}"/>
+                </Grid>
+                
+                <!-- Hàng 4: Phòng ban | Đơn vị công tác | Chức danh -->
+                <Grid Grid.Row="3" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Phòng ban"
+                             Text="{Binding NhanVien.PhongBan_Id}"/>
+                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Đơn vị công tác"
+                             Text="{Binding NhanVien.DonViCongTac_Id}"/>
+                    <TextBox Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Chức danh"
+                             Text="{Binding NhanVien.ChucDanh_Id}"/>
+                </Grid>
+                
+                <!-- Hàng 5: Trình độ CM | Trạng thái (tạm ngưng) | Tiếp xúc độc hại -->
+                <Grid Grid.Row="4" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Trình độ chuyên môn"
+                             Text="{Binding NhanVien.TrinhDoChuyenMon_Id}"/>
+                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Tạm ngưng (0/1)"
+                             Text="{Binding NhanVien.TamNgung}"/>
+                    <TextBox Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Tiếp xúc độc hại (0/1)"
+                             Text="{Binding NhanVien.TiepXucDocHai}"/>
+                </Grid>
+
+                <!-- Hàng 6: Thông tin thêm dài (cuộn) -->
+                <Grid Grid.Row="5" Margin="0,16,0,0">
+                    <TextBox Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Thông tin thêm"
+                             Text="{Binding NhanVien.Dutru1, Mode=TwoWay}"
+                             AcceptsReturn="True" TextWrapping="Wrap" Height="120"/>
+                </Grid>
+            </Grid>
+            </ScrollViewer>
+        </materialDesign:Card>
+
+        <!-- Bỏ form thao tác phức tạp để trang đơn giản như Thuốc -->
+    </Grid>
+</UserControl>

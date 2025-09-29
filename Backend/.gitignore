@@ -1,0 +1,61 @@
+# Node.js / Backend ignores
+
+# dependencies
+node_modules/
+
+# environment files
+.env
+.env.*
+!.env.example
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# coverage
+coverage/
+.nyc_output/
+
+# build output
+build/
+dist/
+.out/
+.next/
+
+# caches
+.cache/
+.parcel-cache/
+.eslintcache
+.turbo/
+
+# tmp
+.tmp/
+tmp/
+.temp/
+
+# editors/IDE
+.vscode/
+.idea/
+
+# system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# misc
+*.swp
+*.swo
+
+# hosting/platform
+.vercel/
+.netlify/

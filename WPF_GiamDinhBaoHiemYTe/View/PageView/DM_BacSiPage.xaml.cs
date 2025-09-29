@@ -1,0 +1,29 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using WPF_GiamDinhBaoHiem.ViewModel.PageViewModel;
+
+namespace WPF_GiamDinhBaoHiem.View.PageView
+{
+    /// <summary>
+    /// Interaction logic for DM_BacSiPage.xaml
+    /// </summary>
+    public partial class DM_BacSiPage : UserControl
+    {
+        public DM_BacSiPage()
+        {
+            InitializeComponent();
+        }
+    }
+}
