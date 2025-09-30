@@ -81,11 +81,14 @@ class PatientServices {
             
             const total = await this.patientModel.countDocuments(query);
             
+            // Transform Decimal128 fields to regular numbers
+            const transformedPatients = this.transformDecimalFields(patients);
+            
             return {
                 success: true,
                 message: 'Lấy danh sách bệnh nhân thành công',
                 data: {
-                    patients,
+                    patients: transformedPatients,
                     pagination: {
                         currentPage: page,
                         totalPages: Math.ceil(total / limit),
@@ -109,7 +112,8 @@ class PatientServices {
      */
     async getPatientById(patientId) {
         try {
-            const patient = await this.patientModel.findById(patientId);
+            // Tìm kiếm theo trường PatientID trong xml1 thay vì _id của MongoDB
+            const patient = await this.patientModel.findOne({ PatientID: patientId });
             
             if (!patient) {
                 return {
@@ -118,10 +122,13 @@ class PatientServices {
                 };
             }
             
+            // Chuyển đổi các trường Decimal128 sang số thường
+            const transformedPatient = this.transformDecimalFields(patient);
+            
             return {
                 success: true,
                 message: 'Lấy thông tin bệnh nhân thành công',
-                data: patient
+                data: transformedPatient
             };
         } catch (error) {
             console.error('Lỗi khi lấy thông tin bệnh nhân:', error);
@@ -165,10 +172,13 @@ class PatientServices {
                 };
             }
             
+            // Transform Decimal128 fields to regular numbers
+            const transformedPatient = this.transformDecimalFields(patient);
+            
             return {
                 success: true,
                 message: 'Cập nhật bệnh nhân thành công',
-                data: patient
+                data: transformedPatient
             };
         } catch (error) {
             console.error('Lỗi khi cập nhật bệnh nhân:', error);
@@ -241,6 +251,39 @@ class PatientServices {
             return Object.keys(obj).reduce((result, key) => {
                 // Giữ nguyên key naming từ client: Ma_Lk, Ma_Dich_Vu, etc.
                 result[key] = this.convertXmlKeysToSnakeCase(obj[key]);
+                return result;
+            }, {});
+        }
+        return obj;
+    }
+
+    /**
+     * Transform Decimal128 fields to regular numbers for JSON response
+     */
+    transformDecimalFields(obj) {
+        // Convert Mongoose document to plain object first
+        if (obj && typeof obj.toObject === 'function') {
+            obj = obj.toObject();
+        }
+        
+        if (Array.isArray(obj)) {
+            return obj.map(item => this.transformDecimalFields(item));
+        } else if (obj !== null && typeof obj === 'object') {
+            return Object.keys(obj).reduce((result, key) => {
+                const value = obj[key];
+                
+                // Check if value is Decimal128
+                if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'Decimal128') {
+                    result[key] = parseFloat(value.toString());
+                } else if (value && typeof value === 'object' && value.$numberDecimal) {
+                    // Handle already serialized Decimal128
+                    result[key] = parseFloat(value.$numberDecimal);
+                } else if (value !== null && typeof value === 'object') {
+                    result[key] = this.transformDecimalFields(value);
+                } else {
+                    result[key] = value;
+                }
+                
                 return result;
             }, {});
         }

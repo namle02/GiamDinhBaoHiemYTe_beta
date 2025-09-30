@@ -13,18 +13,14 @@ namespace WPF_GiamDinhBaoHiem.DI_Register
     {
         public static void Register(IServiceCollection services)
         {
-            services.AddTransient<IDataMapper, DataMapper>();
             services.AddSingleton<IConfigReader, ConfigReader>();
-            services.AddSingleton(new HttpClient
+            services.AddSingleton<HttpClient>(new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(30),
-                BaseAddress = new Uri("https://cbd5875aaf92.ngrok-free.app/")
-
+                BaseAddress = new Uri("http://localhost:3000") // Default base address, can be overridden by IConfigReader
             });
-            services.AddSingleton<IGoogleSheetService, GoogleSheetService>();
-
-            services.AddTransient<IApiServices, ApiServices>();
-            services.AddTransient<IDynamicValidationService, DynamicValidationService>();
+            services.AddSingleton<IDataMapper, DataMapper>();
+            services.AddSingleton<IPatientServices, PatientServices>();
         }
     }
 }

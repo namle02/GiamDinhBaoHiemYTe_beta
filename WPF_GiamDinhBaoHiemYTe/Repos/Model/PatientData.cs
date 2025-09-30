@@ -21,12 +21,5 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         public List<XML13>? Xml13 { get; set; }
         public List<XML14>? Xml14 { get; set; }
         public List<XML15>? Xml15 { get; set; }
-
-        [ObservableProperty] private List<ErrorItem> _activatedErrors = new();
-        
-        // XML Header error states for UI binding
-        [ObservableProperty] private bool _xml1HeaderError = false;
-        [ObservableProperty] private bool _xml2HeaderError = false;
-        [ObservableProperty] private bool _xml3HeaderError = false;
     }
 }

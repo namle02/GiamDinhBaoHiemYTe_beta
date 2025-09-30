@@ -1,7 +1,4 @@
-﻿
-using Microsoft.Data.SqlClient;
-using WPF_GiamDinhBaoHiem.Repos.Dto;
-using WPF_GiamDinhBaoHiem.Repos.Model;
+﻿using WPF_GiamDinhBaoHiem.Repos.Model;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Interface
 {
@@ -12,17 +9,6 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Interface
     public interface IDataMapper
     {
         Task<PatientData> GetDataFromDB(string IDBenhNhan);
-        //Task GetXMLData(XMLDataType type, string query, PatientData patient, SqlConnection connection);
-    
-        // Method để lấy danh sách lỗi từ GoogleSheet
-        Task<List<ErrorItem>> GetErrorListFromGoogleSheetAsync();
-      
-        Task<Thuoc?> GetThuocByDuocIdAsync(string duocId);
-
-        Task<List<NhanVien>> SearchNhanVienAsync(string? keyword);
-
-        Task<DichVu?> GetDichVuByIdOrCodeAsync(string keyword);
-        Task<List<DichVu>> SearchDichVuAsync(string? keyword);
 
     }
 }

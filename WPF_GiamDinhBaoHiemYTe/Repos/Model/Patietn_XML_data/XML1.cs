@@ -72,7 +72,6 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? du_Phong;
         [ObservableProperty] private string? nhom_Mau;
 
-        // Link to error flags for this row
-        [ObservableProperty] private ErrorXML1? error;
+     
     }
 }
