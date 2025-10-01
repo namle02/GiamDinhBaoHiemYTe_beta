@@ -109,7 +109,7 @@ class PatientServices {
      */
     async getPatientById(patientId) {
         try {
-            const patient = await this.patientModel.findById(patientId);
+            const patient = await this.patientModel.findOne({ PatientID: patientId });
             
             if (!patient) {
                 return {
@@ -152,7 +152,7 @@ class PatientServices {
             // Transform dữ liệu XML
             const transformedData = this.transformPatientData(updateData);
             
-            const patient = await this.patientModel.findByIdAndUpdate(
+            const patient = await this.patientModel.findOneAndUpdate(
                 patientId,
                 transformedData,
                 { new: true, runValidators: true }
@@ -185,7 +185,7 @@ class PatientServices {
      */
     async deletePatient(patientId) {
         try {
-            const patient = await this.patientModel.findByIdAndDelete(patientId);
+            const patient = await this.patientModel.findOneAndDelete({ PatientID: patientId });
             
             if (!patient) {
                 return {

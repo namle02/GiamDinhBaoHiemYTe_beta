@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { convertDecimal128 } = require('../../../Utils/ConvertDecimal');
 
 const XML3Schema = new mongoose.Schema({
   id:                  { type: Number, required: false },
@@ -52,6 +53,14 @@ const XML3Schema = new mongoose.Schema({
 }, {
   timestamps: true,
   strict: false
+});
+
+XML3Schema.set('toJSON',{
+  transform: (_, ret) => convertDecimal128(ret),
+});
+
+XML3Schema.set('toObject', {
+  transform: (_, ret) => convertDecimal128(ret),
 });
 
 module.exports = mongoose.model('XML3', XML3Schema);
