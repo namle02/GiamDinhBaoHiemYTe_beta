@@ -16,16 +16,20 @@ const validateRule_Id_3 = (patientData) => {
     };
 
     try {
-        const xml3_data = patientData.Xml3;
-        const danhsachdichvu = [];
-        xml3_data.forEach(item => {
-            danhsachdichvu.push(item.Ma_Dich_Vu);
-        });
-        if (danhsachdichvu.includes('02.0296.0500') || danhsachdichvu.includes('02.0271.0140')) {
-            if (danhsachdichvu.includes('02.0262.0136')) {
-                result.isValid = false;
-                result.errors.push({ Id: item.Id, Error: 'Thanh toán dịch vụ can thiệp ống tiêu hóa, không thanh toán thêm dịch vụ Nội soi đại trực tràng toàn bộ ống mềm' });
-            }
+        const xml3_data = patientData.Xml3 || [];
+        // Kiểm tra nếu có dịch vụ 02.0296.0500 hoặc 02.0271.0140
+        const coDichVuCanThiep = xml3_data.some(item => item.Ma_Dich_Vu === '02.0296.0500' || item.Ma_Dich_Vu === '02.0271.0140');
+        // Kiểm tra nếu có dịch vụ 02.0262.0136
+        const dichVuNoiSoi = xml3_data.filter(item => item.Ma_Dich_Vu === '02.0262.0136');
+
+        if (coDichVuCanThiep && dichVuNoiSoi.length > 0) {
+            result.isValid = false;
+            dichVuNoiSoi.forEach(item => {
+                result.errors.push({
+                    Id: item.Id,
+                    Error: 'Không được thanh toán đồng thời dịch vụ can thiệp ống tiêu hóa (02.0296.0500 hoặc 02.0271.0140) với dịch vụ Nội soi đại trực tràng toàn bộ ống mềm (02.0262.0136)'
+                });
+            });
         }
 
     } catch (error) {
