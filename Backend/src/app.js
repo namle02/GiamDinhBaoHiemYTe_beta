@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const connectDB = require('./Config/db');
 const PatientRoutes = require('./Routes/PatientRoutes');
 const ValidateRoutes = require('./Routes/ValidateRoutes');
@@ -20,6 +21,8 @@ const app = express();
 app.use(cors()); // nới cors để WPF (desktop) không bị chặn
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+app.use(compression());
 
 // Logging middleware
 app.use(LogService.logRequest.bind(LogService));
