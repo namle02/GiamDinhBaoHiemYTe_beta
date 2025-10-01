@@ -38,11 +38,12 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 var json = JsonSerializer.Serialize(patientData);
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync("/api/patient", content);
-                var result = JsonSerializer.Deserialize<ApiResponse<ValidateData>>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions
+                var a = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<ApiResponse<ValidateData>>(await response.Content.ReadAsStringAsync(),  new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                return result ?? new ApiResponse<ValidateData> { Success = false, Message = "Invalid response from server" };
+                    return result ?? new ApiResponse<ValidateData> { Success = false, Message = "Invalid response from server" };
             }
             catch
             {

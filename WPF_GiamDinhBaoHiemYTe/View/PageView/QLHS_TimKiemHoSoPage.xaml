@@ -12,8 +12,6 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <converter:ErrorToColorConverter x:Key="ErrorToColor" />
-        <converter:SafeErrorToColorConverter x:Key="SafeErrorToColor" />
 
 
         <Style x:Key="CellTextBlock" TargetType="TextBlock">
@@ -173,7 +171,7 @@
                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
                     Text="{Binding PatientID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
                     <TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding TraCuuHoSoCommand}" />
+                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}" CommandParameter="{Binding PatientID}" />
                     </TextBox.InputBindings>
                 </TextBox>
 
@@ -202,7 +200,7 @@
                     <Border Style="{StaticResource ChipCount}">
                         <TextBlock>
                             <Run Text="Kết quả: " />
-                            <Run Text="{Binding Items.Count, ElementName=PatientsGrid, Mode=OneWay}" />
+                            <Run Text="{Binding ValidationResults.Count, Mode=OneWay}" />
                         </TextBlock>
                     </Border>
                 </StackPanel>
@@ -211,44 +209,211 @@
 
         <Border Grid.Row="1" />
 
-        <!--  GRID  -->
+        <!--  RESULTS SECTION  -->
         <Grid Grid.Row="2">
+            <!--  HEADER (ContentControl)  -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
+                <!--  Table Header using ContentControl  -->
+                <ContentControl Grid.Row="0">
+                    <materialDesign:Card Padding="12,8" Margin="0,0,0,4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-            <!--  LOADING  -->
-            <Border Background="#66FFFFFF" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+                            <TextBlock
+                                Grid.Column="0"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                Text="Mã liên kết" />
+                            <TextBlock
+                                Grid.Column="1"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                Text="Họ và tên" />
+                            <TextBlock
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                Text="Giới tính" />
+                            <TextBlock
+                                Grid.Column="3"
+                                HorizontalAlignment="Center"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                Text="Ngày sinh" />
+                            <TextBlock
+                                Grid.Column="4"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                Text="Nội dung lỗi" />
+                        </Grid>
+                    </materialDesign:Card>
+                </ContentControl>
+
+                <!--  Results List using ItemsControl  -->
+                <ScrollViewer
+                    Grid.Row="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl x:Name="ResultsItemsControl" ItemsSource="{Binding ValidationResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <materialDesign:Card Margin="0,0,0,6" Padding="0">
+                                    <Border
+                                        Background="Transparent"
+                                        BorderBrush="#E0E0E0"
+                                        BorderThickness="0,0,0,1">
+                                        <Grid Margin="12,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="180" />
+                                                <ColumnDefinition Width="220" />
+                                                <ColumnDefinition Width="120" />
+                                                <ColumnDefinition Width="160" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!--  Mã liên kết  -->
+                                            <ContentControl Grid.Column="0">
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontWeight="Medium"
+                                                    Foreground="#1976D2"
+                                                    Style="{StaticResource CellTextBlock}"
+                                                    Text="{Binding Ma_Lk}" />
+                                            </ContentControl>
+
+                                            <!--  Họ tên  -->
+                                            <ContentControl Grid.Column="1">
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontWeight="SemiBold"
+                                                    Style="{StaticResource CellTextBlock}"
+                                                    Text="{Binding Ho_Ten}" />
+                                            </ContentControl>
+
+                                            <!--  Giới tính  -->
+                                            <ContentControl Grid.Column="2">
+                                                <Border
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Background="#E3F2FD"
+                                                    CornerRadius="12"
+                                                    Padding="12,4">
+                                                    <TextBlock
+                                                        FontSize="13"
+                                                        FontWeight="Medium"
+                                                        Foreground="#1565C0"
+                                                        Text="{Binding Gioi_Tinh}" />
+                                                </Border>
+                                            </ContentControl>
+
+                                            <!--  Ngày sinh  -->
+                                            <ContentControl Grid.Column="3">
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Style="{StaticResource CellTextBlock}"
+                                                    Text="{Binding Nam_Sinh}" />
+                                            </ContentControl>
+
+                                            <!--  Nội dung lỗi  -->
+                                            <ContentControl Grid.Column="4">
+                                                <Border
+                                                    Background="#FFEBEE"
+                                                    BorderBrush="#FFCDD2"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="10,6">
+                                                    <TextBlock
+                                                        VerticalAlignment="Center"
+                                                        FontSize="13"
+                                                        Foreground="#C62828"
+                                                        Text="{Binding Noi_Dung_Loi}"
+                                                        TextWrapping="Wrap" />
+                                                </Border>
+                                            </ContentControl>
+                                        </Grid>
+
+                                        <!--  Hover effect  -->
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F5F5F5" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+                                </materialDesign:Card>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!--  LOADING OVERLAY  -->
+            <Border Background="#99FFFFFF" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                     <ProgressBar
-                        Width="220"
-                        Height="6"
-                        IsIndeterminate="True" />
-                    <TextBlock Margin="0,8,0,0" Text="Đang tải dữ liệu..." />
+                        Width="60"
+                        Height="60"
+                        IsIndeterminate="True"
+                        Style="{StaticResource MaterialDesignCircularProgressBar}" />
+                    <TextBlock
+                        Margin="0,16,0,0"
+                        FontSize="16"
+                        FontWeight="Medium"
+                        Text="Đang tải và kiểm tra dữ liệu..." />
                 </StackPanel>
             </Border>
 
-            <!--  EMPTY  -->
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
+            <!--  EMPTY STATE (ContentControl)  -->
+            <ContentControl>
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasItems, ElementName=PatientsGrid}" Value="False">
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding ValidationResults.Count}" Value="0" />
+                                    <Condition Binding="{Binding IsLoading}" Value="False" />
+                                </MultiDataTrigger.Conditions>
                                 <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
+                            </MultiDataTrigger>
                         </Style.Triggers>
                     </Style>
-                </StackPanel.Style>
+                </ContentControl.Style>
 
-                <materialDesign:PackIcon
-                    Width="48"
-                    Height="48"
-                    Kind="DatabaseSearch"
-                    Opacity="0.6" />
-                <TextBlock
-                    Margin="0,8,0,0"
-                    Opacity="0.7"
-                    Text="Chưa có dữ liệu. Nhập số bệnh án/số tiếp nhận rồi Tra cứu." />
-            </StackPanel>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <materialDesign:PackIcon
+                        Width="64"
+                        Height="64"
+                        Kind="DatabaseSearch"
+                        Opacity="0.4" />
+                    <TextBlock
+                        Margin="0,12,0,0"
+                        FontSize="16"
+                        Opacity="0.6"
+                        Text="Chưa có dữ liệu" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        FontSize="14"
+                        Opacity="0.5"
+                        Text="Nhập số bệnh án/số tiếp nhận rồi nhấn Tra cứu" />
+                </StackPanel>
+            </ContentControl>
         </Grid>
     </Grid>
 </UserControl>
