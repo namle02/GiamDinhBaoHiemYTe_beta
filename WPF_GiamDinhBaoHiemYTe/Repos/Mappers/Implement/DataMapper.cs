@@ -29,7 +29,32 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 {XMLDataType.XML0,$"select * from TT_00_CHECKIN where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
                 {XMLDataType.XML1,$"select * from TT_01_TONGHOP where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
                 {XMLDataType.XML2,$"select * from TT_02_THUOC where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML3,$"select * from TT_03_DVKT_VTYT where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
+                {XMLDataType.XML3,@$"SELECT t.* , q.LoaiBenhPham_Id
+FROM XML130.dbo.TT_03_DVKT_VTYT AS t
+LEFT JOIN (
+    SELECT 
+        dv.MaQuiDinh,
+        cls.NgayGioYeuCau,
+        cls.LoaiBenhPham_Id
+    FROM eHospital_ThuyDienUB.dbo.clsyeucauchitiet AS clsct
+    LEFT JOIN eHospital_ThuyDienUB.dbo.clsyeucau AS cls
+        ON clsct.CLSYeuCau_Id = cls.CLSYeuCau_Id
+    LEFT JOIN eHospital_ThuyDienUB.dbo.BenhAn AS ba
+        ON cls.benhan_id = ba.benhan_id
+    LEFT JOIN eHospital_ThuyDienUB.dbo.dm_dichvu AS dv
+        ON clsct.DichVu_Id = dv.DichVu_Id
+    WHERE dv.MaQuiDinh IN (N'24.0001.1714', N'24.0005.1716', N'24.0003.1715')
+) AS q
+    ON t.MA_DICH_VU = q.MaQuiDinh
+   AND DATETIMEFROMPARTS(
+         TRY_CONVERT(int, SUBSTRING(LTRIM(RTRIM(t.NGAY_YL)), 1, 4)),  -- yyyy
+         TRY_CONVERT(int, SUBSTRING(LTRIM(RTRIM(t.NGAY_YL)), 5, 2)),  -- mm
+         TRY_CONVERT(int, SUBSTRING(LTRIM(RTRIM(t.NGAY_YL)), 7, 2)),  -- dd
+         TRY_CONVERT(int, SUBSTRING(LTRIM(RTRIM(t.NGAY_YL)), 9, 2)),  -- hh
+         TRY_CONVERT(int, SUBSTRING(LTRIM(RTRIM(t.NGAY_YL)),11, 2)),  -- mi
+         0, 0
+       ) = CAST(q.NgayGioYeuCau AS datetime2)
+WHERE t.Ma_LK = N'{IDBenhNhan}';" },
                 {XMLDataType.XML4,$"select * from TT_04_CLS where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
                 {XMLDataType.XML5,$"select * from TT_05_LAMSANG where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
                 {XMLDataType.XML6,$"select * from TT_06_HIV where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },

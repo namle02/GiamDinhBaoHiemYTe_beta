@@ -52,7 +52,8 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? ma_Hieu_Sp;
         [ObservableProperty] private string? tai_Su_Dung;
         [ObservableProperty] private string? du_Phong;
+        [ObservableProperty] private string? loaiBenhPham_Id;
 
-   
+
     }
 }
