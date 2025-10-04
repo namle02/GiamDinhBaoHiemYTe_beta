@@ -3,6 +3,7 @@ const { convertDecimal128 } = require('../../../Utils/ConvertDecimal');
 
 const XML3Schema = new mongoose.Schema({
   id:                  { type: Number, required: false },
+  LoaiBenhPham_Id:     { type: String, required: false },
   Ma_Lk:               { type: String, default: null },
   Stt:                 { type: Number, default: null },
   Ma_Dich_Vu:          { type: String, default: null },
