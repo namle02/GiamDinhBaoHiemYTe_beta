@@ -3,6 +3,7 @@ const cors = require('cors');
 const compression = require('compression');
 const connectDB = require('./Config/db');
 const PatientRoutes = require('./Routes/PatientRoutes');
+const DoctorRoutes = require('./Routes/DoctorRoutes');
 const ValidateRoutes = require('./Routes/ValidateRoutes');
 const TestRoutes = require('./Routes/TestRoutes');
 const LogRoutes = require('./Routes/LogRoutes');
@@ -29,6 +30,7 @@ app.use(LogService.logRequest.bind(LogService));
 
 // Routes
 app.use('/api/patient', PatientRoutes);
+app.use('/api/doctor', DoctorRoutes);
 app.use('/api/validate', ValidateRoutes);
 app.use('/api/test', TestRoutes);
 app.use('/api/logs', LogRoutes);
