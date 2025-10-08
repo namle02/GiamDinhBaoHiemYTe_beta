@@ -10,6 +10,7 @@ const validateRule_Id_27 = (patientData) => {
         ruleId: 'Rule_Id_27',
         isValid: true,
         validateField: 'Ma_Thuoc',
+        validateFile:'XML2',
         message: '',
         errors: [],
         warnings: []
