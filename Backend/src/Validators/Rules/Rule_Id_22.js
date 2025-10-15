@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_22 = (patientData) => {
+const validateRule_Id_22 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán tiền khám bệnh đối với người bệnh khám bệnh và vào điều trị nội trú tại khoa cấp cứu, không đúng quy định tại khoản 1 Điều 5 Thông tư số 22/2023/TT-BYT',
         ruleId: 'Rule_Id_22',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

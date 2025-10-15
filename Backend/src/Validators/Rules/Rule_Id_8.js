@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_8 = (patientData) => {
+const validateRule_Id_8 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán DV Nội soi có sinh thiết (Nội soi thực quản dạ dày tá tràng, nội soi ổ bụng,...) nhưng không làm xét nghiệm giải phẫu mô bệnh học, điều chỉnh về mức giá của các DV nội soi không sinh thiết',
         ruleId: 'Rule_Id_8',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

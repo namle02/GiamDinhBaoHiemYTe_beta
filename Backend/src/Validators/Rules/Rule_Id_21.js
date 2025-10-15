@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_21 = (patientData) => {
+const validateRule_Id_21 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán số ngày giường điều trị nội trú không đúng quy định tại điểm a và điểm b khoản 1 Điều 6 Thông tư số 22/2023/TT-BYT.',
         ruleId: 'Rule_Id_21',
         isValid: true,
         validateField: 'Ngay_Yl',
+        validateFile:'XML1',
         message: '',
         errors: [],
         warnings: []

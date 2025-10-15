@@ -36,9 +36,9 @@ class PatientServices {
             // Trả về kết quả, bất kể validate thành công hay thất bại
             if (!validationResult.overallValid) {
                 return {
-                    success: false,
+                    success: true,
                     message: 'Dữ liệu không hợp lệ nhưng vẫn lưu bệnh nhân',
-                    errors: validationResult
+                    data: validationResult
                 };
             }
 
@@ -112,7 +112,6 @@ class PatientServices {
      */
     async getPatientById(patientId) {
         try {
-            // Tìm kiếm theo trường PatientID trong xml1 thay vì _id của MongoDB
             const patient = await this.patientModel.findOne({ PatientID: patientId });
             
             if (!patient) {
@@ -159,7 +158,7 @@ class PatientServices {
             // Transform dữ liệu XML
             const transformedData = this.transformPatientData(updateData);
             
-            const patient = await this.patientModel.findByIdAndUpdate(
+            const patient = await this.patientModel.findOneAndUpdate(
                 patientId,
                 transformedData,
                 { new: true, runValidators: true }
@@ -195,7 +194,7 @@ class PatientServices {
      */
     async deletePatient(patientId) {
         try {
-            const patient = await this.patientModel.findByIdAndDelete(patientId);
+            const patient = await this.patientModel.findOneAndDelete({ PatientID: patientId });
             
             if (!patient) {
                 return {

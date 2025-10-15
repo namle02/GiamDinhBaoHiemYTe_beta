@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_30 = (patientData) => {
+const validateRule_Id_30 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán các thuốc chứa hoạt chất "Omeprazol mã chi phí (40.677); Esomeprazol mã chi phí (40.678); Pantoprazol mã chi phí (40.679); Rabeprazol mã chi phí (40.680) không đúng quy định tại Thông tư số 20/2022/TT-BYT',
         ruleId: 'Rule_Id_30',
         isValid: true,
         validateField: 'Ma_Thuoc',
+        validateFile:'XML2',
         message: '',
         errors: [],
         warnings: []

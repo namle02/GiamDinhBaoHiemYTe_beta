@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_28 = (patientData) => {
+const validateRule_Id_28 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán thuốc Alphachymotrypsin chỉ định sử dụng không đúng quy định Thông tư số 20/2022/TT-BYT',
         ruleId: 'Rule_Id_28',
         isValid: true,
         validateField: 'Ma_Thuoc',
+        validateFile:'XML2',
         message: '',
         errors: [],
         warnings: []

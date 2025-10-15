@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_7 = (patientData) => {
+const validateRule_Id_7 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ PHCN trong điều trị thoái hóa cột sống cổ/cột sống thắt lưng: Hồng ngoại, đắp paraphin, ...không đúng hướng dẫn tại Quyết định số 3109/QĐ-BYT chẩn đoán, điều trị chuyên ngành PHCN',
         ruleId: 'Rule_Id_7',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

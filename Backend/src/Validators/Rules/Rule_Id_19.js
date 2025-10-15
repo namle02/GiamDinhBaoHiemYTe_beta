@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_19 = (patientData) => {
+const validateRule_Id_19 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán siêu âm hệ tiết niệu hoặc siêu âm tử cung phần phụ đồng thời với siêu âm ổ bụng, không đúng quy trình kỹ thuật số thứ tự 73 Quyết định số 3805/QĐ-BYT ngày 25/9/2014 của Bộ Y tế tài liệu “Hướng dẫn quy trình kỹ thuật nội khoa, chuyên ngành tiêu hóa”.',
         ruleId: 'Rule_Id_19',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

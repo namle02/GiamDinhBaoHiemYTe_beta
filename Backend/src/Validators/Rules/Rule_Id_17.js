@@ -10,12 +10,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_17 = (patientData) => {
+const validateRule_Id_17 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán xét nghiệm AFB không quá 2 lần/ngày theo Quyết định 3126/QĐ-BYT',
         ruleId: 'Rule_Id_17',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

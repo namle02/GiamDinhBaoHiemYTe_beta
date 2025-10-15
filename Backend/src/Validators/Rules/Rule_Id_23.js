@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_23 = (patientData) => {
+const validateRule_Id_23 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán xét nghiệm “Hồng cầu lưới” đồng thời xét nghiệm “Huyết đồ” do kết quả của xét nghiệm “Huyết đồ” đã có chỉ số “Hồng cầu lưới”.',
         ruleId: 'Rule_Id_23',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

@@ -98,7 +98,7 @@ class RuleService {
 
             try {
                
-                const result = ruleInfo.function(patientData);
+                const result = await ruleInfo.function(patientData);
 
                 // Đảm bảo result có đúng format
                 if (!result || typeof result !== 'object') {

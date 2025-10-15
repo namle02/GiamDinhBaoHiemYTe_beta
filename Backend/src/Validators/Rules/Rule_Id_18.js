@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_18 = (patientData) => {
+const validateRule_Id_18 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ “Phẫu thuật mở bụng cắt tử cung hoàn toàn và hai phần phụ”, không thanh toán thêm dịch vụ "Phẫu thuật mở bụng cắt u buồng trứng hoặc cắt phần phụ” vì theo hướng dẫn của quy trình số 30 ban hành kèm theo Quyết định số 1377/QĐ-BYT Hướng dẫn Quy trình kỹ thuật khám bệnh, chữa bệnh chuyên ngành Phụ Sản thì “Phẫu thuật mở bụng cắt tử cung hoàn toàn là phẫu thuật cắt bỏ toàn bộ khối tử cung bao gồm thân tử cung, cổ tử cung, vòi tử cung, buồng trứng”.',
         ruleId: 'Rule_Id_18',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

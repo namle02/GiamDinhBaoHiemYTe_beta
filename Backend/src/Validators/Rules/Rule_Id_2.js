@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_2 = (patientData) => {
+const validateRule_Id_2 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ nội soi can thiệp dạ dày tá - tràng không thanh toán thêm Nội soi thực quản - dạ dày - tá tràng',
         ruleId: 'Rule_Id_2',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []

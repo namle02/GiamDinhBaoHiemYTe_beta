@@ -4,12 +4,13 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_5 = (patientData) => {
+const validateRule_Id_5 = async (patientData) => {
     const result = {
         ruleName: 'HBA1C Thanh toán dịch vụ HbA1C không đúng chỉ định theo quy định tại Thông tư số 13/2020/TT-BYT sửa đổi, bổ sung một số điều của Thông tư số 35/2016/TT-BYT',
         ruleId: 'Rule_Id_5',
         isValid: true,
         validateField: 'Ma_Dich_Vu',
+        validateFile:'XML3',
         message: '',
         errors: [],
         warnings: []
