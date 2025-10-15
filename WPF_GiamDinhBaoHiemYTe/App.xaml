@@ -16,11 +16,10 @@
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
                 <ResourceDictionary Source="/DataTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <convert:BooleanToStringConverter x:Key="BooleanToVisibilityConverter" />
-            <convert:FormTitleConverter x:Key="FormTitleConverter" />
-            <convert:FormVisibilityConverter x:Key="FormVisibilityConverter" />
-            <convert:BooleanToStringConverter x:Key="BooleanToStringConverter" />
-            <convert:DateTimeFormatConverter x:Key="DateTimeFormatConverter" />
+           
+               <convert:ErrorRowConverter x:Key="ErrorRowConverter" />
+               <convert:ErrorTabHeaderConverter x:Key="ErrorTabHeaderConverter" />
+               
         </ResourceDictionary>
     </Application.Resources>
 </Application>

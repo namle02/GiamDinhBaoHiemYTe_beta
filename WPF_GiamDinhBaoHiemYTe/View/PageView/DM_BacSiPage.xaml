@@ -119,21 +119,32 @@
         <!--  Search Panel (nhập ID hoặc Tên; hiển thị một bác sĩ)  -->
         <materialDesign:Card Grid.Row="1" Margin="16,8,16,8" Padding="16">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBox Grid.Column="1" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         materialDesign:HintAssist.Hint="Nhập NhanVien_Id hoặc Tên bác sĩ, Enter để tra cứu"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
-                    <TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding TimKiemCommand}"/>
-                    </TextBox.InputBindings>
-                </TextBox>
-                <!-- Bỏ nút Tra cứu tại đây, đã chuyển lên header -->
+                    <materialDesign:PackIcon Grid.Column="0" Kind="Magnify" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Grid.Column="1" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             materialDesign:HintAssist.Hint="Nhập mã bác sĩ hoặc tên bác sĩ, Enter để tra cứu"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding TimKiemCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+                </Grid>
+                
+                <!-- Status Message -->
+                <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" 
+                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                           Margin="0,8,0,0" HorizontalAlignment="Center"/>
             </Grid>
         </materialDesign:Card>
 
@@ -142,7 +153,6 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="480">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -161,16 +171,16 @@
                     </Grid.ColumnDefinitions>
 
                     <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Mã nhân viên"
-                             Text="{Binding NhanVien.MaNhanVien, Mode=TwoWay}"/>
+                             materialDesign:HintAssist.Hint="Mã bác sĩ"
+                             Text="{Binding SelectedBacSi.MaBacSi, Mode=TwoWay}"/>
 
                     <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Họ tên"
-                             Text="{Binding NhanVien.TenNhanVien, Mode=TwoWay}"/>
+                             Text="{Binding SelectedBacSi.HoTen, Mode=TwoWay}"/>
 
                     <DatePicker Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedDatePicker}"
                                 materialDesign:HintAssist.Hint="Ngày sinh"
-                                SelectedDate="{Binding NhanVien.NgaySinh, Mode=TwoWay}"/>
+                                SelectedDate="{Binding SelectedBacSi.NgaySinh, Mode=TwoWay}"/>
                 </Grid>
 
                 <!-- Hàng 2: Giới tính | Địa chỉ | Email -->
@@ -185,19 +195,19 @@
 
                     <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Giới tính"
-                             Text="{Binding NhanVien.GioiTinh, Mode=TwoWay}"/>
+                             Text="{Binding SelectedBacSi.GioiTinh, Mode=TwoWay}"/>
 
                     <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Địa chỉ"
-                             Text="{Binding NhanVien.DiaChi, Mode=TwoWay}"/>
+                             Text="{Binding SelectedBacSi.DiaChi, Mode=TwoWay}"/>
 
                     <TextBox Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="Email"
-                             Text="{Binding NhanVien.Email, Mode=TwoWay}"/>
+                             Text="{Binding SelectedBacSi.Email, Mode=TwoWay}"/>
                 </Grid>
 
-                <!-- Hàng 3: CMND/CCCD | Hộ chiếu -->
-                <Grid Grid.Row="2" Margin="0,0,0,0">
+                <!-- Hàng 3: Số điện thoại | Bằng cấp -->
+                <Grid Grid.Row="2" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="16"/>
@@ -205,15 +215,15 @@
                     </Grid.ColumnDefinitions>
 
                     <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="CMND/CCCD"
-                             Text="{Binding NhanVien.SoCccd, Mode=TwoWay}"/>
+                             materialDesign:HintAssist.Hint="Số điện thoại"
+                             Text="{Binding SelectedBacSi.SoDienThoai, Mode=TwoWay}"/>
 
                     <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Hộ chiếu"
-                             Text="{Binding NhanVien.SoHoChieu, Mode=TwoWay}"/>
+                             materialDesign:HintAssist.Hint="Bằng cấp"
+                             Text="{Binding SelectedBacSi.BangCap, Mode=TwoWay}"/>
                 </Grid>
                 
-                <!-- Hàng 4: Phòng ban | Đơn vị công tác | Chức danh -->
+                <!-- Hàng 4: Chuyên khoa | Ngày vào làm | Trạng thái -->
                 <Grid Grid.Row="3" Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -223,41 +233,21 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Phòng ban"
-                             Text="{Binding NhanVien.PhongBan_Id}"/>
-                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Đơn vị công tác"
-                             Text="{Binding NhanVien.DonViCongTac_Id}"/>
+                             materialDesign:HintAssist.Hint="Chuyên khoa"
+                             Text="{Binding SelectedBacSi.ChuyenKhoa, Mode=TwoWay}"/>
+                    <DatePicker Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                materialDesign:HintAssist.Hint="Ngày vào làm"
+                                SelectedDate="{Binding SelectedBacSi.NgayVaoLam, Mode=TwoWay}"/>
                     <TextBox Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Chức danh"
-                             Text="{Binding NhanVien.ChucDanh_Id}"/>
+                             materialDesign:HintAssist.Hint="Trạng thái (True/False)"
+                             Text="{Binding SelectedBacSi.TrangThai, StringFormat='{}{0}'}"/>
                 </Grid>
                 
-                <!-- Hàng 5: Trình độ CM | Trạng thái (tạm ngưng) | Tiếp xúc độc hại -->
+                <!-- Hàng 5: Ghi chú -->
                 <Grid Grid.Row="4" Margin="0,16,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Trình độ chuyên môn"
-                             Text="{Binding NhanVien.TrinhDoChuyenMon_Id}"/>
-                    <TextBox Grid.Column="2" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Tạm ngưng (0/1)"
-                             Text="{Binding NhanVien.TamNgung}"/>
-                    <TextBox Grid.Column="4" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Tiếp xúc độc hại (0/1)"
-                             Text="{Binding NhanVien.TiepXucDocHai}"/>
-                </Grid>
-
-                <!-- Hàng 6: Thông tin thêm dài (cuộn) -->
-                <Grid Grid.Row="5" Margin="0,16,0,0">
                     <TextBox Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="Thông tin thêm"
-                             Text="{Binding NhanVien.Dutru1, Mode=TwoWay}"
+                             materialDesign:HintAssist.Hint="Ghi chú"
+                             Text="{Binding SelectedBacSi.GhiChu, Mode=TwoWay}"
                              AcceptsReturn="True" TextWrapping="Wrap" Height="120"/>
                 </Grid>
             </Grid>

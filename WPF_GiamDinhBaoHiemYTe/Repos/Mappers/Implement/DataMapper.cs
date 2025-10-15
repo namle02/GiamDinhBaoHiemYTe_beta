@@ -26,9 +26,9 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
 
             Dictionary<XMLDataType, string> XML_Query_List = new Dictionary<XMLDataType, string>
             {
-                {XMLDataType.XML0,$"select * from TT_00_CHECKIN where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML1,$"select * from TT_01_TONGHOP where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML2,$"select * from TT_02_THUOC where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
+                {XMLDataType.XML0,$"select * from TT_00_CHECKIN where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML1,$"select * from TT_01_TONGHOP where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML2,$"select * from TT_02_THUOC where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
                 {XMLDataType.XML3,@$"SELECT t.* , q.LoaiBenhPham_Id
 FROM XML130.dbo.TT_03_DVKT_VTYT AS t
 LEFT JOIN (
@@ -55,17 +55,17 @@ LEFT JOIN (
          0, 0
        ) = CAST(q.NgayGioYeuCau AS datetime2)
 WHERE t.Ma_LK = N'{IDBenhNhan}';" },
-                {XMLDataType.XML4,$"select * from TT_04_CLS where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML5,$"select * from TT_05_LAMSANG where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML6,$"select * from TT_06_HIV where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML7,$"select * from TT_07_GIAY_RAVIEN where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML8,$"select * from TT_08_HSBA where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML9,$"select * from TT_09_CHUNGSINH where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML10,$"select * from TT_10_DUONGTHAI where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML11,$"select * from TT_11_NGHI_BHXH where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML13,$"select * from TT_13_GIAYCHUYENTUYEN where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML14,$"select * from TT_14_GIAYHENKHAMLAI where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" },
-                {XMLDataType.XML15,$"select * from TT_15_DIEUTRILAO where MA_LK like N'%{IDBenhNhan}%' ORDER BY ID" }
+                {XMLDataType.XML4,$"select * from TT_04_CLS where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML5,$"select * from TT_05_LAMSANG where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML6,$"select * from TT_06_HIV where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML7,$"select * from TT_07_GIAY_RAVIEN where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML8,$"select * from TT_08_HSBA where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML9,$"select * from TT_09_CHUNGSINH where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML10,$"select * from TT_10_DUONGTHAI where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML11,$"select * from TT_11_NGHI_BHXH where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML13,$"select * from TT_13_GIAYCHUYENTUYEN where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML14,$"select * from TT_14_GIAYHENKHAMLAI where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML15,$"select * from TT_15_DIEUTRILAO where MA_LK = N'{IDBenhNhan}' ORDER BY ID" }
             };
 
             string connectionString = _configReader.Config["DB_string"];
@@ -86,7 +86,7 @@ WHERE t.Ma_LK = N'{IDBenhNhan}';" },
             catch (Exception ex)
             {
                 // Log lỗi nếu cần, nhưng không làm gián đoạn flow chính
-                System.Diagnostics.Debug.WriteLine($"DynamicValidationService error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine(ex.Message);
                 _googleSheetData = null;
             }
 
@@ -144,5 +144,6 @@ WHERE t.Ma_LK = N'{IDBenhNhan}';" },
                     break;
             }
         }
+
     }
 }

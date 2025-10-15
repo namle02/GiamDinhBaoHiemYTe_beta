@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using System.Text.Json;
+using System.Windows;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
 using WPF_GiamDinhBaoHiem.Services.Interface;
@@ -13,9 +14,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         private readonly IConfigReader _configReader;
 
 
-        /// <summary>
-        /// Hàm khởi tạo mặc định
-        /// </summary>
+       
         public PatientServices(IDataMapper dataMapper, HttpClient httpClient, IConfigReader configReader)
         {
             _dataMapper = dataMapper;
@@ -23,10 +22,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             _configReader = configReader;
         }
 
-        /// <summary>
-        /// Lấy dữ liệu bệnh nhân từ cơ sở dữ liệu và kiểm tra điều kiện
-        /// </summary>
-        /// <returns></returns>
+      
         public async Task<ApiResponse<ValidateData>> LoadPatientAndValidateData(string PatientId)
         {
             try
@@ -39,23 +35,21 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync("/api/patient", content);
                 var a = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<ApiResponse<ValidateData>>(await response.Content.ReadAsStringAsync(),  new JsonSerializerOptions
+                var result = JsonSerializer.Deserialize<ApiResponse<ValidateData>>(a, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                    return result ?? new ApiResponse<ValidateData> { Success = false, Message = "Invalid response from server" };
+                return result ?? new ApiResponse<ValidateData> { Success = false, Message = "Invalid response from server" };
             }
-            catch
+            catch(Exception ex)
             {
+                MessageBox.Show(ex. Message);
                 throw;
             }
 
         }
 
-        /// <summary>
-        /// Lấy tất cả bệnh nhân từ API
-        /// </summary>
-        /// <returns></returns>
+      
         public async Task<ApiResponse<PatientDto>> GetAllPatient()
         {
             try

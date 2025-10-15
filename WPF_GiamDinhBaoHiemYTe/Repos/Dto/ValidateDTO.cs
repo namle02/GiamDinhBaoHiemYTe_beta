@@ -16,6 +16,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Dto
         [ObservableProperty] private string ruleName = string.Empty;
         [ObservableProperty] private string ruleId = string.Empty;
         [ObservableProperty] private string validateField = string.Empty;
+        [ObservableProperty] private string validateFile = string.Empty;
         [ObservableProperty] private bool isValid;
         [ObservableProperty] private string message = string.Empty;
         [ObservableProperty] private List<errorData>? errors;

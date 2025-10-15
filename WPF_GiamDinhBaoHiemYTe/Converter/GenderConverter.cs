@@ -4,19 +4,20 @@ using System.Windows.Data;
 
 namespace WPF_GiamDinhBaoHiem.Converter
 {
-    public class BooleanToStringConverter : IValueConverter
+    public class GenderConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool boolValue && parameter is string paramString)
+            if (value is int gender)
             {
-                var parts = paramString.Split('|');
-                if (parts.Length == 2)
+                return gender switch
                 {
-                    return boolValue ? parts[0] : parts[1];
-                }
+                    1 => "Nam",
+                    2 => "Nữ",
+                    _ => "Khác"
+                };
             }
-            return value?.ToString() ?? string.Empty;
+            return "Không xác định";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -25,3 +26,4 @@ namespace WPF_GiamDinhBaoHiem.Converter
         }
     }
 }
+

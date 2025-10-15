@@ -49,7 +49,6 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private int? vet_Thuong_Tp;
         [ObservableProperty] private string? du_Phong;
         [ObservableProperty] private string? ngay_Th_Yl;
-        
-  
+        [ObservableProperty] private bool isError;
     }
 }

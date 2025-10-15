@@ -26,23 +26,17 @@ namespace WPF_GiamDinhBaoHiem.Converter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // Debug logging
-            System.Diagnostics.Debug.WriteLine($"SafeErrorToColorConverter.Convert called with value: {value} (type: {value?.GetType()})");
-            
             // Handle null values gracefully
             if (value == null)
             {
-                System.Diagnostics.Debug.WriteLine("SafeErrorToColorConverter: value is null, returning Black");
                 return Brushes.Black;
             }
 
             if (value is bool isError && isError)
             {
-                System.Diagnostics.Debug.WriteLine("SafeErrorToColorConverter: error is true, returning Red");
                 return Brushes.Red;
             }
             
-            System.Diagnostics.Debug.WriteLine($"SafeErrorToColorConverter: error is false ({value}), returning Black");
             return Brushes.Black;
         }
 

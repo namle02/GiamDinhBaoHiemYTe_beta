@@ -12,6 +12,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         private readonly HttpClient _httpClient;
         public Dictionary<string, string> Config { get; private set; } = new();
 
+
         public ConfigReader(HttpClient httpClient)
         {
             _httpClient = httpClient;
@@ -21,8 +22,13 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         {
             try
             {
+             
+                using var firstHttp = new HttpClient();
+                
+             
+                
                 string SheetUrl = ConfigurationManager.AppSettings["ConfigUrl"]!;
-                var result = await _httpClient.GetAsync(SheetUrl);
+                var result = await firstHttp.GetAsync(SheetUrl);
                 if (!result.IsSuccessStatusCode)
                     throw new Exception("Lỗi khi kết nối với máy chủ (Cannot read config)");
 
@@ -32,6 +38,8 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 Config = (sheetData?.values ?? new List<List<string>>())
                     .Where(row => row.Count >= 2 && !string.IsNullOrEmpty(row[0]))
                     .ToDictionary(row => row[0], row => row[1]);
+                _httpClient.BaseAddress = new Uri($"{Config["Server_API"]}");
+                
             }
             catch (Exception ex)
             {
