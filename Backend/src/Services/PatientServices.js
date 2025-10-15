@@ -36,9 +36,9 @@ class PatientServices {
             // Trả về kết quả, bất kể validate thành công hay thất bại
             if (!validationResult.overallValid) {
                 return {
-                    success: false,
+                    success: true,
                     message: 'Dữ liệu không hợp lệ nhưng vẫn lưu bệnh nhân',
-                    errors: validationResult
+                    data: validationResult
                 };
             }
 

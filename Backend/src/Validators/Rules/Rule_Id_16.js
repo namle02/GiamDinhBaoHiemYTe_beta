@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_16 = (patientData) => {
+const validateRule_Id_16 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ kỹ thuật vật lý trị liệu vượt quá số lượng quy định tại Thông tư số 50/2017/TT-BYT (các kỹ thuật vật lý trị liệu thanh toán tối đa 04 kỹ thuật/ngày)',
         ruleId: 'Rule_Id_16',

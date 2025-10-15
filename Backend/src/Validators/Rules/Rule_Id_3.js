@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_3 = (patientData) => {
+const validateRule_Id_3 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ can thiệp ống tiêu hóa, không thanh toán thêm dịch vụ Nội soi đại trực tràng toàn bộ ống mềm',
         ruleId: 'Rule_Id_3',

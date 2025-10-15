@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_20 = (patientData) => {
+const validateRule_Id_20 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán Oxy khi thanh toán đồng thời với dịch vụ thở máy do đã kết cấu chi phí Oxy trong giá dịch vụ, không đúng điểm c khoản 2 Điều 3 Thông tư số 22/2023/TT-BYT',
         ruleId: 'Rule_Id_20',

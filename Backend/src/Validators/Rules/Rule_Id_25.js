@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_25 = (patientData) => {
+const validateRule_Id_25 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán giường điều trị nội trú ban ngày tại cơ sở khám bệnh chữa bệnh YHCT không đúng quy định tại Thông tư số 01/2019/TT-BYT ngày 01/3/2019 của Bộ trưởng Bộ Y tế quy định việc thực hiện điều trị nội trú ban ngày tại cơ sở khám bệnh, chữa bệnh y học cổ truyền và Công văn số 4712/BYT-YDCT ngày 15/ 8/ 2019 hướng dẫn thực hiện Thông tư số 01/2019/TT-BYT',
         ruleId: 'Rule_Id_25',

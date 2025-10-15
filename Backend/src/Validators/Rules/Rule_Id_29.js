@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_29 = (patientData) => {
+const validateRule_Id_29 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán thuốc có hoạt chất Sylimarin (mã thuốc 40.751): thuốc Silygamma, Carsil 90mg, Fynkhepar chỉ định sử dụng không phù hợp với chỉ định trong tờ hướng dẫn sử dụng',
         ruleId: 'Rule_Id_29',

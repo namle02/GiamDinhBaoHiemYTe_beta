@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_33 = (patientData) => {
+const validateRule_Id_33 = async (patientData) => {
     const result = {
         ruleName: 'Phẫu thuật cắt dạ dày không thanh toán thêm nạo vét hạch',
         ruleId: 'Rule_Id_33',

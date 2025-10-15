@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_26 = (patientData) => {
+const validateRule_Id_26 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán thuốc chứa hoạt chất Peptid không đúng quy định tại Thông tư số 20/2022/TT-BYT ((Cerebrolysin, Citicolin, Choline alfoscerat) chỉ định sử dụng đối với người bệnh không mắc các bệnh: bệnh đột quỵ cấp tính; Sau chấn thương và phẫu thuật chấn thương sọ não; Sau phẫu thuật thần kinh sọ não)',
         ruleId: 'Rule_Id_26',

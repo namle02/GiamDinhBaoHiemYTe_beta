@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_12 = (patientData) => {
+const validateRule_Id_12 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ Chọc sinh thiết u, hạch dưới hướng dẫn siêu âm, Sinh thiết tuyến giáp dưới hướng dẫn siêu âm, Tiêm khớp dưới hướng dẫn siêu âm …không thanh toán thêm dịch vụ Siêu âm',
         ruleId: 'Rule_Id_12',
