@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_24 = (patientData) => {
+const validateRule_Id_24 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán chi phí các dịch vụ kỹ thuật thủy châm do người chỉ định hoặc người thực hiện không đúng chức danh chuyên môn của người hành nghề được quy ddịnh tại Điều 11 Thông tư số 32/2023/TT-BYT ngày 31/12/2023 của Bộ Y tế quy định chi tiết một số điều của luật khám bệnh, chữa bệnh',
         ruleId: 'Rule_Id_24',

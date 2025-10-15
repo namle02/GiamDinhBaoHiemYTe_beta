@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_1 = (patientData) => {
+const validateRule_Id_1 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ Vi khuẩn nuôi cấy định danh, không thanh toán thêm DVKT Vi khuẩn nhuộm soi',
         ruleId: 'Rule_Id_1',

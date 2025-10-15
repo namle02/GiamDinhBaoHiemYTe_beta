@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_11 = (patientData) => {
+const validateRule_Id_11 = async (patientData) => {
     const result = {
         ruleName: 'Xét nghiệm “Định lượng Pro-calcitonin [Máu]” chỉ định không đúng khoảng cách hoặc xét nghiệm “Định lượng CRP/CRPhs” thanh toán đồng thời với “Định lượng Pro-calcitonin [Máu]” không đúng quy định tại Thông tư số 50/2017/TT-BYT',
         ruleId: 'Rule_Id_11',

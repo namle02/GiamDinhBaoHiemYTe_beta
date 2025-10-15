@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_31 = (patientData) => {
+const validateRule_Id_31 = async (patientData) => {
     const result = {
         ruleName: 'Không thanh toán Hirzt và Blondeau đồng thời',
         ruleId: 'Rule_Id_31',

@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_14 = (patientData) => {
+const validateRule_Id_14 = async (patientData) => {
     const result = {
         ruleName: 'Không thanh toán dịch vụ “thay băng vết mổ có chiều dài trên 15cm đến 30cm” lần thứ 4 trở đi đối với các trường hợp phẫu thuật mổ lấy thai, điểm d khoản 4 Điều 4d Thông tư số 39/2024/TT- BYT',
         ruleId: 'Rule_Id_14',

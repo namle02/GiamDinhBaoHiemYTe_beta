@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_15 = (patientData) => {
+const validateRule_Id_15 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ kỹ thuật tiêm bắp, tiêm tĩnh mạch, truyền tĩnh mạch, tháo bột các loại, cắt chỉ… trong điều trị ngoại trú, không thanh toán trong điều trị nội trú.',
         ruleId: 'Rule_Id_15',

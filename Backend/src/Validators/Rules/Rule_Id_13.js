@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_13 = (patientData) => {
+const validateRule_Id_13 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ chạy thận nhân tạo, không thanh toán thêm thuốc chống đông hoạt chất Enoxaparin (natri) hoặc Heparin (natri) do đã có trongcơ cấu giá kỹ thuật chạy thận nhân tạo.',
         ruleId: 'Rule_Id_13',

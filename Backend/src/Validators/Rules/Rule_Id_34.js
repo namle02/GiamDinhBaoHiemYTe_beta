@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_34 = (patientData) => {
+const validateRule_Id_34 = async (patientData) => {
   const result = {
     ruleName: "Sai tỷ lệ thanh toán PT thứ 2",
     ruleId: "Rule_Id_34",

@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_6 = (patientData) => {
+const validateRule_Id_6 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ “Bơm thông lệ đạo” đối với người bệnh không có bệnh chít hẹp điểm lệ, tắc lệ quản ngang hoặc ống lệ mũi.',
         ruleId: 'Rule_Id_6',

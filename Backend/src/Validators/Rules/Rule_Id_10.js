@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_10 = (patientData) => {
+const validateRule_Id_10 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán “Xét nghiệm sinh thiết tức thì bằng cắt lạnh” không đúng quy định tại Quyết định số 3338/QĐ-BYT quy trình kỹ thuật khám bệnh, chữa bệnh chuyên ngành Ung bướu và Quyết định số 5199/QĐ-BYT quy trình kỹ thuật chuyênngành Giải phẫu bệnh - tế bào học.',
         ruleId: 'Rule_Id_10',

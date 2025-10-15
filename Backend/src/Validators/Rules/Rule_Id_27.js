@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_27 = (patientData) => {
+const validateRule_Id_27 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán hoạt chất Moxifloxacin chỉ định sử dụng không phù hợp với tờ hướng dẫn sử dụng',
         ruleId: 'Rule_Id_27',
