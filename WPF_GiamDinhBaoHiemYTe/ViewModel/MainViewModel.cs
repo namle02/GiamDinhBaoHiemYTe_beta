@@ -60,6 +60,9 @@ namespace WPF_GiamDinhBaoHiem.ViewModel
                 case "QTHT_TaiKhoanPage":
                     CurrentPage = serviceProvider.GetRequiredService<QTHT_TaiKhoanVM>();
                     break;
+                case "QTHT_CapNhatPage":
+                    CurrentPage = serviceProvider.GetRequiredService<QTHT_CapNhatVM>();
+                    break;
                 default:
                     break;
 

@@ -20,6 +20,7 @@ namespace WPF_GiamDinhBaoHiem.DI_Register
             services.AddTransient<QLHS_TimKiemHoSoVM>();
             services.AddTransient<QTHT_HoSoNhanVienVM>();
             services.AddTransient<QTHT_TaiKhoanVM>();
+            services.AddTransient<QTHT_CapNhatVM>();
 
             services.AddSingleton<SideBarVM>();
 

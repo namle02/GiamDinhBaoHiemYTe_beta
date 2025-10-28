@@ -33,6 +33,9 @@ namespace WPF_GiamDinhBaoHiem.DI_Register
             services.AddSingleton<IPatientDataProcessor, PatientDataProcessor>();
             services.AddSingleton<IDialogService, DialogService>();
             services.AddSingleton<IValidationResultBuilder, ValidationResultBuilder>();
+            
+            // Update service
+            services.AddSingleton<IUpdateService, UpdateService>();
         }
     }
 }
