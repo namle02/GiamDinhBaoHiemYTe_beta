@@ -22,7 +22,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel
         {
             this.serviceProvider = serviceProvider;
             WeakReferenceMessenger.Default.RegisterAll(this);
-            CurrentPage = serviceProvider.GetRequiredService<DashboardPageVM>();
+            CurrentPage = serviceProvider.GetRequiredService<QLHS_TimKiemHoSoVM>();
             sideBarVM = serviceProvider.GetRequiredService<SideBarVM>();
         }
 
