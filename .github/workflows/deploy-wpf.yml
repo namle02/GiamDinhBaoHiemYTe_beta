@@ -33,7 +33,7 @@ jobs:
 
       # 4. Publish project (self-contained, single file)
       - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o ./publish
 
       # 5. Zip the output
       - name: Create Release Archive
