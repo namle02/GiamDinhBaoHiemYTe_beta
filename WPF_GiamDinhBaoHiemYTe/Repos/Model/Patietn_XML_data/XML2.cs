@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WPF_GiamDinhBaoHiem.Services.Interface;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
 {
-    public partial class XML2 : ObservableObject
+    public partial class XML2 : ObservableObject, IHasStt
     {
         [ObservableProperty] private int id;
         [ObservableProperty] private string? ma_Lk;
@@ -49,6 +50,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private int? vet_Thuong_Tp;
         [ObservableProperty] private string? du_Phong;
         [ObservableProperty] private string? ngay_Th_Yl;
+        [ObservableProperty] private int? chucdanh_id;
         [ObservableProperty] private bool isError;
     }
 }

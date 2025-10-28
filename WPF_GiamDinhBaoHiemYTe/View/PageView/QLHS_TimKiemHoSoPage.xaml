@@ -21,7 +21,7 @@
         <converter:GenderConverter x:Key="GenderConverter" />
         <converter:ErrorTextConverter x:Key="ErrorTextConverter" />
 
-        <!-- Style cho TextBlock trong XML2-5 để có màu đỏ khi lỗi -->
+        <!--  Style cho TextBlock trong XML2-5 để có màu đỏ khi lỗi  -->
         <Style x:Key="ErrorTextBlockStyle" TargetType="TextBlock">
             <Setter Property="Foreground">
                 <Setter.Value>
@@ -294,6 +294,21 @@
                         </Button>
                         <Button
                             Height="48"
+                            MinWidth="120"
+                            Margin="8,0,0,0"
+                            Command="{Binding ExportToExcelCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}">
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="16"
+                                    Height="16"
+                                    Margin="0,0,4,0"
+                                    Kind="Download" />
+                                <TextBlock FontSize="14" Text="Export Excel" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            Height="48"
                             MinWidth="100"
                             Margin="8,0,0,0"
                             Command="{Binding ClearAllCacheCommand}"
@@ -334,8 +349,8 @@
                     <ProgressBar
                         Height="8"
                         Maximum="{Binding BatchTotal}"
-                        Value="{Binding BatchProgress}"
-                        Style="{StaticResource MaterialDesignLinearProgressBar}" />
+                        Style="{StaticResource MaterialDesignLinearProgressBar}"
+                        Value="{Binding BatchProgress}" />
                     <TextBlock
                         Margin="0,4,0,0"
                         HorizontalAlignment="Right"
@@ -373,14 +388,14 @@
                                 </Style>
                             </materialDesign:Card.Style>
 
-                            <Grid MinWidth="800">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="180" />
-                                    <ColumnDefinition Width="220" />
-                                    <ColumnDefinition Width="120" />
-                                    <ColumnDefinition Width="160" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="600" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock
@@ -420,10 +435,7 @@
                         </materialDesign:Card>
 
                         <!--  Results List  -->
-                        <ItemsControl
-                            x:Name="ResultsItemsControl"
-                            MinWidth="800"
-                            ItemsSource="{Binding ValidationResults}">
+                        <ItemsControl x:Name="ResultsItemsControl" ItemsSource="{Binding ValidationResults}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <materialDesign:Card Margin="0,0,0,6" Padding="0">
@@ -433,12 +445,12 @@
                                             BorderThickness="0,0,0,1">
                                             <Grid Margin="12,10">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="180" />
-                                                    <ColumnDefinition Width="220" />
-                                                    <ColumnDefinition Width="120" />
-                                                    <ColumnDefinition Width="160" />
                                                     <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="80" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="600" />
+                                                    <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
 
                                                 <!--  Mã liên kết  -->
@@ -496,7 +508,8 @@
                                                             FontSize="13"
                                                             Foreground="{Binding IsError, Converter={StaticResource ErrorContentToColorConverter}}"
                                                             Text="{Binding Noi_Dung_Loi}"
-                                                            TextWrapping="Wrap" />
+                                                            TextWrapping="Wrap"
+                                                            ToolTip="{Binding Noi_Dung_Loi}" />
                                                     </Border>
                                                 </ContentControl>
 
@@ -689,7 +702,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã liên kết" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Lk}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Lk}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="0"
@@ -699,7 +715,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã bệnh nhân" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Bn}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Bn}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="0"
@@ -709,7 +728,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Số thứ tự" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Stt}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Stt}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -734,7 +756,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Số CCCD" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.So_Cccd}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.So_Cccd}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -744,7 +769,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày sinh" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ngay_Sinh}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ngay_Sinh}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -755,7 +783,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Giới tính" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Gioi_Tinh, Converter={StaticResource GenderConverter}}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Gioi_Tinh, Converter={StaticResource GenderConverter}}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="2"
@@ -765,7 +796,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Quốc tịch" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_QuocTich}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_QuocTich}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="2"
@@ -775,7 +809,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Dân tộc" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_DanToc}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_DanToc}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -786,7 +823,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Nghề nghiệp" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Nghe_Nghiep}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Nghe_Nghiep}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="3"
@@ -796,7 +836,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Địa chỉ" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Dia_Chi}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Dia_Chi}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="3"
@@ -806,7 +849,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Điện thoại" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Dien_Thoai}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Dien_Thoai}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -817,7 +863,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Tỉnh cư trú" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Matinh_Cu_Tru}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Matinh_Cu_Tru}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="4"
@@ -827,7 +876,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Huyện cư trú" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Mahuyen_Cu_Tru}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Mahuyen_Cu_Tru}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="4"
@@ -837,7 +889,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Xã cư trú" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Maxa_Cu_Tru}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Maxa_Cu_Tru}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </StackPanel>
@@ -874,7 +929,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã thẻ BHYT" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_The_Bhyt}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_The_Bhyt}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="0"
@@ -884,7 +942,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Giá trị từ" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Gt_The_Tu}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Gt_The_Tu}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="0"
@@ -894,7 +955,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Giá trị đến" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Gt_The_Den}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Gt_The_Den}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -905,7 +969,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã đăng ký KCB" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Dkbd}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Dkbd}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -915,7 +982,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày miễn CCT" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ngay_Mien_Cct}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ngay_Mien_Cct}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -925,7 +995,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Lý do viện vãng" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ly_Do_Vv}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ly_Do_Vv}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </StackPanel>
@@ -965,7 +1038,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Chẩn đoán vào viện" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Chan_DoAn_Vao}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Chan_DoAn_Vao}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="0"
@@ -975,7 +1051,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Chẩn đoán ra viện" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Chan_DoAn_Rv}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Chan_DoAn_Rv}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="0"
@@ -985,7 +1064,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã bệnh chính" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Benh_Chinh}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Benh_Chinh}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -996,7 +1078,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày vào viện" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ngay_Vao}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ngay_Vao}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -1006,7 +1091,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày vào nội trú" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ngay_Vao_Noi_Tru}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ngay_Vao_Noi_Tru}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -1016,7 +1104,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày ra viện" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ngay_Ra}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ngay_Ra}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -1027,7 +1118,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Số ngày điều trị" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.So_Ngay_Dtri}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.So_Ngay_Dtri}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="2"
@@ -1037,7 +1131,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Phương pháp điều trị" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Pp_Dieu_Tri}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Pp_Dieu_Tri}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="2"
@@ -1047,7 +1144,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Kết quả điều trị" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ket_Qua_Dtri}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ket_Qua_Dtri}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -1058,7 +1158,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã bệnh kèm theo" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Benh_Kt}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Benh_Kt}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="3"
@@ -1068,7 +1171,10 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Mã bệnh YHCT" />
-                                                        <TextBlock FontSize="14" Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}" Text="{Binding OverlayXml1Data.Ma_Benh_Yhct}" />
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
+                                                            Text="{Binding OverlayXml1Data.Ma_Benh_Yhct}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="3"
@@ -3047,18 +3153,15 @@
             </Grid>
         </Border>
 
-        <!-- BATCH PROCESSING LOADING OVERLAY -->
-        <Border
-           
-            Background="#80000000"
-            Visibility="{Binding IsBatchProcessing, Converter={StaticResource BoolToVis}}">
+        <!--  BATCH PROCESSING LOADING OVERLAY  -->
+        <Border Background="#80000000" Visibility="{Binding IsBatchProcessing, Converter={StaticResource BoolToVis}}">
             <Grid>
                 <materialDesign:Card
                     Width="500"
                     Height="300"
+                    Padding="24"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Padding="24">
+                    VerticalAlignment="Center">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -3075,67 +3178,68 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Title -->
+                        <!--  Title  -->
                         <TextBlock
                             Grid.Row="0"
+                            HorizontalAlignment="Center"
                             FontSize="20"
                             FontWeight="Bold"
-                            HorizontalAlignment="Center"
                             Text="Đang xử lý dữ liệu Excel" />
 
-                        <!-- Progress Info -->
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <!--  Progress Info  -->
+                        <StackPanel
+                            Grid.Row="2"
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal">
                             <TextBlock Text="Đã xử lý: " />
                             <TextBlock
                                 FontWeight="Bold"
                                 Foreground="{DynamicResource PrimaryHueMidBrush}"
                                 Text="{Binding BatchProgress}" />
                             <TextBlock Text=" / " />
-                            <TextBlock
-                                FontWeight="Bold"
-                                Text="{Binding BatchTotal}" />
+                            <TextBlock FontWeight="Bold" Text="{Binding BatchTotal}" />
                             <TextBlock Text=" bệnh nhân" />
                         </StackPanel>
 
-                        <!-- Progress Bar -->
+                        <!--  Progress Bar  -->
                         <Grid Grid.Row="4">
                             <ProgressBar
                                 Height="8"
-                                Maximum="{Binding BatchTotal}"
-                                Value="{Binding BatchProgress}"
                                 Background="{DynamicResource MaterialDesignDivider}"
-                                Foreground="{DynamicResource PrimaryHueMidBrush}" />
-                            
-                            <!-- Progress Percentage -->
+                                Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                Maximum="{Binding BatchTotal}"
+                                Value="{Binding BatchProgress}" />
+
+                            <!--  Progress Percentage  -->
                             <TextBlock
-                                FontSize="10"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
+                                FontSize="10"
                                 Foreground="White"
                                 Text="{Binding BatchProgressPercentage, StringFormat={}{0:F1}%}" />
                         </Grid>
 
-                        <!-- Status Text -->
+                        <!--  Status Text  -->
                         <TextBlock
                             Grid.Row="6"
-                            FontSize="14"
                             HorizontalAlignment="Center"
+                            FontSize="14"
                             Text="{Binding BatchStatus}"
-                            TextWrapping="Wrap"
-                            TextAlignment="Center" />
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
 
-                        <!-- Current Patient -->
+                        <!--  Current Patient  -->
                         <TextBlock
                             Grid.Row="8"
-                            FontSize="12"
                             HorizontalAlignment="Center"
+                            FontSize="12"
                             Foreground="{DynamicResource PrimaryHueMidBrush}"
                             Text="{Binding CurrentProcessingPatient, StringFormat='Đang xử lý: {0}'}"
-                            TextWrapping="Wrap"
                             TextAlignment="Center"
+                            TextWrapping="Wrap"
                             Visibility="{Binding CurrentProcessingPatient, Converter={StaticResource StringToVis}}" />
 
-                        <!-- Statistics -->
+                        <!--  Statistics  -->
                         <Grid Grid.Row="10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -3143,44 +3247,38 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Success Count -->
+                            <!--  Success Count  -->
                             <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                                 <TextBlock
                                     FontSize="16"
                                     FontWeight="Bold"
                                     Foreground="Green"
                                     Text="{Binding BatchSuccessCount}" />
-                                <TextBlock
-                                    FontSize="12"
-                                    Text="Thành công" />
+                                <TextBlock FontSize="12" Text="Thành công" />
                             </StackPanel>
 
-                            <!-- Error Count -->
+                            <!--  Error Count  -->
                             <StackPanel Grid.Column="1" HorizontalAlignment="Center">
                                 <TextBlock
                                     FontSize="16"
                                     FontWeight="Bold"
                                     Foreground="Red"
                                     Text="{Binding BatchErrorCount}" />
-                                <TextBlock
-                                    FontSize="12"
-                                    Text="Lỗi" />
+                                <TextBlock FontSize="12" Text="Lỗi" />
                             </StackPanel>
 
-                            <!-- Speed -->
+                            <!--  Speed  -->
                             <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                                 <TextBlock
                                     FontSize="16"
                                     FontWeight="Bold"
                                     Foreground="{DynamicResource PrimaryHueMidBrush}"
                                     Text="{Binding BatchProcessingSpeed, StringFormat={}{0:F1}}" />
-                                <TextBlock
-                                    FontSize="12"
-                                    Text="bệnh nhân/giây" />
+                                <TextBlock FontSize="12" Text="bệnh nhân/giây" />
                             </StackPanel>
                         </Grid>
 
-                        <!-- Cancel Button -->
+                        <!--  Cancel Button  -->
                         <Button
                             Grid.Row="11"
                             Width="100"

@@ -26,6 +26,13 @@ namespace WPF_GiamDinhBaoHiem.DI_Register
             services.AddSingleton<IBacSiServices, BacSiServices>();
             services.AddSingleton<IExcelReaderService, ExcelReaderService>();
             services.AddSingleton<IBatchProcessorService, BatchProcessorService>();
+            services.AddSingleton<IExcelExportService, ExcelExportService>();
+            
+            // Refactored services
+            services.AddSingleton<IValidationErrorService, ValidationErrorService>();
+            services.AddSingleton<IPatientDataProcessor, PatientDataProcessor>();
+            services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<IValidationResultBuilder, ValidationResultBuilder>();
         }
     }
 }

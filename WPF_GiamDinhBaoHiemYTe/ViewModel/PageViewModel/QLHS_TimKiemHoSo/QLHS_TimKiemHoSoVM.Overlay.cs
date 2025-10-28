@@ -54,6 +54,20 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         [ObservableProperty]
         private List<XML5>? overlayXml5Data;
 
+        // ==================== OVERLAY ERROR TRACKING ====================
+        [ObservableProperty]
+        private HashSet<int> overlayErrorIds = new();
+
+        [ObservableProperty]
+        private HashSet<string> overlayErrorXmlTabs = new();
+
+        // Computed properties để check error cho từng tab - FOR TAB HIGHLIGHTING IN OVERLAY
+        public bool HasOverlayXml1Error => OverlayErrorXmlTabs.Contains("XML1");
+        public bool HasOverlayXml2Error => OverlayErrorXmlTabs.Contains("XML2");
+        public bool HasOverlayXml3Error => OverlayErrorXmlTabs.Contains("XML3");
+        public bool HasOverlayXml4Error => OverlayErrorXmlTabs.Contains("XML4");
+        public bool HasOverlayXml5Error => OverlayErrorXmlTabs.Contains("XML5");
+
         // ==================== OVERLAY COMMANDS ====================
         [RelayCommand]
         private async Task ShowErrorDetails(PatientValidationResult validationResult)
@@ -181,11 +195,28 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                         }
                     }
 
-                    // Extract error IDs từ SelectedValidationResult
-                    ExtractOverlayErrorIds();
+                    // Extract error IDs từ SelectedValidationResult - SỬ DỤNG SERVICE
+                    if (SelectedValidationResult?.ValidationRules != null)
+                    {
+                        var errorResult = _validationErrorService.ExtractErrorIds(SelectedValidationResult.ValidationRules);
+                        OverlayErrorIds.Clear();
+                        foreach (var id in errorResult.ErrorIds)
+                            OverlayErrorIds.Add(id);
+                        
+                        OverlayErrorXmlTabs.Clear();
+                        foreach (var tab in errorResult.ErrorXmlTabs)
+                            OverlayErrorXmlTabs.Add(tab);
+                    }
                     
-                    // QUAN TRỌNG: Check errors để update header highlighting!
-                    CheckOverlayErrorIdsInXmls(patientData);
+                    // QUAN TRỌNG: Check errors để update header highlighting! - SỬ DỤNG SERVICE
+                    _validationErrorService.MarkErrorsInXmlData(patientData, OverlayErrorIds, OverlayErrorXmlTabs);
+                    
+                    // Notify UI để update tab highlighting
+                    OnPropertyChanged(nameof(HasOverlayXml1Error));
+                    OnPropertyChanged(nameof(HasOverlayXml2Error));
+                    OnPropertyChanged(nameof(HasOverlayXml3Error));
+                    OnPropertyChanged(nameof(HasOverlayXml4Error));
+                    OnPropertyChanged(nameof(HasOverlayXml5Error));
                 }
             }
             catch (Exception)
@@ -275,10 +306,10 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                                     }
                                 }
 
-                                // Extract XML tab từ validateFile
+                                // Extract XML tab từ validateFile - SỬ DỤNG SERVICE
                                 if (!string.IsNullOrEmpty(rule.ValidateFile))
                                 {
-                                    var xmlTab = NormalizeXmlTabName(rule.ValidateFile);
+                                    var xmlTab = _validationErrorService.NormalizeXmlTabName(rule.ValidateFile);
                                     if (!string.IsNullOrEmpty(xmlTab))
                                     {
                                         preloadErrorXmlTabs.Add(xmlTab);

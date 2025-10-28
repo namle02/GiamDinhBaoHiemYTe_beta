@@ -26,7 +26,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             _patientCacheService = patientCacheService;
             
             // Khởi tạo Semaphore với số lượng thread tối đa
-            // Mặc định là 5 để tránh overload server và database
+            // Mặc định là 20 để tăng throughput xử lý
             _semaphore = new SemaphoreSlim(5, 5);
         }
 
@@ -41,6 +41,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             {
                 TotalProcessed = patientIds.Count
             };
+
 
             // Tạo Semaphore mới với maxConcurrency được chỉ định
             using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
@@ -75,6 +76,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
 
                     // Xử lý patient
                     var patientResult = await ProcessSinglePatientAsync(patientId, cancellationToken);
+                    
                     
                     // Cập nhật kết quả và thống kê
                     lock (result)
@@ -131,6 +133,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
 
             stopwatch.Stop();
             result.TotalTime = stopwatch.Elapsed;
+
 
             // Cập nhật progress cuối cùng
             onProgress?.Invoke(new BatchProgress

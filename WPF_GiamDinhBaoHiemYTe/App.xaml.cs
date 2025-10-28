@@ -35,6 +35,10 @@ public partial class App : Application
         var configService = serviceProvider.GetRequiredService<IConfigReader>();
         await configService.GetConfigFromSheet();
 
+        // Load rules khi app khởi động để cache sẵn dữ liệu
+        var ruleService = serviceProvider.GetRequiredService<Services.Interface.IRuleServices>();
+        await ruleService.LoadRulesAsync();
+
         var mainwindow = serviceProvider.GetRequiredService<MainWindow>();
         mainwindow.Show();
         base.OnStartup(e);

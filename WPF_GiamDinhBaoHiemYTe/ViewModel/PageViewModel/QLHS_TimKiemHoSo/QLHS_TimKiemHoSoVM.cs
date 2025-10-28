@@ -11,7 +11,6 @@ using WPF_GiamDinhBaoHiem.Repos.Model;
 using WPF_GiamDinhBaoHiem.Services.Interface;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
-using System.Windows;
 
 namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
 {
@@ -27,6 +26,11 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         private readonly IPatientCacheService _patientCacheService;
         private readonly IExcelReaderService _excelReaderService;
         private readonly IBatchProcessorService _batchProcessorService;
+        private readonly IExcelExportService _excelExportService;
+        private readonly IValidationErrorService _validationErrorService;
+        private readonly IPatientDataProcessor _patientDataProcessor;
+        private readonly IDialogService _dialogService;
+        private readonly IValidationResultBuilder _validationResultBuilder;
         internal PatientData? _rawPatientData; // internal để các partial classes khác access được
         
         // ==================== CONSTANTS ====================
@@ -78,13 +82,28 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         private DateTime _batchStartTime;
 
         // ==================== CONSTRUCTOR ====================
-        public QLHS_TimKiemHoSoVM(IPatientServices patientServices, IDataMapper dataMapper, IPatientCacheService patientCacheService, IExcelReaderService excelReaderService, IBatchProcessorService batchProcessorService)
+        public QLHS_TimKiemHoSoVM(
+            IPatientServices patientServices, 
+            IDataMapper dataMapper, 
+            IPatientCacheService patientCacheService, 
+            IExcelReaderService excelReaderService, 
+            IBatchProcessorService batchProcessorService, 
+            IExcelExportService excelExportService,
+            IValidationErrorService validationErrorService,
+            IPatientDataProcessor patientDataProcessor,
+            IDialogService dialogService,
+            IValidationResultBuilder validationResultBuilder)
         {
             _patientServices = patientServices;
             _dataMapper = dataMapper;
             _patientCacheService = patientCacheService;
             _excelReaderService = excelReaderService;
             _batchProcessorService = batchProcessorService;
+            _excelExportService = excelExportService;
+            _validationErrorService = validationErrorService;
+            _patientDataProcessor = patientDataProcessor;
+            _dialogService = dialogService;
+            _validationResultBuilder = validationResultBuilder;
         }
 
         // ==================== SEARCH COMMAND ====================
@@ -183,41 +202,28 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 var validateData = apiResponse.Data;
                 System.Diagnostics.Debug.WriteLine($"Search: Processing validation results for {patientId}");
 
-                // Extract error IDs từ validation results
-                ExtractErrorIds(validateData);
+                // Extract error IDs từ validation results - SỬ DỤNG SERVICE
+                var errorResult = _validationErrorService.ExtractErrorIds(validateData);
+                ErrorIds = errorResult.ErrorIds;
+                ErrorXmlTabs = errorResult.ErrorXmlTabs;
                 
-                // Check error IDs trong các XML
-                CheckErrorIdsInXmls();
+                // Check error IDs trong các XML - SỬ DỤNG SERVICE
+                if (_rawPatientData != null)
+                {
+                    _validationErrorService.MarkErrorsInXmlData(_rawPatientData, ErrorIds, ErrorXmlTabs);
+                }
                 
-                // Tạo kết quả validation cho hiển thị trong bảng
+                // Notify UI để update tab highlighting
+                OnPropertyChanged(nameof(HasXml1Error));
+                OnPropertyChanged(nameof(HasXml2Error));
+                OnPropertyChanged(nameof(HasXml3Error));
+                OnPropertyChanged(nameof(HasXml4Error));
+                OnPropertyChanged(nameof(HasXml5Error));
+                
+                // Tạo kết quả validation cho hiển thị trong bảng - SỬ DỤNG SERVICE
                 if (Xml1Data != null)
                 {
-                    // Tạo string tổng hợp các lỗi
-                    var errorMessages = new List<string>();
-                    
-                    if (validateData.ValidationResults != null)
-                    {
-                        foreach (var rule in validateData.ValidationResults)
-                        {
-                            if (!rule.IsValid)
-                            {
-                                errorMessages.Add($"• {rule.RuleName}");
-                            }
-                        }
-                    }
-
-                    var result = new PatientValidationResult
-                    {
-                        Ma_Lk = Xml1Data.Ma_Lk ?? "",
-                        Ho_Ten = Xml1Data.Ho_Ten ?? "",
-                        Gioi_Tinh = Xml1Data.Gioi_Tinh == 1 ? "Nam" : (Xml1Data.Gioi_Tinh == 2 ? "Nữ" : "Khác"),
-                        Nam_Sinh = Xml1Data.Ngay_Sinh ?? "",
-                        Noi_Dung_Loi = errorMessages.Count > 0 
-                            ? string.Join("\n", errorMessages) 
-                            : "Không có lỗi",
-                        IsError = errorMessages.Count > 0,
-                        ValidationRules = validateData.ValidationResults
-                    };
+                    var result = _validationResultBuilder.BuildValidationResult(Xml1Data, validateData.ValidationResults);
 
                     // Kiểm tra xem bệnh nhân đã có trong ValidationResults chưa
                     var existingResult = ValidationResults.FirstOrDefault(r => r.Ma_Lk == result.Ma_Lk);
@@ -246,7 +252,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                     // Preload overlay data
                     _ = PreloadOverlayDataInBackground(result);
                     
-                    System.Diagnostics.Debug.WriteLine($"Search: Successfully completed for {patientId} with {errorMessages.Count} errors");
+                    System.Diagnostics.Debug.WriteLine($"Search: Successfully completed for {patientId}");
                 }
                 else
                 {
@@ -255,37 +261,34 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
             }
             catch (InvalidOperationException ex)
             {
-                // Lỗi business logic - hiển thị thông báo cho user
+                // Lỗi business logic - SỬ DỤNG DIALOG SERVICE
                 System.Diagnostics.Debug.WriteLine($"Search: Business error for {patientId}: {ex.Message}");
-                
-                // TODO: Thay thế bằng notification service hoặc MessageBox
-                MessageBox.Show(ex.Message, "Lỗi tìm kiếm", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning(ex.Message, "Lỗi tìm kiếm");
             }
             catch (HttpRequestException ex)
             {
-                // Lỗi network - hiển thị thông báo network
+                // Lỗi network - SỬ DỤNG DIALOG SERVICE
                 System.Diagnostics.Debug.WriteLine($"Search: Network error for {patientId}: {ex.Message}");
                 
                 var message = ex.Message.Contains("timeout") || ex.Message.Contains("timed out")
                     ? "Kết nối bị timeout. Vui lòng kiểm tra mạng và thử lại."
                     : "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.";
                 
-                MessageBox.Show(message, "Lỗi kết nối", MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(message, "Lỗi kết nối");
             }
             catch (TaskCanceledException ex)
             {
-                // Lỗi timeout hoặc cancel
+                // Lỗi timeout hoặc cancel - SỬ DỤNG DIALOG SERVICE
                 System.Diagnostics.Debug.WriteLine($"Search: Timeout/Cancel error for {patientId}: {ex.Message}");
-                
-                MessageBox.Show("Yêu cầu bị timeout. Vui lòng thử lại.", "Timeout", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning("Yêu cầu bị timeout. Vui lòng thử lại.", "Timeout");
             }
             catch (Exception ex)
             {
-                // Lỗi không xác định
+                // Lỗi không xác định - SỬ DỤNG DIALOG SERVICE
                 System.Diagnostics.Debug.WriteLine($"Search: Unexpected error for {patientId}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Search: Stack trace: {ex.StackTrace}");
                 
-                MessageBox.Show($"Đã xảy ra lỗi không xác định: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError($"Đã xảy ra lỗi không xác định: {ex.Message}", "Lỗi hệ thống");
             }
             finally
             {
@@ -301,146 +304,43 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         {
             try
             {
-                // Mở dialog để chọn file Excel
-                var dialog = new Microsoft.Win32.OpenFileDialog
-                {
-                    Filter = "Excel Files (*.xlsx;*.xls)|*.xlsx;*.xls|All Files (*.*)|*.*",
-                    Title = "Chọn file Excel chứa danh sách mã liên kết"
-                };
+                // SỬ DỤNG DIALOG SERVICE
+                var filePath = _dialogService.ShowOpenExcelFileDialog("Chọn file Excel chứa danh sách mã liên kết");
+                if (filePath == null)
+                    return;
 
-                if (dialog.ShowDialog() == true)
+                // Lấy danh sách tên các sheet trong file
+                var sheetNames = await _excelReaderService.GetSheetNamesAsync(filePath);
+                
+                string? selectedSheet = null;
+                
+                // Nếu có nhiều sheet, hiển thị dialog chọn sheet - SỬ DỤNG DIALOG SERVICE
+                if (sheetNames.Count > 1)
                 {
-                    var filePath = dialog.FileName;
-                    
-                    // Lấy danh sách tên các sheet trong file
-                    var sheetNames = await _excelReaderService.GetSheetNamesAsync(filePath);
-                    
-                    string? selectedSheet = null;
-                    
-                    // Nếu có nhiều sheet, hiển thị dialog chọn sheet
-                    if (sheetNames.Count > 1)
+                    selectedSheet = _dialogService.ShowSheetSelectionDialog(sheetNames);
+                    if (selectedSheet == null)
                     {
-                        selectedSheet = ShowSheetSelectionDialog(sheetNames);
-                        if (selectedSheet == null)
-                        {
-                            // User đã hủy
-                            return;
-                        }
-                    }
-                    else if (sheetNames.Count == 1)
-                    {
-                        // Chỉ có 1 sheet, tự động chọn
-                        selectedSheet = sheetNames[0];
-                    }
-                    else
-                    {
-                        BatchStatus = "Lỗi: File Excel không có sheet nào";
+                        // User đã hủy
                         return;
                     }
-                    
-                    await ProcessExcelFile(filePath, selectedSheet);
                 }
+                else if (sheetNames.Count == 1)
+                {
+                    // Chỉ có 1 sheet, tự động chọn
+                    selectedSheet = sheetNames[0];
+                }
+                else
+                {
+                    BatchStatus = "Lỗi: File Excel không có sheet nào";
+                    return;
+                }
+                
+                await ProcessExcelFile(filePath, selectedSheet);
             }
             catch (Exception ex)
             {
                 BatchStatus = $"Lỗi: {ex.Message}";
             }
-        }
-
-        /// <summary>
-        /// Hiển thị dialog để user chọn sheet
-        /// </summary>
-        private string? ShowSheetSelectionDialog(List<string> sheetNames)
-        {
-            // Tạo WPF dialog
-            var dialog = new System.Windows.Window
-            {
-                Title = "Chọn Sheet",
-                Width = 400,
-                Height = 300,
-                WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
-                ResizeMode = System.Windows.ResizeMode.NoResize
-            };
-
-            var stackPanel = new System.Windows.Controls.StackPanel
-            {
-                Margin = new System.Windows.Thickness(10)
-            };
-
-            var label = new System.Windows.Controls.Label
-            {
-                Content = "Chọn sheet muốn đọc:",
-                FontSize = 14,
-                Margin = new System.Windows.Thickness(0, 0, 0, 10)
-            };
-
-            var listBox = new System.Windows.Controls.ListBox
-            {
-                Height = 150,
-                Margin = new System.Windows.Thickness(0, 0, 0, 10)
-            };
-
-            foreach (var sheetName in sheetNames)
-            {
-                listBox.Items.Add(sheetName);
-            }
-            
-            // Chọn sheet đầu tiên
-            if (listBox.Items.Count > 0)
-            {
-                listBox.SelectedIndex = 0;
-            }
-
-            var buttonPanel = new System.Windows.Controls.StackPanel
-            {
-                Orientation = System.Windows.Controls.Orientation.Horizontal,
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Right
-            };
-
-            var okButton = new System.Windows.Controls.Button
-            {
-                Content = "OK",
-                Width = 75,
-                Height = 30,
-                Margin = new System.Windows.Thickness(0, 0, 10, 0),
-                IsDefault = true
-            };
-
-            var cancelButton = new System.Windows.Controls.Button
-            {
-                Content = "Hủy",
-                Width = 75,
-                Height = 30,
-                IsCancel = true
-            };
-
-            okButton.Click += (s, e) =>
-            {
-                dialog.DialogResult = true;
-                dialog.Close();
-            };
-
-            cancelButton.Click += (s, e) =>
-            {
-                dialog.DialogResult = false;
-                dialog.Close();
-            };
-
-            buttonPanel.Children.Add(okButton);
-            buttonPanel.Children.Add(cancelButton);
-
-            stackPanel.Children.Add(label);
-            stackPanel.Children.Add(listBox);
-            stackPanel.Children.Add(buttonPanel);
-
-            dialog.Content = stackPanel;
-
-            if (dialog.ShowDialog() == true)
-            {
-                return listBox.SelectedItem?.ToString();
-            }
-
-            return null;
         }
 
         private async Task ProcessExcelFile(string filePath, string? sheetName = null)
@@ -515,6 +415,9 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 // Xử lý kết quả và cập nhật ValidationResults
                 await ProcessBatchResults(batchResult);
 
+                // Kiểm tra số lượng bệnh nhân sau khi xử lý
+                await ValidatePatientCounts(batchResult);
+
                 if (_batchCancellationTokenSource.Token.IsCancellationRequested)
                 {
                     BatchStatus = $"Đã hủy! Đã xử lý {batchResult.SuccessCount}/{batchResult.TotalProcessed} bệnh nhân trước khi hủy.";
@@ -546,6 +449,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         /// </summary>
         private async Task ProcessBatchResults(BatchProcessingResult batchResult)
         {
+            
             foreach (var result in batchResult.Results.Where(r => r.IsSuccess && r.ValidationResult?.Data != null))
             {
                 try
@@ -564,31 +468,10 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                             x.Ma_Bn?.Equals(result.PatientId, StringComparison.OrdinalIgnoreCase) == true
                         ) ?? patientData.Xml1[0];
 
-                        // Tạo error messages
-                        var errorMessages = new List<string>();
-                        if (result.ValidationResult.Data.ValidationResults != null)
-                        {
-                            foreach (var rule in result.ValidationResult.Data.ValidationResults)
-                            {
-                                if (!rule.IsValid)
-                                {
-                                    errorMessages.Add($"• {rule.RuleName}");
-                                }
-                            }
-                        }
-
-                        var validationResult = new PatientValidationResult
-                        {
-                            Ma_Lk = xml1Data.Ma_Lk ?? "",
-                            Ho_Ten = xml1Data.Ho_Ten ?? "",
-                            Gioi_Tinh = xml1Data.Gioi_Tinh == 1 ? "Nam" : (xml1Data.Gioi_Tinh == 2 ? "Nữ" : "Khác"),
-                            Nam_Sinh = xml1Data.Ngay_Sinh ?? "",
-                            Noi_Dung_Loi = errorMessages.Count > 0 
-                                ? string.Join("\n", errorMessages) 
-                                : "Không có lỗi",
-                            IsError = errorMessages.Count > 0,
-                            ValidationRules = result.ValidationResult.Data.ValidationResults
-                        };
+                        // SỬ DỤNG VALIDATION RESULT BUILDER SERVICE
+                        var validationResult = _validationResultBuilder.BuildValidationResult(
+                            xml1Data, 
+                            result.ValidationResult.Data.ValidationResults);
 
                         // Kiểm tra xem bệnh nhân đã có trong ValidationResults chưa
                         var existingResult = ValidationResults.FirstOrDefault(r => r.Ma_Lk == validationResult.Ma_Lk);
@@ -613,6 +496,48 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 {
                     // Log lỗi nhưng tiếp tục xử lý các kết quả khác
                     System.Diagnostics.Debug.WriteLine($"Error processing batch result for {result.PatientId}: {ex.Message}");
+                }
+            }
+            
+        }
+
+        /// <summary>
+        /// Kiểm tra số lượng bệnh nhân và tìm những MA_LK không hiển thị kết quả
+        /// </summary>
+        private async Task ValidatePatientCounts(BatchProcessingResult batchResult)
+        {
+            // Kiểm tra số lượng bệnh nhân
+            if (batchResult.SuccessCount != ValidationResults.Count)
+            {
+                // Lấy danh sách MA_LK đã hiển thị trên màn hình
+                var displayedMaLkList = ValidationResults.Select(r => r.Ma_Lk).ToList();
+                
+                // Tìm những MA_LK thành công nhưng không hiển thị trên màn hình
+                var missingMaLkList = new List<string>();
+                
+                foreach (var result in batchResult.Results)
+                {
+                    if (result.IsSuccess && result.ValidationResult?.Data != null)
+                    {
+                        // Kiểm tra xem MA_LK này có hiển thị trên màn hình không
+                        if (!displayedMaLkList.Contains(result.PatientId))
+                        {
+                            missingMaLkList.Add(result.PatientId);
+                        }
+                    }
+                }
+                
+                if (missingMaLkList.Count > 0)
+                {
+                    var errorMessage = $"Phát hiện {missingMaLkList.Count} mã liên kết xử lý thành công nhưng không hiển thị kết quả:\n\n" +
+                                     string.Join("\n", missingMaLkList) +
+                                     "\n\nCó thể do:\n" +
+                                     "- Dữ liệu không đầy đủ trong database\n" +
+                                     "- Lỗi khi lấy thông tin XML1\n" +
+                                     "- Vấn đề về format hoặc cấu trúc dữ liệu";
+                    
+                    // SỬ DỤNG DIALOG SERVICE
+                    _dialogService.ShowWarning(errorMessage, "Cảnh báo: MA_LK không hiển thị");
                 }
             }
         }
@@ -658,6 +583,69 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
             //  Clear multi-patient overlay cache
             _overlayCache.Clear();
         }
+
+        // ==================== EXPORT COMMANDS ====================
+        
+        [RelayCommand]
+        private async Task ExportToExcel()
+        {
+            if (ValidationResults == null || !ValidationResults.Any())
+            {
+                // SỬ DỤNG DIALOG SERVICE
+                _dialogService.ShowInformation("Không có dữ liệu để export", "Thông báo");
+                return;
+            }
+
+            // SỬ DỤNG DIALOG SERVICE
+            var filePath = _dialogService.ShowSaveExcelFileDialog(
+                $"BaoCaoValidation_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                "Lưu file Excel");
+
+            if (filePath != null)
+            {
+                try
+                {
+                    IsLoading = true;
+                    System.Diagnostics.Debug.WriteLine($"Export: Bắt đầu export {ValidationResults.Count} bệnh nhân ra file {filePath}");
+                    
+                    var success = await _excelExportService.ExportValidationResultsToExcelAsync(
+                        ValidationResults.ToList(), 
+                        filePath);
+                    
+                    if (success)
+                    {
+                        var message = $"Export thành công!\n\n" +
+                                    $"File đã được lưu tại: {filePath}\n" +
+                                    $"Tổng số bệnh nhân: {ValidationResults.Count}\n" +
+                                    $"Số bệnh nhân có lỗi: {ValidationResults.Count(r => r.IsError)}\n" +
+                                    $"Số bệnh nhân không lỗi: {ValidationResults.Count(r => !r.IsError)}\n\n" +
+                                    $"File Excel bao gồm:\n" +
+                                    $"- Sheet 'Tổng Quan': Thông tin tất cả bệnh nhân\n" +
+                                    $"- Các sheet theo từng loại lỗi: Chi tiết bệnh nhân có lỗi";
+                        
+                        // SỬ DỤNG DIALOG SERVICE
+                        _dialogService.ShowInformation(message, "Export thành công");
+                        System.Diagnostics.Debug.WriteLine($"Export: Export thành công file {filePath}");
+                    }
+                    else
+                    {
+                        _dialogService.ShowError("Có lỗi xảy ra khi export file", "Lỗi Export");
+                        System.Diagnostics.Debug.WriteLine($"Export: Export thất bại file {filePath}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var errorMessage = $"Lỗi khi export: {ex.Message}";
+                    _dialogService.ShowError(errorMessage, "Lỗi Export");
+                    System.Diagnostics.Debug.WriteLine($"Export: Lỗi khi export - {ex.Message}");
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+            }
+        }
+
     }
 }
 

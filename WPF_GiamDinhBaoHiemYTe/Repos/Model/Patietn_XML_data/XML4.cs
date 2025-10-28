@@ -1,8 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WPF_GiamDinhBaoHiem.Services.Interface;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
 {
-    public partial class XML4 : ObservableObject
+    public partial class XML4 : ObservableObject, IHasStt
     {
         [ObservableProperty] private int id;
         [ObservableProperty] private string? ma_Lk;

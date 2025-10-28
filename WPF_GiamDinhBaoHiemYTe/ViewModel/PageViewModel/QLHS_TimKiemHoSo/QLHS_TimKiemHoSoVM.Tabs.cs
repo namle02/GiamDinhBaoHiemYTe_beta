@@ -8,7 +8,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
 {
     /// <summary>
     /// ViewModel cho trang Tìm Kiếm Hồ Sơ - TAB LOADING
-    /// File này chứa: Tab Properties, Lazy Loading Logic
+    /// REFACTORED: Sử dụng PatientDataProcessor thay vì duplicate code
     /// </summary>
     public partial class QLHS_TimKiemHoSoVM
     {
@@ -39,6 +39,21 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         private bool _xml4Loaded = false;
         private bool _xml5Loaded = false;
 
+        // ==================== ERROR TRACKING PROPERTIES ====================
+        // Main view error tracking
+        [ObservableProperty]
+        private HashSet<int> errorIds = new();
+
+        [ObservableProperty]
+        private HashSet<string> errorXmlTabs = new();
+
+        // Computed properties để check error cho từng tab - FOR TAB HIGHLIGHTING
+        public bool HasXml1Error => ErrorXmlTabs.Contains("XML1");
+        public bool HasXml2Error => ErrorXmlTabs.Contains("XML2");
+        public bool HasXml3Error => ErrorXmlTabs.Contains("XML3");
+        public bool HasXml4Error => ErrorXmlTabs.Contains("XML4");
+        public bool HasXml5Error => ErrorXmlTabs.Contains("XML5");
+
         // ==================== TAB CHANGE HANDLER ====================
         /// <summary>
         /// Property để theo dõi khi tab được thay đổi
@@ -51,6 +66,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         // ==================== LAZY LOADING LOGIC ====================
         /// <summary>
         /// Lazy load dữ liệu tab chỉ khi tab được chọn
+        /// REFACTORED: Sử dụng PatientDataProcessor
         /// </summary>
         private void LoadTabDataIfNeeded(int tabIndex)
         {
@@ -61,13 +77,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 case 0: // XML1
                     if (!_xml1Loaded)
                     {
-                        if (_rawPatientData.Xml1 != null && _rawPatientData.Xml1.Count > 0)
-                        {
-                            Xml1Data = _rawPatientData.Xml1.FirstOrDefault(x => 
-                                x.Ma_Lk?.Equals(PatientID, StringComparison.OrdinalIgnoreCase) == true ||
-                                x.Ma_Bn?.Equals(PatientID, StringComparison.OrdinalIgnoreCase) == true
-                            ) ?? _rawPatientData.Xml1[0];
-                        }
+                        Xml1Data = _patientDataProcessor.FindXml1ByPatientId(_rawPatientData.Xml1, PatientID);
                         _xml1Loaded = true;
                     }
                     break;
@@ -75,13 +85,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 case 1: // XML2
                     if (!_xml2Loaded)
                     {
-                        if (_rawPatientData.Xml2 != null)
-                        {
-                            for (int i = 0; i < _rawPatientData.Xml2.Count; i++)
-                            {
-                                _rawPatientData.Xml2[i].Stt = i + 1;
-                            }
-                        }
+                        _patientDataProcessor.AssignSttToXmlData(_rawPatientData.Xml2);
                         Xml2Data = _rawPatientData.Xml2;
                         _xml2Loaded = true;
                     }
@@ -90,14 +94,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 case 2: // XML3
                     if (!_xml3Loaded)
                     {
-                        if (_rawPatientData.Xml3 != null)
-                        {
-                            for (int i = 0; i < _rawPatientData.Xml3.Count; i++)
-                            {
-                                _rawPatientData.Xml3[i].Stt = i + 1;
-                            }
-                        }
-                        Xml3Data = _rawPatientData.Xml3;
+                        Xml3Data = _patientDataProcessor.SortAndAssignSttXml3(_rawPatientData.Xml3);
                         _xml3Loaded = true;
                     }
                     break;
@@ -105,14 +102,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 case 3: // XML4
                     if (!_xml4Loaded)
                     {
-                        if (_rawPatientData.Xml4 != null)
-                        {
-                            for (int i = 0; i < _rawPatientData.Xml4.Count; i++)
-                            {
-                                _rawPatientData.Xml4[i].Stt = i + 1;
-                            }
-                        }
-                        Xml4Data = _rawPatientData.Xml4;
+                        Xml4Data = _patientDataProcessor.SortAndAssignSttXml4(_rawPatientData.Xml4);
                         _xml4Loaded = true;
                     }
                     break;
@@ -120,13 +110,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 case 4: // XML5
                     if (!_xml5Loaded)
                     {
-                        if (_rawPatientData.Xml5 != null)
-                        {
-                            for (int i = 0; i < _rawPatientData.Xml5.Count; i++)
-                            {
-                                _rawPatientData.Xml5[i].Stt = i + 1;
-                            }
-                        }
+                        _patientDataProcessor.AssignSttToXmlData(_rawPatientData.Xml5);
                         Xml5Data = _rawPatientData.Xml5;
                         _xml5Loaded = true;
                     }
@@ -135,4 +119,3 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         }
     }
 }
-
