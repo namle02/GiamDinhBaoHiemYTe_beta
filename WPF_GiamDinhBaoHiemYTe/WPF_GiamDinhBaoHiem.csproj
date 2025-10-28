@@ -11,19 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Logo_benh_vien-removebg-preview.png" />
-    <None Remove="Assets\Male_Logo.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Assets\Logo_benh_vien-removebg-preview.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
-    <Content Include="Assets\Male_Logo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
+    <Resource Include="Assets\Logo_benh_vien-removebg-preview.png" />
+    <Resource Include="Assets\Male_Logo.png" />
   </ItemGroup>
 
   <ItemGroup>
