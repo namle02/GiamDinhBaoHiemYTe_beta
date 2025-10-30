@@ -225,111 +225,461 @@
 
             <!--  SEARCH  -->
             <materialDesign:Card Padding="16">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <!--  Hàng 1: Toggle button và các button actions  -->
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <TextBox
-                        x:Name="SearchTextBox"
-                        Grid.Column="0"
-                        MinHeight="48"
-                        Margin="0,0,8,0"
-                        VerticalContentAlignment="Center"
-                        materialDesign:HintAssist.Hint="Nhập số bệnh án / số tiếp nhận rồi nhấn Enter"
-                        materialDesign:TextFieldAssist.HasClearButton="True"
-                        FontSize="18"
-                        Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                        Text="{Binding PatientID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                        <TextBox.InputBindings>
-                            <KeyBinding
-                                Key="Enter"
-                                Command="{Binding SearchCommand}"
-                                CommandParameter="{Binding PatientID}" />
-                        </TextBox.InputBindings>
+                        <!--  Segmented Control: Tìm kiếm theo Mã Liên Kết vs Mã Bệnh Nhân  -->
+                        <Border
+                            Grid.Column="0"
+                            Height="44"
+                            MinWidth="450"
+                            Margin="0,0,16,0"
+                            Padding="4"
+                            Background="#F3F4F6"
+                            BorderBrush="#D1D5DB"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
 
-                    </TextBox>
-                    <Button
-                        Grid.Column="1"
-                        Height="48"
-                        MinWidth="140"
-                        Margin="8,5,8,5"
-                        Command="{Binding SearchCommand}"
-                        CommandParameter="{Binding Text, ElementName=SearchTextBox}">
-                        <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                            <materialDesign:PackIcon
-                                Width="20"
-                                Height="20"
-                                Margin="0,0,8,0"
-                                Kind="Search" />
-                            <TextBlock FontSize="16" Text="Tra cứu" />
-                        </StackPanel>
-                    </Button>
+                                <!--  Tìm theo Mã Liên Kết Button  -->
+                                <Button
+                                    Grid.Column="0"
+                                    Margin="0,0,2,0"
+                                    Padding="10,6"
+                                    Command="{Binding ToggleSearchModeCommand}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource MaterialDesignFlatButton}" TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="#6B7280" />
+                                            <Setter Property="FontWeight" Value="Normal" />
+                                            <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="6" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSearchByMaBn}" Value="False">
+                                                    <Setter Property="Background" Value="White" />
+                                                    <Setter Property="Foreground" Value="#1F2937" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                    <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp2" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                        <materialDesign:PackIcon
+                                            Width="18"
+                                            Height="18"
+                                            Margin="0,0,6,0"
+                                            VerticalAlignment="Center"
+                                            Kind="Link" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            Text="Tìm theo Mã liên kết" />
+                                    </StackPanel>
+                                </Button>
 
-                    <StackPanel
-                        Grid.Column="2"
-                        Margin="8,0,0,0"
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal">
-
-
-
-
-                        <Button
-                            Height="48"
-                            MinWidth="120"
-                            Margin="8,0,0,0"
-                            Command="{Binding ImportExcelAndProcessCommand}"
-                            Style="{StaticResource MaterialDesignOutlinedButton}">
-                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                <materialDesign:PackIcon
-                                    Width="16"
-                                    Height="16"
-                                    Margin="0,0,4,0"
-                                    Kind="FileExcel" />
-                                <TextBlock FontSize="14" Text="Import Excel" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            Height="48"
-                            MinWidth="120"
-                            Margin="8,0,0,0"
-                            Command="{Binding ExportToExcelCommand}"
-                            Style="{StaticResource MaterialDesignOutlinedButton}">
-                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                <materialDesign:PackIcon
-                                    Width="16"
-                                    Height="16"
-                                    Margin="0,0,4,0"
-                                    Kind="Download" />
-                                <TextBlock FontSize="14" Text="Export Excel" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            Height="48"
-                            MinWidth="100"
-                            Margin="8,0,0,0"
-                            Command="{Binding ClearAllCacheCommand}"
-                            Style="{StaticResource MaterialDesignOutlinedButton}">
-                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                                <materialDesign:PackIcon
-                                    Width="16"
-                                    Height="16"
-                                    Margin="0,0,4,0"
-                                    Kind="Refresh" />
-                                <TextBlock FontSize="14" Text="Làm mới" />
-                            </StackPanel>
-                        </Button>
-                        <Border Style="{StaticResource ChipCount}">
-                            <TextBlock>
-                                <Run Text="Kết quả: " />
-                                <Run Text="{Binding ValidationResults.Count, Mode=OneWay}" />
-                            </TextBlock>
+                                <!--  Tìm theo Mã Bệnh Nhân Button  -->
+                                <Button
+                                    Grid.Column="1"
+                                    Margin="2,0,0,0"
+                                    Padding="10,6"
+                                    Command="{Binding ToggleSearchModeCommand}">
+                                    <Button.Style>
+                                        <Style BasedOn="{StaticResource MaterialDesignFlatButton}" TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="#6B7280" />
+                                            <Setter Property="FontWeight" Value="Normal" />
+                                            <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="6" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSearchByMaBn}" Value="True">
+                                                    <Setter Property="Background" Value="White" />
+                                                    <Setter Property="Foreground" Value="#1F2937" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                    <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp2" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                        <materialDesign:PackIcon
+                                            Width="18"
+                                            Height="18"
+                                            Margin="0,0,6,0"
+                                            VerticalAlignment="Center"
+                                            Kind="AccountCircle" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            Text="Tìm theo Mã bệnh nhân" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
                         </Border>
-                    </StackPanel>
-                </Grid>
+
+                        <!--  Action buttons  -->
+                        <StackPanel
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                            <Button
+                                Height="40"
+                                MinWidth="120"
+                                Margin="8,0,0,0"
+                                Command="{Binding ImportExcelAndProcessCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <materialDesign:PackIcon
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,0,4,0"
+                                        Kind="FileExcel" />
+                                    <TextBlock FontSize="14" Text="Import Excel" />
+                                </StackPanel>
+                            </Button>
+                            <Button
+                                Height="40"
+                                MinWidth="120"
+                                Margin="8,0,0,0"
+                                Command="{Binding ExportToExcelCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <materialDesign:PackIcon
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,0,4,0"
+                                        Kind="Download" />
+                                    <TextBlock FontSize="14" Text="Export Excel" />
+                                </StackPanel>
+                            </Button>
+                            <Button
+                                Height="40"
+                                MinWidth="100"
+                                Margin="8,0,0,0"
+                                Command="{Binding ClearAllCacheCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <materialDesign:PackIcon
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,0,4,0"
+                                        Kind="Refresh" />
+                                    <TextBlock FontSize="14" Text="Làm mới" />
+                                </StackPanel>
+                            </Button>
+                            <Border Style="{StaticResource ChipCount}">
+                                <TextBlock>
+                                    <Run Text="Kết quả: " />
+                                    <Run Text="{Binding ValidationResults.Count, Mode=OneWay}" />
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!--  Hàng 2: Search Box (theo MA_LK) - Ẩn khi IsSearchByMaBn = True  -->
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSearchByMaBn}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox
+                            x:Name="SearchTextBox"
+                            Grid.Column="0"
+                            MinHeight="48"
+                            Margin="0,0,8,0"
+                            VerticalContentAlignment="Center"
+                            materialDesign:HintAssist.Hint="Nhập mã liên kết (MA_LK) rồi nhấn Enter"
+                            materialDesign:TextFieldAssist.HasClearButton="True"
+                            FontSize="18"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            Text="{Binding PatientID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                            <TextBox.InputBindings>
+                                <KeyBinding
+                                    Key="Enter"
+                                    Command="{Binding SearchCommand}"
+                                    CommandParameter="{Binding PatientID}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+
+                        <Button
+                            Grid.Column="1"
+                            Height="48"
+                            MinWidth="140"
+                            Margin="8,5,8,5"
+                            Command="{Binding SearchCommand}"
+                            CommandParameter="{Binding Text, ElementName=SearchTextBox}">
+                            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                <materialDesign:PackIcon
+                                    Width="20"
+                                    Height="20"
+                                    Margin="0,0,8,0"
+                                    Kind="Search" />
+                                <TextBlock FontSize="16" Text="Tra cứu" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!--  Hàng 2: Search Box theo MA_BN + Thời gian - Hiện khi IsSearchByMaBn = True  -->
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSearchByMaBn}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!--  MA_BN và Button  -->
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox
+                                x:Name="MaBnSearchTextBox"
+                                Grid.Column="0"
+                                MinHeight="48"
+                                Margin="0,0,8,0"
+                                VerticalContentAlignment="Center"
+                                materialDesign:HintAssist.Hint="Nhập mã bệnh nhân (MA_BN)"
+                                materialDesign:TextFieldAssist.HasClearButton="True"
+                                FontSize="18"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Text="{Binding MaBenhNhan, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding SearchByMaBnCommand}" />
+                                </TextBox.InputBindings>
+                            </TextBox>
+
+                            <Button
+                                Grid.Column="1"
+                                Height="48"
+                                MinWidth="140"
+                                Margin="8,5,8,5"
+                                Command="{Binding SearchByMaBnCommand}">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                    <materialDesign:PackIcon
+                                        Width="20"
+                                        Height="20"
+                                        Margin="0,0,8,0"
+                                        Kind="Search" />
+                                    <TextBlock FontSize="16" Text="Tra Cứu" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!--  Date Pickers  -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <DatePicker
+                                Grid.Column="0"
+                                MinHeight="48"
+                                materialDesign:HintAssist.Hint="Ngày vào (từ)"
+                                FontSize="16"
+                                SelectedDate="{Binding NgayVaoFrom, Mode=TwoWay}"
+                                Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+
+                            <DatePicker
+                                Grid.Column="2"
+                                MinHeight="48"
+                                materialDesign:HintAssist.Hint="Ngày ra (đến)"
+                                FontSize="16"
+                                SelectedDate="{Binding NgayRaTo, Mode=TwoWay}"
+                                Style="{StaticResource MaterialDesignOutlinedDatePicker}" />
+                        </Grid>
+                    </Grid>
+
+                    <!--  Hàng 3: Danh sách MA_LK kết quả (chỉ hiện khi tìm theo MA_BN)  -->
+                    <Border
+                        Margin="0,12,0,0"
+                        Padding="12"
+                        Background="#F9FAFB"
+                        BorderBrush="#E5E7EB"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSearchByMaBn}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <StackPanel>
+                            <!--  Hiện danh sách khi có kết quả  -->
+                            <StackPanel Visibility="{Binding HasMaLkSearchResults, Converter={StaticResource BoolToVis}}">
+                                <!--  Header với nút expand/collapse  -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
+                                        Foreground="#374151">
+                                        <Run Text="✅ Tìm thấy " />
+                                        <Run FontWeight="Bold" Text="{Binding MaLkSearchResults.Count, Mode=OneWay}" />
+                                        <Run Text=" mã liên kết. Chọn một để xem chi tiết:" />
+                                    </TextBlock>
+
+                                    <!--  Nút toggle expand/collapse  -->
+                                    <Button
+                                        Grid.Column="1"
+                                        Width="32"
+                                        Height="32"
+                                        Padding="0"
+                                        Command="{Binding ToggleSearchResultsExpandCommand}"
+                                        Style="{StaticResource MaterialDesignIconButton}">
+                                        <materialDesign:PackIcon Width="20" Height="20">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Setter Property="Kind" Value="ChevronUp" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSearchResultsExpanded}" Value="False">
+                                                            <Setter Property="Kind" Value="ChevronDown" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                        <Button.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock>
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="Thu gọn danh sách" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSearchResultsExpanded}" Value="False">
+                                                                    <Setter Property="Text" Value="Mở rộng danh sách" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </ToolTip>
+                                        </Button.ToolTip>
+                                    </Button>
+                                </Grid>
+
+                                <!--  ListBox với dynamic height  -->
+                                <ListBox
+                                    ItemsSource="{Binding MaLkSearchResults}"
+                                    SelectedItem="{Binding SelectedMaLkResult, Mode=TwoWay}"
+                                    SelectionMode="Single">
+                                    <ListBox.Style>
+                                        <Style TargetType="ListBox">
+                                            <Setter Property="MaxHeight" Value="600" />
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSearchResultsExpanded}" Value="False">
+                                                    <Setter Property="MaxHeight" Value="0" />
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.Style>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border
+                                                Margin="0,4"
+                                                Padding="16,12"
+                                                Background="White"
+                                                BorderBrush="#D1D5DB"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Cursor="Hand">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#F0F9FF" />
+                                                                <Setter Property="BorderBrush" Value="#3B82F6" />
+                                                                <Setter Property="BorderThickness" Value="2" />
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Border.InputBindings>
+                                                    <MouseBinding
+                                                        Command="{Binding DataContext.SelectMaLkFromListCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        MouseAction="LeftClick" />
+                                                </Border.InputBindings>
+                                                <TextBlock
+                                                    FontSize="14"
+                                                    FontWeight="Medium"
+                                                    Text="{Binding DisplayText}"
+                                                    TextWrapping="Wrap" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+
+                            <!--  Message khi không có kết quả  -->
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontSize="13"
+                                FontStyle="Italic"
+                                Foreground="#6B7280"
+                                Text="📋 Chưa có kết quả tìm kiếm. Nhập MA_BN và chọn thời gian, sau đó click 'Tìm MA_LK'."
+                                TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasMaLkSearchResults}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </materialDesign:Card>
 
             <Border Grid.Row="1" />

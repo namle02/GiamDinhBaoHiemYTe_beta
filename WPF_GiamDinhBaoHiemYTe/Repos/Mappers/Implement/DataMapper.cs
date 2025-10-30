@@ -1,5 +1,7 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Windows;
+using WPF_GiamDinhBaoHiem.Repos.Dto;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
 using WPF_GiamDinhBaoHiem.Repos.Model;
 
@@ -28,11 +30,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
             {
                 {XMLDataType.XML0,$"select * from TT_00_CHECKIN where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
                 {XMLDataType.XML1,$"select * from TT_01_TONGHOP where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
-                {XMLDataType.XML2,@$"SELECT t.* , nv.chucdanh_id
-                FROM XML130.dbo.TT_02_THUOC AS t
-                LEFT JOIN eHospital_ThuyDienUB.dbo.vw_nhanvien AS nv
-                ON nv.SoChungChiHanhNghe = t.MA_BAC_SI
-                where t.Ma_LK = N'{IDBenhNhan}'ORDER BY ID;" },
+                {XMLDataType.XML2,$"select * from TT_02_THUOC where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
                 {XMLDataType.XML3,@$"SELECT t.* , q.LoaiBenhPham_Id, nv.chucdanh_id
 FROM XML130.dbo.TT_03_DVKT_VTYT AS t
 LEFT JOIN (
@@ -95,7 +93,7 @@ WHERE t.Ma_LK = N'{IDBenhNhan}';" },
                 System.Diagnostics.Debug.WriteLine(ex.Message);
                 _googleSheetData = null;
             }
-
+           
             return patient;
         }
 
@@ -148,6 +146,57 @@ WHERE t.Ma_LK = N'{IDBenhNhan}';" },
                 case XMLDataType.XML15:
                     patient.Xml15 = (await connection.QueryAsync<XML15>(query)).ToList();
                     break;
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách MA_LK theo MA_BN và khoảng thời gian
+        /// </summary>
+        public async Task<List<MaLkSearchResult>> GetMaLkByMaBnAndDate(string maBn, string ngayVaoFrom, string ngayRaTo)
+        {
+            try
+            {
+                string connectionString = _configReader.Config["DB_string"];
+
+                // Query để lấy danh sách MA_LK
+                string query = @"
+                    SELECT MA_BN, MA_LK, NGAY_VAO, NGAY_RA
+                    FROM TT_01_TONGHOP
+                    WHERE MA_BN = @maBn
+                      AND NGAY_VAO >= @ngayVaoFrom 
+                      AND NGAY_RA <= @ngayRaTo
+                    ORDER BY NGAY_VAO DESC";
+
+                // Debug log
+                System.Diagnostics.Debug.WriteLine($"=== DataMapper Query ===");
+                System.Diagnostics.Debug.WriteLine($"MA_BN: {maBn}");
+                System.Diagnostics.Debug.WriteLine($"NGAY_VAO >= {ngayVaoFrom}");
+                System.Diagnostics.Debug.WriteLine($"NGAY_RA <= {ngayRaTo}");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var results = await connection.QueryAsync<MaLkSearchResult>(query, new 
+                    { 
+                        maBn, 
+                        ngayVaoFrom, 
+                        ngayRaTo 
+                    });
+                    
+                    System.Diagnostics.Debug.WriteLine($"Kết quả: Tìm thấy {results.Count()} MA_LK");
+                    foreach (var r in results)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  → MA_LK: {r.Ma_Lk}, NGAY_VAO: {r.Ngay_Vao}, NGAY_RA: {r.Ngay_Ra}");
+                    }
+                    System.Diagnostics.Debug.WriteLine($"=======================");
+                    
+                    return results.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tìm kiếm MA_LK: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                return new List<MaLkSearchResult>();
             }
         }
 

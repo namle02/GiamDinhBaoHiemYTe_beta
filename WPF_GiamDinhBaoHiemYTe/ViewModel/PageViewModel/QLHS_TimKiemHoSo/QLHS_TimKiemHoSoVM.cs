@@ -11,6 +11,7 @@ using WPF_GiamDinhBaoHiem.Repos.Model;
 using WPF_GiamDinhBaoHiem.Services.Interface;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
+using System.Globalization;
 
 namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
 {
@@ -46,6 +47,54 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
 
         [ObservableProperty]
         private ObservableCollection<PatientValidationResult> validationResults = new();
+
+        // ==================== SEARCH MODE PROPERTIES ====================
+        /// <summary>
+        /// Chế độ tìm kiếm: true = tìm theo MA_BN, false = tìm theo MA_LK
+        /// </summary>
+        [ObservableProperty]
+        private bool isSearchByMaBn = false;
+
+        /// <summary>
+        /// Mã bệnh nhân (khi tìm theo MA_BN)
+        /// </summary>
+        [ObservableProperty]
+        private string maBenhNhan = string.Empty;
+
+        /// <summary>
+        /// Ngày vào (from)
+        /// </summary>
+        [ObservableProperty]
+        private DateTime? ngayVaoFrom = DateTime.Now.AddMonths(-1);
+
+        /// <summary>
+        /// Ngày ra (to)
+        /// </summary>
+        [ObservableProperty]
+        private DateTime? ngayRaTo = DateTime.Now;
+
+        /// <summary>
+        /// Danh sách MA_LK tìm được (khi tìm theo MA_BN)
+        /// </summary>
+        [ObservableProperty]
+        private ObservableCollection<MaLkSearchResult> maLkSearchResults = new();
+
+        /// <summary>
+        /// MA_LK đang được chọn trong danh sách
+        /// </summary>
+        [ObservableProperty]
+        private MaLkSearchResult? selectedMaLkResult;
+
+        /// <summary>
+        /// Helper property để bind visibility - tự động update khi Count thay đổi
+        /// </summary>
+        public bool HasMaLkSearchResults => MaLkSearchResults != null && MaLkSearchResults.Count > 0;
+
+        /// <summary>
+        /// Trạng thái mở rộng/thu gọn của danh sách MA_LK search results
+        /// </summary>
+        [ObservableProperty]
+        private bool isSearchResultsExpanded = true;
 
         // ==================== BATCH PROCESSING PROPERTIES ====================
         [ObservableProperty]
@@ -104,6 +153,139 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
             _patientDataProcessor = patientDataProcessor;
             _dialogService = dialogService;
             _validationResultBuilder = validationResultBuilder;
+        }
+
+        // ==================== SEARCH MODE TOGGLE ====================
+        [RelayCommand]
+        private void ToggleSearchMode()
+        {
+            IsSearchByMaBn = !IsSearchByMaBn;
+            
+            // Clear results khi chuyển đổi mode
+            MaLkSearchResults.Clear();
+            SelectedMaLkResult = null;
+            OnPropertyChanged(nameof(HasMaLkSearchResults));
+            
+            // Clear search inputs
+            if (IsSearchByMaBn)
+            {
+                // Chuyển sang mode tìm theo MA_BN
+                PatientID = string.Empty; // Clear MA_LK input
+                System.Diagnostics.Debug.WriteLine("Chuyển sang tìm kiếm theo MA_BN");
+            }
+            else
+            {
+                // Chuyển về mode tìm theo MA_LK
+                MaBenhNhan = string.Empty; // Clear MA_BN input
+                System.Diagnostics.Debug.WriteLine("Chuyển về tìm kiếm theo MA_LK");
+            }
+            
+            // Notify UI to update visibility
+            OnPropertyChanged(nameof(IsSearchByMaBn));
+        }
+
+        // ==================== SEARCH BY MA_BN ====================
+        [RelayCommand]
+        private async Task SearchByMaBn()
+        {
+            if (string.IsNullOrWhiteSpace(MaBenhNhan))
+            {
+                _dialogService.ShowWarning("Vui lòng nhập mã bệnh nhân", "Thông báo");
+                return;
+            }
+
+            if (NgayVaoFrom == null || NgayRaTo == null)
+            {
+                _dialogService.ShowWarning("Vui lòng chọn khoảng thời gian", "Thông báo");
+                return;
+            }
+
+            if (NgayVaoFrom > NgayRaTo)
+            {
+                _dialogService.ShowWarning("Ngày vào phải nhỏ hơn hoặc bằng ngày ra", "Thông báo");
+                return;
+            }
+
+            try
+            {
+                IsLoading = true;
+                MaLkSearchResults.Clear();
+
+                // Format ngày sang yyyyMMdd0000 và yyyyMMdd2359
+                string ngayVaoFromStr = NgayVaoFrom.Value.ToString("yyyyMMdd") + "0000";
+                string ngayRaToStr = NgayRaTo.Value.ToString("yyyyMMdd") + "2359";
+
+                System.Diagnostics.Debug.WriteLine($"Tìm kiếm MA_LK với MA_BN: {MaBenhNhan}, từ {ngayVaoFromStr} đến {ngayRaToStr}");
+
+                var results = await _dataMapper.GetMaLkByMaBnAndDate(MaBenhNhan, ngayVaoFromStr, ngayRaToStr);
+
+                System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Nhận được {results?.Count ?? 0} kết quả từ database");
+
+                if (results == null || results.Count == 0)
+                {
+                    _dialogService.ShowInformation($"Không tìm thấy MA_LK nào cho bệnh nhân {MaBenhNhan} trong khoảng thời gian này", "Thông báo");
+                    System.Diagnostics.Debug.WriteLine("SearchByMaBn: Không có kết quả, hiển thị thông báo");
+                    return;
+                }
+
+                // Thêm kết quả vào ObservableCollection trên UI thread
+                System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Bắt đầu thêm {results.Count} kết quả vào MaLkSearchResults");
+                
+                // Đảm bảo update UI trên UI thread
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var result in results)
+                    {
+                        MaLkSearchResults.Add(result);
+                        System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Thêm MA_LK: {result.Ma_Lk} - {result.DisplayText}");
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Hoàn thành! MaLkSearchResults.Count = {MaLkSearchResults.Count}");
+                    
+                    // Trigger property changed để UI update
+                    OnPropertyChanged(nameof(MaLkSearchResults));
+                    OnPropertyChanged(nameof(HasMaLkSearchResults));
+                    
+                    System.Diagnostics.Debug.WriteLine($"SearchByMaBn: HasMaLkSearchResults = {HasMaLkSearchResults}");
+                });
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowError($"Lỗi khi tìm kiếm: {ex.Message}", "Lỗi");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        // ==================== SELECT MA_LK FROM LIST ====================
+        [RelayCommand]
+        private async Task SelectMaLkFromList(MaLkSearchResult? maLkResult)
+        {
+            if (maLkResult == null || string.IsNullOrWhiteSpace(maLkResult.Ma_Lk))
+            {
+                System.Diagnostics.Debug.WriteLine("SelectMaLkFromList: MA_LK is null or empty");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"SelectMaLkFromList: Selected MA_LK = {maLkResult.Ma_Lk}");
+
+            // Gán MA_LK vào PatientID để sử dụng search command thông thường
+            PatientID = maLkResult.Ma_Lk;
+
+            // Gọi search command với MA_LK
+            await Search(maLkResult.Ma_Lk);
+        }
+
+        /// <summary>
+        /// Toggle mở rộng/thu gọn danh sách MA_LK search results
+        /// </summary>
+        [RelayCommand]
+        private void ToggleSearchResultsExpand()
+        {
+            IsSearchResultsExpanded = !IsSearchResultsExpanded;
+            System.Diagnostics.Debug.WriteLine($"ToggleSearchResultsExpand: IsExpanded = {IsSearchResultsExpanded}");
         }
 
         // ==================== SEARCH COMMAND ====================
@@ -362,21 +544,33 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 _batchCancellationTokenSource = new CancellationTokenSource();
                 _batchStartTime = DateTime.Now;
 
-                // Đọc danh sách ma_lk từ Excel
-                var maLkList = await _excelReaderService.ReadMaLkFromExcelAsync(filePath, sheetName);
+                // Đọc dữ liệu từ Excel (tự động phát hiện format MA_LK hoặc MA_BN + dates)
+                var excelData = await _excelReaderService.ReadDataFromExcelAsync(filePath, sheetName);
                 
-                if (maLkList == null || maLkList.Count == 0)
+                if (excelData == null || excelData.Count == 0)
                 {
                     BatchStatus = "Không tìm thấy dữ liệu trong file Excel";
                     return;
                 }
 
-                BatchTotal = maLkList.Count;
-                BatchStatus = $"Đã đọc {maLkList.Count} mã liên kết. Bắt đầu xử lý song song...";
+                // Đếm số lượng theo loại
+                int maLkCount = excelData.Count(x => x.DataType == "MA_LK");
+                int maBnCount = excelData.Count(x => x.DataType == "MA_BN");
 
-                // Sử dụng BatchProcessorService để xử lý song song với Semaphore
-                var batchResult = await _batchProcessorService.ProcessPatientsAsync(
-                    maLkList,
+                BatchTotal = excelData.Count;
+                if (maBnCount > 0)
+                {
+                    BatchStatus = $"Đã đọc {excelData.Count} dòng (MA_LK: {maLkCount}, MA_BN: {maBnCount}). Bắt đầu xử lý...";
+                    System.Diagnostics.Debug.WriteLine($"Excel: Phát hiện format MA_BN, sẽ tìm MA_LK tự động");
+                }
+                else
+                {
+                    BatchStatus = $"Đã đọc {excelData.Count} mã liên kết. Bắt đầu xử lý song song...";
+                }
+
+                // Sử dụng BatchProcessorService với method mới
+                var batchResult = await _batchProcessorService.ProcessExcelDataAsync(
+                    excelData,
                     maxConcurrency: 5, // Xử lý tối đa 5 request đồng thời
                     onProgress: (progress) =>
                     {

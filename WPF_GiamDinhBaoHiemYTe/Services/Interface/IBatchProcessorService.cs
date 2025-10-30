@@ -30,6 +30,20 @@ namespace WPF_GiamDinhBaoHiem.Services.Interface
         Task<PatientProcessingResult> ProcessSinglePatientAsync(
             string patientId, 
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Xử lý danh sách Excel data (MA_LK hoặc MA_BN + dates)
+        /// </summary>
+        /// <param name="excelData">Danh sách dữ liệu từ Excel</param>
+        /// <param name="maxConcurrency">Số lượng request đồng thời tối đa</param>
+        /// <param name="onProgress">Callback để cập nhật tiến trình</param>
+        /// <param name="cancellationToken">Token để hủy operation</param>
+        /// <returns>Kết quả xử lý batch</returns>
+        Task<BatchProcessingResult> ProcessExcelDataAsync(
+            List<ExcelRowData> excelData,
+            int maxConcurrency = 5,
+            Action<BatchProgress>? onProgress = null,
+            CancellationToken cancellationToken = default);
     }
 
     /// <summary>

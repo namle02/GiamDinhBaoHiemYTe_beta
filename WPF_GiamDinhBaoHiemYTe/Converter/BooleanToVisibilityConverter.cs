@@ -9,18 +9,37 @@ namespace WPF_GiamDinhBaoHiem.Converter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool boolValue)
+            bool boolValue = false;
+            
+            // Handle bool values
+            if (value is bool b)
             {
-                return boolValue ? Visibility.Visible : Visibility.Collapsed;
+                boolValue = b;
             }
-            return Visibility.Collapsed;
+            // Handle int values (for Count properties)
+            else if (value is int intValue)
+            {
+                boolValue = intValue > 0;
+            }
+            
+            // Check if parameter is "Inverse"
+            bool inverse = parameter?.ToString()?.ToLower() == "inverse";
+            
+            if (inverse)
+            {
+                return boolValue ? Visibility.Collapsed : Visibility.Visible;
+            }
+            
+            return boolValue ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is Visibility visibility)
             {
-                return visibility == Visibility.Visible;
+                bool inverse = parameter?.ToString()?.ToLower() == "inverse";
+                bool result = visibility == Visibility.Visible;
+                return inverse ? !result : result;
             }
             return false;
         }
