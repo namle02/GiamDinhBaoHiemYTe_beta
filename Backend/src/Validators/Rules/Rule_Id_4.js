@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_4 = (patientData) => {
+const validateRule_Id_4 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán dịch vụ Nội soi tán sỏi niệu quản các loại, không thanh toán thêm Đặt ống thông niệu quản qua nội soi (sond JJ)',
         ruleId: 'Rule_Id_4',

@@ -12,11 +12,10 @@ class PatientController {
             }, req);
             
             const result = await PatientServices.createPatient(req.body);
-
             if (result.success) {
                 await LogService.success('PatientController', 'Tạo bệnh nhân thành công', {
                     patientId: req.body.PatientID,
-                    validationErrors: result.errors
+                    validationErrors: result.data
                 }, req);
                 
                 res.status(201).json({
@@ -27,13 +26,13 @@ class PatientController {
             } else {
                 await LogService.warn('PatientController', 'Tạo bệnh nhân thất bại, bệnh nhân đã tồn tại', {
                     patientId: req.body.PatientID,
-                    errors: result.errors
+                    errors: result.data
                 }, req);
                 
                 res.status(200).json({
-                    success: false,
+                    success: true,
                     message: result.message,
-                    errors: result.errors
+                    data: result.data
                 });
             }
         } catch (error) {

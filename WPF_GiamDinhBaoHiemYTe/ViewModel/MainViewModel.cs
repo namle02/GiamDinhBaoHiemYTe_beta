@@ -22,7 +22,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel
         {
             this.serviceProvider = serviceProvider;
             WeakReferenceMessenger.Default.RegisterAll(this);
-            CurrentPage = serviceProvider.GetRequiredService<DashboardPageVM>();
+            CurrentPage = serviceProvider.GetRequiredService<QLHS_TimKiemHoSoVM>();
             sideBarVM = serviceProvider.GetRequiredService<SideBarVM>();
         }
 
@@ -59,6 +59,9 @@ namespace WPF_GiamDinhBaoHiem.ViewModel
                     break;
                 case "QTHT_TaiKhoanPage":
                     CurrentPage = serviceProvider.GetRequiredService<QTHT_TaiKhoanVM>();
+                    break;
+                case "QTHT_CapNhatPage":
+                    CurrentPage = serviceProvider.GetRequiredService<QTHT_CapNhatVM>();
                     break;
                 default:
                     break;

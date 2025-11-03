@@ -13,18 +13,30 @@ namespace WPF_GiamDinhBaoHiem.DI_Register
     {
         public static void Register(IServiceCollection services)
         {
-            services.AddTransient<IDataMapper, DataMapper>();
             services.AddSingleton<IConfigReader, ConfigReader>();
-            services.AddSingleton(new HttpClient
+            services.AddSingleton<HttpClient>(new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(30),
-                BaseAddress = new Uri("https://cbd5875aaf92.ngrok-free.app/")
-
+               
             });
-            services.AddSingleton<IGoogleSheetService, GoogleSheetService>();
-
-            services.AddTransient<IApiServices, ApiServices>();
-            services.AddTransient<IDynamicValidationService, DynamicValidationService>();
+            services.AddSingleton<IDataMapper, DataMapper>();
+            services.AddSingleton<IPatientServices, PatientServices>();
+            services.AddSingleton<IPatientCacheService, PatientCacheService>();
+            services.AddSingleton<IRuleServices, RuleServices>();
+            services.AddSingleton<IBacSiServices, BacSiServices>();
+            services.AddSingleton<IExcelReaderService, ExcelReaderService>();
+            services.AddSingleton<IBatchProcessorService, BatchProcessorService>();
+            services.AddSingleton<IExcelExportService, ExcelExportService>();
+            
+            // Refactored services
+            services.AddSingleton<IValidationErrorService, ValidationErrorService>();
+            services.AddSingleton<IPatientDataProcessor, PatientDataProcessor>();
+            services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<IValidationResultBuilder, ValidationResultBuilder>();
+            
+            // Update service
+            services.AddSingleton<IUpdateService, UpdateService>();
         }
     }
 }
+

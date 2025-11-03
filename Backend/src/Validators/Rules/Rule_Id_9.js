@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_9 = (patientData) => {
+const validateRule_Id_9 = async (patientData) => {
     const result = {
         ruleName: 'Thanh toán các DVKT phục hồi chức năng đối với các trường hợp chống chỉ định cho người bệnh có khối u ác tính (ung thư) theo quy định tại Quyết định số 54/QĐ-BYT và Quyết định số 5737/QĐ-BYT “Hướng dẫn quy trình kỹ thuật chuyên ngành phục hồi chức năng”, Quyết định số 26/QĐ-BYT quy trình kỹ thuật y học cổ truyền',
         ruleId: 'Rule_Id_9',

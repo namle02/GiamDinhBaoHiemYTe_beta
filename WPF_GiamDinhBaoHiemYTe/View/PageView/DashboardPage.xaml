@@ -1,164 +1,170 @@
-﻿<UserControl x:Class="WPF_GiamDinhBaoHiem.View.PageView.DashboardPage"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:oxy="http://oxyplot.org/wpf"
-             xmlns:vm="clr-namespace:WPF_GiamDinhBaoHiem.ViewModel.PageViewModel"
-             mc:Ignorable="d"
-             Background="#F5F7FB">
+﻿<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.PageView.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:oxy="http://oxyplot.org/wpf"
+    xmlns:vm="clr-namespace:WPF_GiamDinhBaoHiem.ViewModel.PageViewModel"
+    Background="#F5F7FB"
+    mc:Ignorable="d">
 
-    <!-- Tạo VM trong Resources rồi bind qua StaticResource (không động code-behind) -->
+    <!--  Tạo VM trong Resources rồi bind qua StaticResource (không động code-behind)  -->
     <UserControl.Resources>
-        <vm:DashboardPageVM x:Key="DashboardVM"/>
+        <vm:DashboardPageVM x:Key="DashboardVM" />
 
-        <!-- Styles -->
+        <!--  Styles  -->
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="14"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.15"/>
+                    <DropShadowEffect
+                        BlurRadius="10"
+                        Opacity="0.15"
+                        ShadowDepth="1" />
                 </Setter.Value>
             </Setter>
         </Style>
 
         <Style x:Key="KpiCaption" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#6B7280"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Foreground" Value="#6B7280" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
 
         <Style x:Key="CardTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#111827" />
         </Style>
 
         <Style x:Key="KpiNumber" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="28"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#111827" />
         </Style>
     </UserControl.Resources>
 
-    <!-- GÁN DATACONTEXT tại đây -->
+    <!--  GÁN DATACONTEXT tại đây  -->
     <UserControl.DataContext>
-        <StaticResource ResourceKey="DashboardVM"/>
+        <StaticResource ResourceKey="DashboardVM" />
     </UserControl.DataContext>
 
-    <!-- CONTENT CHỈ CÓ 1 GRID (tránh “Content set more than once”) -->
+    <!--  CONTENT CHỈ CÓ 1 GRID (tránh “Content set more than once”)  -->
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="16"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="16"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- ===== KPIs ===== -->
-        <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,8">
-            <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+        <!--  ===== KPIs =====  -->
+        <UniformGrid
+            Grid.Row="0"
+            Margin="0,0,0,8"
+            Columns="4">
+            <Border Margin="0,0,12,0" Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiCaption}" Text="TỔNG SỐ HỒ SƠ"/>
-                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding TongHoSoTrongNgay}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Foreground="#059669"
-                                   Text="{Binding TongHoSoTrongNgay, StringFormat=Trong ngày: {0}}"
-                                   Margin="0,0,16,0"/>
-                        <TextBlock Foreground="#2563EB"
-                                   Text="{Binding TongHoSoTrongThang, StringFormat=Trong tháng: {0}}"/>
+                    <TextBlock Style="{StaticResource KpiCaption}" Text="TỔNG SỐ HỒ SƠ" />
+                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding TongHoSoTrongNgay}" />
+                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,16,0"
+                            Foreground="#059669"
+                            Text="{Binding TongHoSoTrongNgay, StringFormat=Trong ngày: {0}}" />
+                        <TextBlock Foreground="red" Text="{Binding TongHoSoTrongThang, StringFormat=Trong tháng: {0}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+            <Border Margin="0,0,12,0" Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiCaption}" Text="ĐIỀU TRỊ NỘI TRÚ"/>
-                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding DieuTriNoiTruNgay}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Foreground="#059669"
-                                   Text="{Binding DieuTriNoiTruNgay, StringFormat=Trong ngày: {0}}"
-                                   Margin="0,0,16,0"/>
-                        <TextBlock Foreground="#2563EB"
-                                   Text="{Binding DieuTriNoiTruThang, StringFormat=Trong tháng: {0}}"/>
+                    <TextBlock Style="{StaticResource KpiCaption}" Text="ĐIỀU TRỊ NỘI TRÚ" />
+                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding DieuTriNoiTruNgay}" />
+                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,16,0"
+                            Foreground="#059669"
+                            Text="{Binding DieuTriNoiTruNgay, StringFormat=Trong ngày: {0}}" />
+                        <TextBlock Foreground="red" Text="{Binding DieuTriNoiTruThang, StringFormat=Trong tháng: {0}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+            <Border Margin="0,0,12,0" Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiCaption}" Text="TÌNH TRẠNG RA VIỆN"/>
-                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding RaVienNgay}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Foreground="#059669"
-                                   Text="{Binding RaVienNgay, StringFormat=Trong ngày: {0}}"
-                                   Margin="0,0,16,0"/>
-                        <TextBlock Foreground="#2563EB"
-                                   Text="{Binding RaVienThang, StringFormat=Trong tháng: {0}}"/>
+                    <TextBlock Style="{StaticResource KpiCaption}" Text="TÌNH TRẠNG RA VIỆN" />
+                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding RaVienNgay}" />
+                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,16,0"
+                            Foreground="#059669"
+                            Text="{Binding RaVienNgay, StringFormat=Trong ngày: {0}}" />
+                        <TextBlock Foreground="red" Text="{Binding RaVienThang, StringFormat=Trong tháng: {0}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiCaption}" Text="% BẢO HIỂM Y TẾ"/>
-                    <TextBlock Style="{StaticResource KpiNumber}"
-                               Text="{Binding TiLeBHYT, StringFormat={}{0:P0}}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Foreground="#6B7280"
-                                   Text="{Binding TiLeBHYT, StringFormat=Trong ngày: {0:P0}}"
-                                   Margin="0,0,16,0"/>
-                        <TextBlock Foreground="#6B7280"
-                                   Text="{Binding TiLeBHYTThang, StringFormat=Trong tháng: {0:P0}}"/>
+                    <TextBlock Style="{StaticResource KpiCaption}" Text="% BẢO HIỂM Y TẾ" />
+                    <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding TiLeBHYT, StringFormat={}{0:P0}}" />
+                    <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,16,0"
+                            Foreground="#059669"
+                            Text="{Binding TiLeBHYT, StringFormat=Trong ngày: {0:P0}}" />
+                        <TextBlock Foreground="red" Text="{Binding TiLeBHYTThang, StringFormat=Trong tháng: {0:P0}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
         </UniformGrid>
 
-        <!-- ===== Middle charts ===== -->
+        <!--  ===== Middle charts =====  -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition/>
+                <ColumnDefinition />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource Card}">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Style="{StaticResource CardTitle}" Text="THỐNG KÊ HỒ SƠ KCB"/>
-                    <oxy:PlotView Grid.Row="1" Model="{Binding KcbPlot}"/>
+                    <TextBlock Style="{StaticResource CardTitle}" Text="THỐNG KÊ HỒ SƠ KCB" />
+                    <oxy:PlotView Grid.Row="1" Model="{Binding KcbPlot}" />
                 </Grid>
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource Card}">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Style="{StaticResource CardTitle}" Text="THỐNG KÊ CHI PHÍ KCB"/>
-                    <oxy:PlotView Grid.Row="1" Model="{Binding ChiPhiPlot}"/>
+                    <TextBlock Style="{StaticResource CardTitle}" Text="THỐNG KÊ CHI PHÍ KCB" />
+                    <oxy:PlotView Grid.Row="1" Model="{Binding ChiPhiPlot}" />
                 </Grid>
             </Border>
         </Grid>
 
-        <!-- ===== Bottom pie ===== -->
+        <!--  ===== Bottom pie =====  -->
         <Border Grid.Row="4" Style="{StaticResource Card}">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBlock Style="{StaticResource CardTitle}" Text="TỔNG HỢP 20 BỆNH PHỔ BIẾN"/>
-                <oxy:PlotView Grid.Row="1" Model="{Binding BenhPhoBienPlot}"/>
+                <TextBlock Style="{StaticResource CardTitle}" Text="TỔNG HỢP 20 BỆNH PHỔ BIẾN" />
+                <oxy:PlotView Grid.Row="1" Model="{Binding BenhPhoBienPlot}" />
             </Grid>
         </Border>
     </Grid>

@@ -1,8 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WPF_GiamDinhBaoHiem.Services.Interface;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
 {
-    public partial class XML3 : ObservableObject
+    public partial class XML3 : ObservableObject, IHasStt
     {
         [ObservableProperty] private int id;
         [ObservableProperty] private string? ma_Lk;
@@ -43,6 +44,16 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? ma_Benh_Yhct;
         [ObservableProperty] private string? ngay_Yl;
         [ObservableProperty] private string? ngay_Th_Yl;
+        private bool _isError;
+        public bool IsError 
+        { 
+            get => _isError;
+            set 
+            {
+                _isError = value;
+                OnPropertyChanged();
+            }
+        }
         [ObservableProperty] private string? ngay_Kq;
         [ObservableProperty] private int? ma_Pttt;
         [ObservableProperty] private int? vet_Thuong_Tp;
@@ -52,7 +63,9 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? ma_Hieu_Sp;
         [ObservableProperty] private string? tai_Su_Dung;
         [ObservableProperty] private string? du_Phong;
+        [ObservableProperty] private string? loaiBenhPham_Id;
+        [ObservableProperty] private int? chucdanh_id;
 
-        [ObservableProperty] private ErrorXML3? error;
+
     }
 }

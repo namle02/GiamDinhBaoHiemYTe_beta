@@ -1,158 +1,46 @@
-using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
 {
-    public class BacSi : INotifyPropertyChanged
+    public partial class BacSi : ObservableObject
     {
-        private int _id;
-        private string _maBacSi = string.Empty;
-        private string _hoTen = string.Empty;
-        private string _chuyenKhoa = string.Empty;
-        private string _soDienThoai = string.Empty;
-        private string _email = string.Empty;
-        private string _diaChi = string.Empty;
-        private DateTime _ngaySinh;
-        private string _gioiTinh = string.Empty;
-        private string _bangCap = string.Empty;
-        private DateTime _ngayVaoLam;
-        private bool _trangThai;
-        private string _ghiChu = string.Empty;
+        [ObservableProperty]
+        private int id;
 
-        public int Id
-        {
-            get => _id;
-            set
-            {
-                _id = value;
-                OnPropertyChanged(nameof(Id));
-            }
-        }
+        [ObservableProperty]
+        private string maBacSi = string.Empty;
 
-        public string MaBacSi
-        {
-            get => _maBacSi;
-            set
-            {
-                _maBacSi = value;
-                OnPropertyChanged(nameof(MaBacSi));
-            }
-        }
+        [ObservableProperty]
+        private string hoTen = string.Empty;
 
-        public string HoTen
-        {
-            get => _hoTen;
-            set
-            {
-                _hoTen = value;
-                OnPropertyChanged(nameof(HoTen));
-            }
-        }
+        [ObservableProperty]
+        private string chuyenKhoa = string.Empty;
 
-        public string ChuyenKhoa
-        {
-            get => _chuyenKhoa;
-            set
-            {
-                _chuyenKhoa = value;
-                OnPropertyChanged(nameof(ChuyenKhoa));
-            }
-        }
+        [ObservableProperty]
+        private string soDienThoai = string.Empty;
 
-        public string SoDienThoai
-        {
-            get => _soDienThoai;
-            set
-            {
-                _soDienThoai = value;
-                OnPropertyChanged(nameof(SoDienThoai));
-            }
-        }
+        [ObservableProperty]
+        private string email = string.Empty;
 
-        public string Email
-        {
-            get => _email;
-            set
-            {
-                _email = value;
-                OnPropertyChanged(nameof(Email));
-            }
-        }
+        [ObservableProperty]
+        private string diaChi = string.Empty;
 
-        public string DiaChi
-        {
-            get => _diaChi;
-            set
-            {
-                _diaChi = value;
-                OnPropertyChanged(nameof(DiaChi));
-            }
-        }
+        [ObservableProperty]
+        private DateTime ngaySinh;
 
-        public DateTime NgaySinh
-        {
-            get => _ngaySinh;
-            set
-            {
-                _ngaySinh = value;
-                OnPropertyChanged(nameof(NgaySinh));
-            }
-        }
+        [ObservableProperty]
+        private string gioiTinh = string.Empty;
 
-        public string GioiTinh
-        {
-            get => _gioiTinh;
-            set
-            {
-                _gioiTinh = value;
-                OnPropertyChanged(nameof(GioiTinh));
-            }
-        }
+        [ObservableProperty]
+        private string bangCap = string.Empty;
 
-        public string BangCap
-        {
-            get => _bangCap;
-            set
-            {
-                _bangCap = value;
-                OnPropertyChanged(nameof(BangCap));
-            }
-        }
+        [ObservableProperty]
+        private DateTime ngayVaoLam;
 
-        public DateTime NgayVaoLam
-        {
-            get => _ngayVaoLam;
-            set
-            {
-                _ngayVaoLam = value;
-                OnPropertyChanged(nameof(NgayVaoLam));
-            }
-        }
+        [ObservableProperty]
+        private bool trangThai;
 
-        public bool TrangThai
-        {
-            get => _trangThai;
-            set
-            {
-                _trangThai = value;
-                OnPropertyChanged(nameof(TrangThai));
-            }
-        }
-
-        public string GhiChu
-        {
-            get => _ghiChu;
-            set
-            {
-                _ghiChu = value;
-                OnPropertyChanged(nameof(GhiChu));
-            }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        [ObservableProperty]
+        private string ghiChu = string.Empty;
     }
 }

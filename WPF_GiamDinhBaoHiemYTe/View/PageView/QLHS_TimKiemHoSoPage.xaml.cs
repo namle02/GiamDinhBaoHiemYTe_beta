@@ -47,6 +47,6 @@ namespace WPF_GiamDinhBaoHiem.View.PageView
             InitializeComponent();
         }
 
-        
+       
     }
 }

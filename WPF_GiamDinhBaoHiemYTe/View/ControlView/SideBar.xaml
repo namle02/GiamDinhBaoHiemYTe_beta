@@ -375,6 +375,36 @@
                             </Grid>
                         </Button.Content>
                     </Button>
+
+                    <!--  Kiểm tra cập nhật  -->
+                    <Button
+                        Width="350"
+                        Height="60"
+                        HorizontalContentAlignment="Left"
+                        Background="#1c2939"
+                        BorderThickness="0"
+                        Command="{Binding NavigationCommand}"
+                        CommandParameter="QTHT_CapNhatPage"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                        <Button.Content>
+                            <Grid Margin="30,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Width="40"
+                                    Height="40"
+                                    Kind="MenuRight" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Text="Kiểm tra cập nhật" />
+                            </Grid>
+                        </Button.Content>
+                    </Button>
                 </StackPanel>
             </Expander>
         </StackPanel>
