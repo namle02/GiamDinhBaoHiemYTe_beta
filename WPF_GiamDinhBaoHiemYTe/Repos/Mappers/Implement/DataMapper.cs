@@ -30,7 +30,11 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
             {
                 {XMLDataType.XML0,$"select * from TT_00_CHECKIN where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
                 {XMLDataType.XML1,$"select * from TT_01_TONGHOP where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
-                {XMLDataType.XML2,$"select * from TT_02_THUOC where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
+                {XMLDataType.XML2,@$"SELECT t.* ,  nv.chucdanh_id
+FROM XML130.dbo.TT_02_THUOC AS t
+LEFT JOIN eHospital_ThuyDienUB.dbo.vw_nhanvien AS nv
+	ON nv.SoChungChiHanhNghe = t.MA_BAC_SI
+where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
                 {XMLDataType.XML3,@$"SELECT t.* , q.LoaiBenhPham_Id, nv.chucdanh_id
 FROM XML130.dbo.TT_03_DVKT_VTYT AS t
 LEFT JOIN (
