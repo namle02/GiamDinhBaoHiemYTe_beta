@@ -408,7 +408,7 @@
                             MinHeight="48"
                             Margin="0,0,8,0"
                             VerticalContentAlignment="Center"
-                            materialDesign:HintAssist.Hint="Nhập mã liên kết (MA_LK) rồi nhấn Enter"
+                            materialDesign:HintAssist.Hint="Nhập mã liên kết  rồi nhấn Enter"
                             materialDesign:TextFieldAssist.HasClearButton="True"
                             FontSize="18"
                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -471,7 +471,7 @@
                                 MinHeight="48"
                                 Margin="0,0,8,0"
                                 VerticalContentAlignment="Center"
-                                materialDesign:HintAssist.Hint="Nhập mã bệnh nhân (MA_BN)"
+                                materialDesign:HintAssist.Hint="Nhập mã bệnh nhân "
                                 materialDesign:TextFieldAssist.HasClearButton="True"
                                 FontSize="18"
                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -664,7 +664,7 @@
                                 FontSize="13"
                                 FontStyle="Italic"
                                 Foreground="#6B7280"
-                                Text="📋 Chưa có kết quả tìm kiếm. Nhập MA_BN và chọn thời gian, sau đó click 'Tìm MA_LK'."
+                                Text="📋 Chưa có kết quả tìm kiếm. Nhập MA_BN và chọn thời gian, sau đó click 'tra cứu'."
                                 TextWrapping="Wrap">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
