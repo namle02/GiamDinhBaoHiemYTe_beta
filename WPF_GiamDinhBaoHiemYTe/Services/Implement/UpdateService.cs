@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -116,24 +117,89 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         private async Task ReplaceApplicationFiles(string sourcePath)
         {
             var appPath = AppDomain.CurrentDomain.BaseDirectory;
-            var batchFile = Path.Combine(Path.GetTempPath(), "update.bat");
+            var exeName = "WPF_GiamDinhBaoHiem.exe";
+            var exePath = Path.Combine(appPath, exeName);
+            
+            // Kiểm tra xem có file exe trong thư mục extract không
+            var extractedExePath = Path.Combine(sourcePath, exeName);
+            if (!File.Exists(extractedExePath))
+            {
+                // Nếu không có trong root, tìm trong các thư mục con (có thể do cấu trúc zip)
+                var allExes = Directory.GetFiles(sourcePath, exeName, SearchOption.AllDirectories);
+                if (allExes.Length > 0)
+                {
+                    // Nếu tìm thấy trong thư mục con, copy toàn bộ thư mục đó
+                    var exeDir = Path.GetDirectoryName(allExes[0]);
+                    sourcePath = exeDir ?? sourcePath;
+                }
+            }
 
-            var batchContent = $@"
-@echo off
+            var batchFile = Path.Combine(Path.GetTempPath(), $"update_{Guid.NewGuid():N}.bat");
+            var tempPath = Path.GetTempPath();
+            var zipPath = Path.Combine(tempPath, "update.zip");
+            var extractPath = Path.Combine(tempPath, "update_extracted");
+
+            var batchContent = $@"@echo off
+echo Waiting for application to close...
+:wait
+tasklist /FI ""IMAGENAME eq {exeName}"" 2>NUL | find /I /N ""{exeName}"">NUL
+if ""%ERRORLEVEL%""==""0"" (
+    timeout /t 1 /nobreak > nul
+    goto wait
+)
+echo Application closed, starting update...
 timeout /t 2 /nobreak > nul
-xcopy ""{sourcePath}\*"" ""{appPath}"" /E /Y /I
-start """" ""{Path.Combine(appPath, "WPF_GiamDinhBaoHiem.exe")}""
+
+REM Copy all files from extracted folder to application folder
+echo Copying files...
+xcopy ""{sourcePath}\*"" ""{appPath}"" /E /Y /I /H /R
+if %ERRORLEVEL% NEQ 0 (
+    echo Copy failed with error code %ERRORLEVEL%
+    pause
+    exit /b 1
+)
+
+REM Verify that the main exe file was copied
+if not exist ""{exePath}"" (
+    echo ERROR: Main executable was not copied!
+    pause
+    exit /b 1
+)
+
+REM Clean up temp files
+echo Cleaning up temporary files...
+if exist ""{zipPath}"" del /F /Q ""{zipPath}""
+if exist ""{extractPath}"" rmdir /S /Q ""{extractPath}""
+
+REM Start the updated application
+echo Starting updated application...
+start """" /D ""{appPath}"" ""{exePath}""
+
+REM Clean up batch file
+timeout /t 1 /nobreak > nul
 del ""%~f0""
+echo Update completed!
 ";
             await File.WriteAllTextAsync(batchFile, batchContent);
 
-            Process.Start(new ProcessStartInfo
+            // Tạo process với quyền admin để đảm bảo có thể replace files
+            var processInfo = new ProcessStartInfo
             {
                 FileName = batchFile,
-                CreateNoWindow = true,
-                UseShellExecute = true
-            });
+                CreateNoWindow = false, // Hiển thị để debug
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
 
+            Process.Start(processInfo);
+
+            // Đóng tất cả resources trước khi shutdown
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            
+            // Đợi một chút để đảm bảo batch file đã được tạo và chạy
+            await Task.Delay(500);
+            
             Application.Current.Shutdown();
         }
     }
