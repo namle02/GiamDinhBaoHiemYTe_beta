@@ -144,27 +144,45 @@ echo Waiting for application to close...
 :wait
 tasklist /FI ""IMAGENAME eq {exeName}"" 2>NUL | find /I /N ""{exeName}"">NUL
 if ""%ERRORLEVEL%""==""0"" (
-    timeout /t 1 /nobreak > nul
+    echo Process still running, waiting...
+    timeout /t 2 /nobreak > nul
     goto wait
 )
-echo Application closed, starting update...
+echo Application closed, forcing cleanup...
+timeout /t 3 /nobreak > nul
+
+REM Force kill any remaining processes (just in case)
+taskkill /F /IM ""{exeName}"" 2>NUL
 timeout /t 2 /nobreak > nul
 
-REM Copy all files from extracted folder to application folder
+REM Delete old exe file first to ensure it can be replaced
+if exist ""{exePath}"" (
+    echo Deleting old executable...
+    del /F /Q ""{exePath}"" 2>NUL
+    timeout /t 1 /nobreak > nul
+)
+
+REM Copy all files from extracted folder to application folder using robocopy (more reliable)
 echo Copying files...
-xcopy ""{sourcePath}\*"" ""{appPath}"" /E /Y /I /H /R
-if %ERRORLEVEL% NEQ 0 (
+robocopy ""{sourcePath}"" ""{appPath}"" /E /IS /IT /R:3 /W:2 /NP /NFL /NDL
+if %ERRORLEVEL% GTR 1 (
+    echo Copy completed with warnings (error code: %ERRORLEVEL%)
+) else if %ERRORLEVEL% EQU 1 (
+    echo Copy completed successfully
+) else (
     echo Copy failed with error code %ERRORLEVEL%
     pause
     exit /b 1
 )
 
 REM Verify that the main exe file was copied
+timeout /t 1 /nobreak > nul
 if not exist ""{exePath}"" (
     echo ERROR: Main executable was not copied!
     pause
     exit /b 1
 )
+echo Verification: Main executable exists at {exePath}
 
 REM Clean up temp files
 echo Cleaning up temporary files...
