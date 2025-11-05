@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:vm="clr-namespace:WPF_GiamDinhBaoHiem.ViewModel.PageViewModel"
-    Background="#F5F7FB"
+    Background="#E8F4F8"
     mc:Ignorable="d">
 
     <!--  Tạo VM trong Resources rồi bind qua StaticResource (không động code-behind)  -->
@@ -17,22 +17,24 @@
         <Style x:Key="Card" TargetType="Border">
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Padding" Value="14" />
-            <Setter Property="Background" Value="White" />
+            <Setter Property="Background" Value="#FFFFFF" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect
-                        BlurRadius="10"
-                        Opacity="0.15"
-                        ShadowDepth="1" />
+                        BlurRadius="12"
+                        Opacity="0.2"
+                        ShadowDepth="2"
+                        Color="#4A90E2" />
                 </Setter.Value>
             </Setter>
         </Style>
 
         <Style x:Key="KpiCaption" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#6B7280" />
+            <Setter Property="Foreground" Value="#4A5568" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="FontWeight" Value="Medium" />
         </Style>
 
         <Style x:Key="CardTitle" TargetType="TextBlock">
@@ -44,7 +46,7 @@
         <Style x:Key="KpiNumber" TargetType="TextBlock">
             <Setter Property="FontSize" Value="28" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="Foreground" Value="#2D3748" />
         </Style>
     </UserControl.Resources>
 
@@ -77,7 +79,7 @@
                             Margin="0,0,16,0"
                             Foreground="#059669"
                             Text="{Binding TongHoSoTrongNgay, StringFormat=Trong ngày: {0}}" />
-                        <TextBlock Foreground="red" Text="{Binding TongHoSoTrongThang, StringFormat=Trong tháng: {0}}" />
+                        <TextBlock Foreground="#DC2626" Text="{Binding TongHoSoTrongThang, StringFormat=Trong tháng: {0}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -119,7 +121,7 @@
                             Margin="0,0,16,0"
                             Foreground="#059669"
                             Text="{Binding TiLeBHYT, StringFormat=Trong ngày: {0:P0}}" />
-                        <TextBlock Foreground="Blue" Text="{Binding TiLeBHYTThang, StringFormat=Trong tháng: {0:P0}}" />
+                        <TextBlock Foreground="#2563EB" Text="{Binding TiLeBHYTThang, StringFormat=Trong tháng: {0:P0}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
