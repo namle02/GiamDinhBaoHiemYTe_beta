@@ -100,7 +100,7 @@
 
             <Border Margin="0,0,12,0" Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiCaption}" Text="TÌNH TRẠNG RA VIỆN" />
+                    <TextBlock Style="{StaticResource KpiCaption}" Text="TÌNH TRẠNG RA VIỆN (testing)" />
                     <TextBlock Style="{StaticResource KpiNumber}" Text="{Binding RaVienNgay}" />
                     <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
                         <TextBlock
