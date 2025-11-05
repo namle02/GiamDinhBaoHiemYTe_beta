@@ -264,11 +264,8 @@ echo Copying files from {escapedSourcePath} to {escapedAppPath}...
 echo This may take a few moments...
 robocopy ""{escapedSourcePath}"" ""{escapedAppPath}"" /E /IS /IT /R:3 /W:2 /NP /NFL /NDL
 set copyResult=%ERRORLEVEL%
-if %copyResult% GTR 1 (
-    echo Copy completed with warnings (error code: %copyResult%)
-) else if %copyResult% EQU 1 (
-    echo Copy completed successfully
-) else (
+REM Robocopy return codes: 0-7 = success/warnings, 8+ = failure
+if %copyResult% GEQ 8 (
     echo.
     echo ERROR: Copy failed with error code %copyResult%
     echo This may be due to insufficient permissions.
@@ -279,6 +276,11 @@ if %copyResult% GTR 1 (
     echo.
     pause
     exit /b 1
+) else if %copyResult% EQU 1 (
+    echo Copy completed successfully
+) else (
+    echo Copy completed with warnings (error code: %copyResult%)
+    echo Note: Error codes 0-7 usually indicate success with some warnings
 )
 
 REM Verify that the main exe file was copied
