@@ -27,31 +27,60 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         {
             try
             {
-                var version = Assembly.GetExecutingAssembly().GetName().Version;
-                if (version == null)
+                // Đọc trực tiếp từ file exe để đảm bảo lấy version mới nhất sau khi update
+                var exePath = Assembly.GetExecutingAssembly().Location;
+                if (string.IsNullOrEmpty(exePath))
                 {
-                    // Fallback: đọc từ file version info
-                    var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-                    return fileVersionInfo.FileVersion ?? "1.0.0";
+                    exePath = Process.GetCurrentProcess().MainModule?.FileName;
                 }
                 
-                // Hiển thị version đầy đủ, bao gồm Revision nếu > 0
-                if (version.Revision > 0)
+                if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
                 {
-                    return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+                    // Đọc từ FileVersionInfo để lấy version chính xác từ file
+                    var fileVersionInfo = FileVersionInfo.GetVersionInfo(exePath);
+                    if (!string.IsNullOrEmpty(fileVersionInfo.FileVersion))
+                    {
+                        // Parse version string (ví dụ: "1.0.9.0" -> "1.0.9")
+                        var version = new Version(fileVersionInfo.FileVersion);
+                        if (version.Revision > 0)
+                        {
+                            return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+                        }
+                        else if (version.Build > 0)
+                        {
+                            return $"{version.Major}.{version.Minor}.{version.Build}";
+                        }
+                        else
+                        {
+                            return $"{version.Major}.{version.Minor}";
+                        }
+                    }
                 }
-                else if (version.Build > 0)
+                
+                // Fallback: đọc từ Assembly (có thể là version cũ nếu assembly chưa reload)
+                var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+                if (assemblyVersion != null)
                 {
-                    return $"{version.Major}.{version.Minor}.{version.Build}";
+                    if (assemblyVersion.Revision > 0)
+                    {
+                        return $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}.{assemblyVersion.Revision}";
+                    }
+                    else if (assemblyVersion.Build > 0)
+                    {
+                        return $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}";
+                    }
+                    else
+                    {
+                        return $"{assemblyVersion.Major}.{assemblyVersion.Minor}";
+                    }
                 }
-                else
-                {
-                    return $"{version.Major}.{version.Minor}";
-                }
+                
+                return "1.0.0";
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback nếu không đọc được version
+                // Log error để debug
+                System.Diagnostics.Debug.WriteLine($"Error getting version: {ex.Message}");
                 return "1.0.0";
             }
         }
@@ -182,8 +211,64 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
 
         private async Task ReplaceApplicationFiles(string sourcePath)
         {
-            var appPath = AppDomain.CurrentDomain.BaseDirectory;
             var exeName = "WPF_GiamDinhBaoHiem.exe";
+            
+            // Xác định đúng thư mục cài đặt ứng dụng
+            // Lấy đường dẫn từ process thực tế đang chạy
+            var currentExePath = Process.GetCurrentProcess().MainModule?.FileName;
+            if (string.IsNullOrEmpty(currentExePath))
+            {
+                currentExePath = Assembly.GetExecutingAssembly().Location;
+            }
+            
+            var appPath = Path.GetDirectoryName(currentExePath);
+            
+            // Nếu đang chạy từ thư mục temp (.net extraction), cần tìm thư mục gốc
+            // .NET single-file apps extract vào temp nhưng cần update vào thư mục gốc
+            if (appPath != null && appPath.Contains(@"\AppData\Local\Temp\.net\"))
+            {
+                // Thử tìm thư mục cài đặt thực sự
+                // Kiểm tra các vị trí thường gặp
+                var possiblePaths = new[]
+                {
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GiamDinhBaoHiemYTe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "GiamDinhBaoHiemYTe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "GiamDinhBaoHiemYTe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GiamDinhBaoHiemYTe"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "GiamDinhBaoHiemYTe")
+                };
+                
+                // Tìm thư mục nào có chứa file exe
+                foreach (var possiblePath in possiblePaths)
+                {
+                    if (Directory.Exists(possiblePath))
+                    {
+                        var possibleExePath = Path.Combine(possiblePath, exeName);
+                        if (File.Exists(possibleExePath))
+                        {
+                            appPath = possiblePath;
+                            System.Diagnostics.Debug.WriteLine($"Found installation directory: {appPath}");
+                            break;
+                        }
+                    }
+                }
+                
+                // Nếu không tìm thấy, sử dụng AppData làm thư mục cài đặt mặc định
+                if (appPath != null && appPath.Contains(@"\AppData\Local\Temp\.net\"))
+                {
+                    appPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GiamDinhBaoHiemYTe");
+                    Directory.CreateDirectory(appPath);
+                    System.Diagnostics.Debug.WriteLine($"Using default installation directory: {appPath}");
+                }
+            }
+            
+            if (string.IsNullOrEmpty(appPath))
+            {
+                appPath = AppDomain.CurrentDomain.BaseDirectory;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"Update target directory: {appPath}");
+            
             var exePath = Path.Combine(appPath, exeName);
             
             // Loại bỏ trailing backslash để tránh lỗi trong batch script
