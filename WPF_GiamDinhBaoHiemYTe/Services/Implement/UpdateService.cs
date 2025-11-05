@@ -186,6 +186,10 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             var exeName = "WPF_GiamDinhBaoHiem.exe";
             var exePath = Path.Combine(appPath, exeName);
             
+            // Loại bỏ trailing backslash để tránh lỗi trong batch script
+            appPath = appPath.TrimEnd('\\', '/');
+            sourcePath = sourcePath.TrimEnd('\\', '/');
+            
             // Kiểm tra xem có file exe trong thư mục extract không
             var extractedExePath = Path.Combine(sourcePath, exeName);
             if (!File.Exists(extractedExePath))
@@ -196,7 +200,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 {
                     // Nếu tìm thấy trong thư mục con, copy toàn bộ thư mục đó
                     var exeDir = Path.GetDirectoryName(allExes[0]);
-                    sourcePath = exeDir ?? sourcePath;
+                    sourcePath = (exeDir ?? sourcePath).TrimEnd('\\', '/');
                 }
             }
 
@@ -209,6 +213,11 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             var needsAdmin = RequiresAdmin(appPath);
             var hasWriteAccess = CanWriteToDirectory(appPath);
             
+            // Escape đường dẫn cho batch script (thay thế backslash và escape ký tự đặc biệt)
+            var escapedAppPath = appPath.Replace("\"", "\"\"");
+            var escapedSourcePath = sourcePath.Replace("\"", "\"\"");
+            var escapedExePath = exePath.Replace("\"", "\"\"");
+            
             var batchContent = $@"@echo off
 title Update Application - {exeName}
 color 0A
@@ -216,8 +225,8 @@ echo ================================================
 echo   UPDATE APPLICATION - {exeName}
 echo ================================================
 echo.
-echo Source: {sourcePath}
-echo Target: {appPath}
+echo Source: {escapedSourcePath}
+echo Target: {escapedAppPath}
 echo.
 
 echo Waiting for application to close...
@@ -236,24 +245,24 @@ taskkill /F /IM ""{exeName}"" 2>NUL
 timeout /t 2 /nobreak > nul
 
 REM Kiểm tra xem thư mục source có tồn tại không
-if not exist ""{sourcePath}"" (
-    echo ERROR: Source folder does not exist: {sourcePath}
+if not exist ""{escapedSourcePath}"" (
+    echo ERROR: Source folder does not exist: {escapedSourcePath}
     pause
     exit /b 1
 )
 
 REM Delete old exe file first to ensure it can be replaced
-if exist ""{exePath}"" (
+if exist ""{escapedExePath}"" (
     echo Deleting old executable...
-    del /F /Q ""{exePath}"" 2>NUL
+    del /F /Q ""{escapedExePath}"" 2>NUL
     timeout /t 1 /nobreak > nul
 )
 
 REM Copy all files from extracted folder to application folder using robocopy (more reliable)
 echo.
-echo Copying files from {sourcePath} to {appPath}...
+echo Copying files from {escapedSourcePath} to {escapedAppPath}...
 echo This may take a few moments...
-robocopy ""{sourcePath}"" ""{appPath}"" /E /IS /IT /R:3 /W:2 /NP /NFL /NDL
+robocopy ""{escapedSourcePath}"" ""{escapedAppPath}"" /E /IS /IT /R:3 /W:2 /NP /NFL /NDL
 set copyResult=%ERRORLEVEL%
 if %copyResult% GTR 1 (
     echo Copy completed with warnings (error code: %copyResult%)
@@ -274,13 +283,13 @@ if %copyResult% GTR 1 (
 
 REM Verify that the main exe file was copied
 timeout /t 1 /nobreak > nul
-if not exist ""{exePath}"" (
+if not exist ""{escapedExePath}"" (
     echo ERROR: Main executable was not copied!
-    echo Expected location: {exePath}
+    echo Expected location: {escapedExePath}
     pause
     exit /b 1
 )
-echo Verification: Main executable exists at {exePath}
+echo Verification: Main executable exists at {escapedExePath}
 
 REM Clean up temp files
 echo.
@@ -291,7 +300,7 @@ if exist ""{extractPath}"" rmdir /S /Q ""{extractPath}""
 REM Start the updated application
 echo.
 echo Starting updated application...
-start """" /D ""{appPath}"" ""{exePath}""
+start """" /D ""{escapedAppPath}"" ""{escapedExePath}""
 
 REM Clean up batch file
 timeout /t 2 /nobreak > nul
