@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
@@ -245,25 +246,27 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                     cancellationToken.ThrowIfCancellationRequested();
 
                     string? maLkToProcess = null;
-                    string displayId = string.Empty;
+                    string progressLabel = string.Empty;
+                    string originalIdentifier = string.Empty;
 
                     // Xác định MA_LK cần xử lý
                     if (rowData.DataType == "MA_LK" && !string.IsNullOrWhiteSpace(rowData.MaLk))
                     {
                         maLkToProcess = rowData.MaLk;
-                        displayId = maLkToProcess;
+                        progressLabel = maLkToProcess;
                         Debug.WriteLine($"Excel: Xử lý trực tiếp MA_LK = {maLkToProcess}");
                     }
                     else if (rowData.DataType == "MA_BN" && rowData.IsValid())
                     {
-                        displayId = $"{rowData.MaBn} ({rowData.NgayVao} - {rowData.NgayRa})";
+                        originalIdentifier = $"{rowData.MaBn} ({rowData.NgayVao} - {rowData.NgayRa})";
+                        progressLabel = originalIdentifier;
                         Debug.WriteLine($"Excel: Tìm MA_LK cho MA_BN = {rowData.MaBn}, Ngày vào = {rowData.NgayVao}, Ngày ra = {rowData.NgayRa}");
 
                         try
                         {
                             // Format ngày từ Excel (có thể là dd/MM/yyyy hoặc yyyyMMdd)
-                            string ngayVaoFormatted = FormatDateForQuery(rowData.NgayVao);
-                            string ngayRaFormatted = FormatDateForQuery(rowData.NgayRa);
+                            string ngayVaoFormatted = FormatDateForQuery(rowData.NgayVao, isEndDate: false);
+                            string ngayRaFormatted = FormatDateForQuery(rowData.NgayRa, isEndDate: true);
 
                             // Tìm MA_LK từ MA_BN + dates
                             var maLkResults = await _dataMapper.GetMaLkByMaBnAndDate(
@@ -282,6 +285,13 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                                 // Tìm thấy ĐÚNG 1 MA_LK - OK
                                 maLkToProcess = maLkResults[0].Ma_Lk;
                                 Debug.WriteLine($"Excel: ✓ Tìm thấy MA_LK = {maLkToProcess} cho MA_BN = {rowData.MaBn}");
+
+                                if (!string.IsNullOrWhiteSpace(maLkToProcess))
+                                {
+                                    progressLabel = string.IsNullOrWhiteSpace(originalIdentifier)
+                                        ? maLkToProcess
+                                        : $"{maLkToProcess} ({originalIdentifier})";
+                                }
                             }
                             else
                             {
@@ -315,7 +325,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                     if (!string.IsNullOrWhiteSpace(maLkToProcess))
                     {
                         patientResult = await ProcessSinglePatientAsync(maLkToProcess, cancellationToken);
-                        patientResult.PatientId = displayId; // Hiển thị ID gốc từ Excel
+                        patientResult.PatientId = maLkToProcess; // Gắn ID chuẩn để các bước sau sử dụng
                     }
                     else
                     {
@@ -341,12 +351,12 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                         
                         patientResult = new PatientProcessingResult
                         {
-                            PatientId = displayId,
+                            PatientId = string.IsNullOrWhiteSpace(originalIdentifier) ? progressLabel : originalIdentifier,
                             IsSuccess = false,
                             ErrorMessage = errorMsg
                         };
                         
-                        Debug.WriteLine($"Excel: ❌ Lỗi cho {displayId}: {errorMsg}");
+                        Debug.WriteLine($"Excel: ❌ Lỗi cho {patientResult.PatientId}: {errorMsg}");
                     }
 
                     // Cập nhật thống kê
@@ -365,8 +375,8 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                         {
                             Current = processedCount,
                             Total = excelData.Count,
-                            CurrentPatientId = displayId,
-                            Status = $"Đang xử lý: {displayId} ({processedCount}/{excelData.Count})",
+                            CurrentPatientId = progressLabel,
+                            Status = $"Đang xử lý: {progressLabel} ({processedCount}/{excelData.Count})",
                             SuccessCount = successCount,
                             ErrorCount = errorCount
                         });
@@ -412,7 +422,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         /// <summary>
         /// Format ngày từ Excel sang format yyyyMMddHHmm cho query
         /// </summary>
-        private string FormatDateForQuery(string? dateString)
+        private string FormatDateForQuery(string? dateString, bool isEndDate = false)
         {
             if (string.IsNullOrWhiteSpace(dateString))
                 return string.Empty;
@@ -424,18 +434,31 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             if (dateString.Length >= 8 && dateString.All(char.IsDigit))
             {
                 if (dateString.Length == 8)
-                    return dateString + "0000"; // Thêm 0000 cho giờ
-                else if (dateString.Length >= 12)
-                    return dateString.Substring(0, 12); // Lấy 12 ký tự đầu
-                else
-                    return dateString.PadRight(12, '0'); // Pad thêm số 0
+                {
+                    return dateString + (isEndDate ? "2359" : "0000");
+                }
+
+                if (dateString.Length >= 12)
+                {
+                    return dateString.Substring(0, 12);
+                }
+
+                var padChar = isEndDate ? '9' : '0';
+                return dateString.PadRight(12, padChar);
             }
 
             // Thử parse các format khác (dd/MM/yyyy HH:mm, dd-MM-yyyy, etc.)
             if (DateTime.TryParse(dateString, out DateTime date))
             {
-                // Giữ nguyên giờ phút nếu có, nếu không có thì dùng 0000
-                return date.ToString("yyyyMMddHHmm");
+                bool hasExplicitTime = dateString.Contains(":") || dateString.Contains("T");
+
+                if (hasExplicitTime && date.TimeOfDay != TimeSpan.Zero)
+                {
+                    return date.ToString("yyyyMMddHHmm");
+                }
+
+                var dayString = date.ToString("yyyyMMdd");
+                return dayString + (isEndDate ? "2359" : "0000");
             }
 
             // Fallback: trả về string gốc
