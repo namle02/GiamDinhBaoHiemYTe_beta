@@ -161,12 +161,12 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                     int maLkCol = -1, maBnCol = -1, ngayVaoCol = -1, ngayRaCol = -1;
                     int headerRow = 1;
                     
-                    // Debug: In ra tất cả các cột trong 15 dòng đầu
-                    System.Diagnostics.Debug.WriteLine("=== Excel Headers Debug (15 rows đầu) ===");
+                    
+                   
                     for (int debugRow = 1; debugRow <= 15; debugRow++)
                     {
                         var debugRowData = worksheet.Row(debugRow);
-                        System.Diagnostics.Debug.Write($"Row {debugRow}: ");
+                        
                         for (int debugCol = 1; debugCol <= 20; debugCol++)
                         {
                             var debugCell = debugRowData.Cell(debugCol).GetString().Trim();
@@ -174,10 +174,10 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             {
                                 // Truncate dài quá 30 ký tự
                                 var displayText = debugCell.Length > 30 ? debugCell.Substring(0, 30) + "..." : debugCell;
-                                System.Diagnostics.Debug.Write($"[Col{debugCol}:{displayText}] ");
+                               
                             }
                         }
-                        System.Diagnostics.Debug.WriteLine("");
+                       
                     }
                     System.Diagnostics.Debug.WriteLine("=========================");
                     
@@ -207,7 +207,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             {
                                 maLkCol = col;
                                 headerRow = row;
-                                System.Diagnostics.Debug.WriteLine($"✓ Tìm thấy MA_LK tại Col {col}, Row {row}: '{originalValue}'");
+                               
                             }
                             // Tìm MA_BN (nhiều variant)
                             else if (maBnCol == -1 && (
@@ -218,7 +218,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             {
                                 maBnCol = col;
                                 headerRow = row;
-                                System.Diagnostics.Debug.WriteLine($"✓ Tìm thấy MA_BN tại Col {col}, Row {row}: '{originalValue}'");
+                                
                             }
                             // Tìm NGAY_VAO (nhiều variant)
                             else if (ngayVaoCol == -1 && (
@@ -231,7 +231,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             {
                                 ngayVaoCol = col;
                                 headerRow = row;
-                                System.Diagnostics.Debug.WriteLine($"✓ Tìm thấy NGAY_VAO tại Col {col}, Row {row}: '{originalValue}'");
+                                
                             }
                             // Tìm NGAY_RA (nhiều variant)
                             else if (ngayRaCol == -1 && (
@@ -244,7 +244,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             {
                                 ngayRaCol = col;
                                 headerRow = row;
-                                System.Diagnostics.Debug.WriteLine($"✓ Tìm thấy NGAY_RA tại Col {col}, Row {row}: '{originalValue}'");
+                               
                             }
                         }
                         
@@ -253,24 +253,19 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             break;
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"=== Kết quả tìm kiếm cột ===");
-                    System.Diagnostics.Debug.WriteLine($"MA_LK: Column {maLkCol} {(maLkCol == -1 ? "❌ KHÔNG TÌM THẤY" : "✓")}");
-                    System.Diagnostics.Debug.WriteLine($"MA_BN: Column {maBnCol} {(maBnCol == -1 ? "❌ KHÔNG TÌM THẤY" : "✓")}");
-                    System.Diagnostics.Debug.WriteLine($"NGAY_VAO: Column {ngayVaoCol} {(ngayVaoCol == -1 ? "❌ KHÔNG TÌM THẤY" : "✓")}");
-                    System.Diagnostics.Debug.WriteLine($"NGAY_RA: Column {ngayRaCol} {(ngayRaCol == -1 ? "❌ KHÔNG TÌM THẤY" : "✓")}");
-                    System.Diagnostics.Debug.WriteLine($"===========================");
+                    
 
                     // Xác định loại dữ liệu
                     string dataType;
                     if (maLkCol != -1)
                     {
                         dataType = "MA_LK";
-                        System.Diagnostics.Debug.WriteLine("Excel format: MA_LK");
+                       
                     }
                     else if (maBnCol != -1 && ngayVaoCol != -1 && ngayRaCol != -1)
                     {
                         dataType = "MA_BN";
-                        System.Diagnostics.Debug.WriteLine("Excel format: MA_BN + Dates");
+                       
                     }
                     else
                     {
@@ -303,7 +298,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                                 rowData.MaLk = value;
                                 dataList.Add(rowData);
                                 previousValue = value;
-                                System.Diagnostics.Debug.WriteLine($"Excel: Đọc MA_LK = {value}");
+                               
                             }
                         }
                         else // MA_BN
@@ -324,13 +319,13 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                                     rowData.NgayRa = ngayRa;
                                     dataList.Add(rowData);
                                     previousValue = combinedKey;
-                                    System.Diagnostics.Debug.WriteLine($"Excel: Đọc MA_BN = {maBn}, Ngày vào = {ngayVao}, Ngày ra = {ngayRa}");
+                                    
                                 }
                             }
                         }
                     }
 
-                    System.Diagnostics.Debug.WriteLine($"Excel: Đọc thành công {dataList.Count} dòng");
+                   
                 }
                 catch (Exception ex)
                 {

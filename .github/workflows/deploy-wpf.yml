@@ -40,12 +40,15 @@ jobs:
         run: Compress-Archive -Path ./publish/* -DestinationPath ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
         shell: pwsh
 
-      # 6. Create GitHub Release and Upload Asset
-      - name: Create Release and Upload Asset
-        uses: softprops/action-gh-release@v1
+      # 6. Create GitHub Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
           body: |
             ## 🎉 Phiên bản ${{ github.ref_name }}
             
@@ -62,5 +65,15 @@ jobs:
             3. Chạy file WPF_GiamDinhBaoHiem.exe
           draft: false
           prerelease: false
-          files: ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
+
+      # 7. Upload Release Asset
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
+          asset_name: ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
 

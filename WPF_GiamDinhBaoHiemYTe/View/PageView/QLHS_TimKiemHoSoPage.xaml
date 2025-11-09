@@ -991,7 +991,7 @@
                             SelectedIndex="0"
                             VirtualizingPanel.IsVirtualizing="True"
                             VirtualizingPanel.VirtualizationMode="Recycling">
-                            <TabItem Style="{StaticResource ColoredTabItem}">
+                        <TabItem Style="{StaticResource ColoredTabItem}">
                                 <TabItem.HeaderTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="XML1">
@@ -1896,7 +1896,9 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Style="{StaticResource ColoredTabItem}">
+                            <TabItem
+                                Style="{StaticResource ColoredTabItem}"
+                                Visibility="{Binding DataContext.HasOverlayXml2Error, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
                                 <TabItem.HeaderTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="XML2">
@@ -2593,7 +2595,9 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Style="{StaticResource ColoredTabItem}">
+                            <TabItem
+                                Style="{StaticResource ColoredTabItem}"
+                                Visibility="{Binding DataContext.HasOverlayXml3Error, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
                                 <TabItem.HeaderTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="XML3">
@@ -3014,7 +3018,9 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Style="{StaticResource ColoredTabItem}">
+                            <TabItem
+                                Style="{StaticResource ColoredTabItem}"
+                                Visibility="{Binding DataContext.HasOverlayXml4Error, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
                                 <TabItem.HeaderTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="XML4">
@@ -3270,7 +3276,9 @@
                                 </ScrollViewer>
                             </TabItem>
 
-                            <TabItem Style="{StaticResource ColoredTabItem}">
+                            <TabItem
+                                Style="{StaticResource ColoredTabItem}"
+                                Visibility="{Binding DataContext.HasOverlayXml5Error, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
                                 <TabItem.HeaderTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="XML5">

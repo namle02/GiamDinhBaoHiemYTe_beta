@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using WPF_GiamDinhBaoHiem.DI_Register;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
+using WPF_GiamDinhBaoHiem.Services.Interface;
 
 namespace WPF_GiamDinhBaoHiem;
 
@@ -42,6 +43,21 @@ public partial class App : Application
         var mainwindow = serviceProvider.GetRequiredService<MainWindow>();
         mainwindow.Show();
         base.OnStartup(e);
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        try
+        {
+            var cacheService = serviceProvider.GetService<IPatientCacheService>();
+            cacheService?.ClearAllCache();
+        }
+        catch
+        {
+            // Ignore cleanup errors during shutdown
+        }
+
+        base.OnExit(e);
     }
 
 }

@@ -254,13 +254,11 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                     {
                         maLkToProcess = rowData.MaLk;
                         progressLabel = maLkToProcess;
-                        Debug.WriteLine($"Excel: Xử lý trực tiếp MA_LK = {maLkToProcess}");
                     }
                     else if (rowData.DataType == "MA_BN" && rowData.IsValid())
                     {
                         originalIdentifier = $"{rowData.MaBn} ({rowData.NgayVao} - {rowData.NgayRa})";
                         progressLabel = originalIdentifier;
-                        Debug.WriteLine($"Excel: Tìm MA_LK cho MA_BN = {rowData.MaBn}, Ngày vào = {rowData.NgayVao}, Ngày ra = {rowData.NgayRa}");
 
                         try
                         {
@@ -277,14 +275,12 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             if (maLkResults == null || maLkResults.Count == 0)
                             {
                                 // KHÔNG tìm thấy MA_LK nào - LỖI
-                                Debug.WriteLine($"Excel: ❌ KHÔNG tìm thấy MA_LK cho MA_BN = {rowData.MaBn}");
                                 maLkToProcess = null;
                             }
                             else if (maLkResults.Count == 1)
                             {
                                 // Tìm thấy ĐÚNG 1 MA_LK - OK
                                 maLkToProcess = maLkResults[0].Ma_Lk;
-                                Debug.WriteLine($"Excel: ✓ Tìm thấy MA_LK = {maLkToProcess} cho MA_BN = {rowData.MaBn}");
 
                                 if (!string.IsNullOrWhiteSpace(maLkToProcess))
                                 {
@@ -296,7 +292,6 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             else
                             {
                                 // Tìm thấy NHIỀU MA_LK - LỖI (data không rõ ràng)
-                                Debug.WriteLine($"Excel: ⚠️ Tìm thấy {maLkResults.Count} MA_LK cho MA_BN = {rowData.MaBn} → LỖI DATA KHÔNG RÕ RÀNG");
                                 
                                 // Tạo message chi tiết về các MA_LK tìm thấy
                                 var maLkList = string.Join(", ", maLkResults.Select(x => x.Ma_Lk).Take(5));
@@ -315,7 +310,6 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"Excel: Lỗi khi tìm MA_LK cho MA_BN = {rowData.MaBn}: {ex.Message}");
                         }
                     }
 
@@ -355,8 +349,6 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             IsSuccess = false,
                             ErrorMessage = errorMsg
                         };
-                        
-                        Debug.WriteLine($"Excel: ❌ Lỗi cho {patientResult.PatientId}: {errorMsg}");
                     }
 
                     // Cập nhật thống kê
@@ -384,12 +376,10 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 }
                 catch (OperationCanceledException)
                 {
-                    Debug.WriteLine($"Excel: Processing cancelled");
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Excel: Error processing row: {ex.Message}");
                     lock (lockObj)
                     {
                         errorCount++;
@@ -408,7 +398,6 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             }
             catch (OperationCanceledException)
             {
-                Debug.WriteLine("Batch processing was cancelled");
             }
 
             stopwatch.Stop();

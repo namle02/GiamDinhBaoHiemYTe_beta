@@ -774,8 +774,6 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
             OverlayErrorIds.Clear();
             OverlayErrorXmlTabs.Clear();
             
-            //  Clear multi-patient overlay cache
-            _overlayCache.Clear();
         }
 
         // ==================== EXPORT COMMANDS ====================
