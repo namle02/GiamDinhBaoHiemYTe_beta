@@ -201,9 +201,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                                 cellValue == "malk" || 
                                 cellValue == "malienkết" || 
                                 cellValue == "maliênkết" ||
-                                cellValue == "xml1id" ||
-                                cellValue.Contains("malk") ||
-                                cellValue.Contains("xml1")))
+                                cellValue.Contains("malk")))
                             {
                                 maLkCol = col;
                                 headerRow = row;
