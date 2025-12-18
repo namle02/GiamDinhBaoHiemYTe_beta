@@ -110,7 +110,7 @@ const validateRule_Id_28 = async (patientData) => {
         }
     } catch (error) {
         result.isValid = false;
-        result.errors.push(`Lỗi khi validate Thanh toán thuốc Alphachymotrypsin chỉ định sử dụng không đúng quy định Thông tư số 20/2022/TT-BYT: ${error.message}`);
+        result.errors.push({Id: 0, Error: `Lỗi khi validate Thanh toán thuốc Alphachymotrypsin chỉ định sử dụng không đúng quy định Thông tư số 20/2022/TT-BYT: ${error.message}`});
         result.message = 'Lỗi khi validate Thanh toán thuốc Alphachymotrypsin chỉ định sử dụng không đúng quy định Thông tư số 20/2022/TT-BYT';
     }
 

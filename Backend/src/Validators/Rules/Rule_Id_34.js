@@ -1,5 +1,5 @@
 /**
- * Rule 34: Sai tỷ lệ thanh toán PT thứ 2
+ * Rule 34: Kiểm tra dịch vụ phẫu thuật có khoảng thời gian giao nhau
  * @param {Object} patientData - Toàn bộ dữ liệu bệnh nhân
  * @returns {Object} - Kết quả validation
  */
@@ -31,79 +31,119 @@ const validateRule_Id_34 = async (patientData) => {
   }
 
   /**
-   * Kiểm tra 2 ngày có là cùng ngày hoặc liền ngày không
-   * So sánh chỉ theo yyyy-mm-dd (đúng ngày); liền kề nghĩa là cách đúng 1 ngày
+   * Kiểm tra 2 khoảng thời gian có giao nhau không
+   * Khoảng thời gian 1: [start1, end1]
+   * Khoảng thời gian 2: [start2, end2]
+   * Giao nhau nếu: start1 <= end2 && start2 <= end1
    */
-  function isConsecutiveOrSameDay(dateStr1, dateStr2) {
-    const d1 = parseCustomDate(dateStr1);
-    const d2 = parseCustomDate(dateStr2);
-    if (!d1 || !d2 || isNaN(d1) || isNaN(d2)) return false;
-    // Loại bỏ thời gian
-    d1.setHours(0, 0, 0, 0);
-    d2.setHours(0, 0, 0, 0);
-    const diff = Math.abs(d1 - d2);
-    return diff === 0 || diff === 86400000;
+  function isTimeRangeOverlap(service1, service2) {
+    const start1 = parseCustomDate(service1.Ngay_Th_Yl);
+    const end1 = parseCustomDate(service1.Ngay_Kq);
+    const start2 = parseCustomDate(service2.Ngay_Th_Yl);
+    const end2 = parseCustomDate(service2.Ngay_Kq);
+
+    // Nếu thiếu thông tin ngày thì không thể kiểm tra
+    if (!start1 || !end1 || !start2 || !end2) {
+      return false;
+    }
+
+    // Kiểm tra overlap: start1 <= end2 && start2 <= end1
+    return start1 <= end2 && start2 <= end1;
+  }
+
+  /**
+   * Kiểm tra 2 dịch vụ có diễn ra và kết thúc đồng thời không
+   */
+  function isSimultaneous(service1, service2) {
+    const start1 = parseCustomDate(service1.Ngay_Th_Yl);
+    const end1 = parseCustomDate(service1.Ngay_Kq);
+    const start2 = parseCustomDate(service2.Ngay_Th_Yl);
+    const end2 = parseCustomDate(service2.Ngay_Kq);
+
+    if (!start1 || !end1 || !start2 || !end2) {
+      return false;
+    }
+
+    // Diễn ra và kết thúc đồng thời nếu Ngay_Th_Yl và Ngay_Kq đều giống nhau
+    return start1.getTime() === start2.getTime() && end1.getTime() === end2.getTime();
   }
 
   try {
-    const xml3_data = (patientData.Xml3 || []).filter(
-      (item) => item.Ma_Pttt_Qt != null && item.Ma_Pttt_Qt !== ""
+    // Lọc các dịch vụ phẫu thuật: ma_nhom === 8 và Ma_Pttt_Qt != null
+    const surgeryServices = (patientData.Xml3 || []).filter(
+      (item) =>
+        item.Ma_Nhom == 8 &&
+        item.Ma_Pttt_Qt != null 
     );
 
-    // Sắp xếp theo ngày chỉ định tăng dần (Ngay_Th_Yl)
-    const sortedServices = [...xml3_data].sort((a, b) => {
-      const dateA = a.Ngay_Th_Yl ? parseCustomDate(a.Ngay_Th_Yl) : new Date(0);
-      const dateB = b.Ngay_Th_Yl ? parseCustomDate(b.Ngay_Th_Yl) : new Date(0);
-      return dateA - dateB;
-    });
+    // Kiểm tra từng cặp dịch vụ xem có giao nhau không
+    for (let i = 0; i < surgeryServices.length; i++) {
+      for (let j = i + 1; j < surgeryServices.length; j++) {
+        const service1 = surgeryServices[i];
+        const service2 = surgeryServices[j];
 
+        // Chỉ kiểm tra nếu hai dịch vụ có khoảng thời gian giao nhau
+        if (isTimeRangeOverlap(service1, service2)) {
+          const start1 = parseCustomDate(service1.Ngay_Th_Yl);
+          const start2 = parseCustomDate(service2.Ngay_Th_Yl);
+          const tyle1 = parseFloat(service1.Tyle_Tt_Dv);
+          const tyle2 = parseFloat(service2.Tyle_Tt_Dv);
 
-    for (let i = 0; i < sortedServices.length - 1; i++) {
-      const first = sortedServices[i];
-      const second = sortedServices[i + 1];
-      // Dịch vụ liền kề nếu ngày y lệnh của dịch vụ 1 liền kề ngày kết quả của dịch vụ 2
-      if (first.Ngay_Th_Yl && second.Ngay_Kq && isConsecutiveOrSameDay(first.Ngay_Th_Yl, second.Ngay_Kq)) {
-        // Kiểm tra tỷ lệ thanh toán
-        // Dịch vụ đầu tiên phải có Tyle_Tt_Dv là 100
-        if (parseFloat(first.Tyle_Tt_Dv) !== 100) {
-          result.errors.push({
-            Id: first.Id,
-            Error: `Dịch vụ phẫu thuật đầu tiên (ID: ${first.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) sai: ${first.Tyle_Tt_Dv}, phải là 100 khi liền kề với dịch vụ phẫu thuật tiếp theo (ID: ${second.Id})`,
-          });
-          result.isValid = false;
-          console.log(result.isValid);
-        }
+          // Kiểm tra nếu hai dịch vụ diễn ra và kết thúc đồng thời
+          if (isSimultaneous(service1, service2)) {
+            // Một trong hai dịch vụ không được có Tyle_Tt_Dv = 100
+            if (tyle1 === 100 || tyle2 === 100) {
+              const errorIds = [];
+              const errorMessages = [];
+              
+              if (tyle1 === 100) {
+                errorIds.push(service1.Id);
+                errorMessages.push(`Dịch vụ phẫu thuật (ID: ${service1.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ khi diễn ra và kết thúc đồng thời với dịch vụ khác (ID: ${service2.Id})`);
+              }
+              
+              if (tyle2 === 100) {
+                errorIds.push(service2.Id);
+                errorMessages.push(`Dịch vụ phẫu thuật (ID: ${service2.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ khi diễn ra và kết thúc đồng thời với dịch vụ khác (ID: ${service1.Id})`);
+              }
 
-        // Dịch vụ thứ hai
-        let expectedTyLe =
-          first.Ma_Bac_Si &&
-          second.Ma_Bac_Si &&
-          first.Ma_Bac_Si === second.Ma_Bac_Si
-            ? 50
-            : 80;
-        if (parseFloat(second.Tyle_Tt_Dv) !== expectedTyLe) {
-          result.errors.push({
-            Id: second.Id,
-            Error: `Dịch vụ phẫu thuật tiếp theo (ID: ${
-              second.Id
-            }) có Tỷ lệ thanh toán (Tyle_Tt_Dv) sai: ${
-              second.Tyle_Tt_Dv
-            }, phải là ${expectedTyLe} vì ${
-              first.Ma_Bac_Si === second.Ma_Bac_Si ? "cùng" : "khác"
-            } bác sĩ với dịch vụ trước (ID: ${first.Id})`,
-          });
-          result.isValid = false;
+              result.errors.push({
+                Ids: errorIds.length === 1 ? errorIds[0] : errorIds,
+                Error: errorMessages.join("; "),
+              });
+              result.isValid = false;
+            }
+          } else {
+            // Xác định dịch vụ nào diễn ra trước, dịch vụ nào diễn ra sau
+            let earlierService, laterService;
+            if (start1 <= start2) {
+              earlierService = service1;
+              laterService = service2;
+            } else {
+              earlierService = service2;
+              laterService = service1;
+            }
+
+            const laterTyLe = parseFloat(laterService.Tyle_Tt_Dv);
+            
+            // Dịch vụ diễn ra sau có Tyle_Tt_Dv = 100 thì sai
+            if (laterTyLe === 100) {
+              result.errors.push({
+                Id: laterService.Id,
+                Error: `Dịch vụ phẫu thuật (ID: ${laterService.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ vì diễn ra sau dịch vụ phẫu thuật khác (ID: ${earlierService.Id}) có khoảng thời gian giao nhau. Dịch vụ ${earlierService.Id}: từ ${earlierService.Ngay_Th_Yl} đến ${earlierService.Ngay_Kq}, Dịch vụ ${laterService.Id}: từ ${laterService.Ngay_Th_Yl} đến ${laterService.Ngay_Kq}`,
+              });
+              result.isValid = false;
+            }
+          }
         }
       }
     }
-
   } catch (error) {
     result.isValid = false;
     result.errors.push(
-      `Lỗi khi validate Sai tỷ lệ thanh toán PT thứ 2: ${error.message}`
+      `Lỗi khi validate dịch vụ phẫu thuật có khoảng thời gian giao nhau: ${error.message}`
     );
-    result.message = "Lỗi khi validate Sai tỷ lệ thanh toán PT thứ 2";
-  } 
+    result.message = "Lỗi khi validate dịch vụ phẫu thuật có khoảng thời gian giao nhau";
+  }
   return result;
 };
 

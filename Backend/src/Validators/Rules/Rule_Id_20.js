@@ -77,6 +77,10 @@ const validateRule_Id_20 = async (patientData) => {
                                 Id: dv.Id,
                                 Error: `Không được thanh toán đồng thời Oxy (mã thuốc 40.17) với dịch vụ thở máy (${dv.Ma_Dich_Vu}) trong cùng khoảng thời gian từ ngày y lệnh đến ngày kết quả`
                             });
+                            result.errors.push({
+                                Id: thuoc.Id,
+                                Error: `Không được thanh toán đồng thời Oxy (mã thuốc 40.17) với dịch vụ thở máy (${dv.Ma_Dich_Vu}) trong cùng khoảng thời gian từ ngày y lệnh đến ngày kết quả`
+                            });
                         }
                     }
                 });

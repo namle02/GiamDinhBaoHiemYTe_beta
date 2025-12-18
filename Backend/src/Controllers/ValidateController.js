@@ -309,6 +309,51 @@ class ValidateController {
             });
         }
     }
+
+    /**
+     * Lấy thống kê validation calls (để debug)
+     */
+    async getValidationStats(req, res) {
+        try {
+            const stats = RuleService.getValidationStats();
+            
+            res.status(200).json({
+                success: true,
+                message: 'Thống kê validation calls',
+                data: stats
+            });
+        } catch (error) {
+            await LogService.error('ValidateController', 'Lỗi khi lấy thống kê validation', error, req);
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi server',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Reset validation counter (để debug)
+     */
+    async resetValidationCounter(req, res) {
+        try {
+            RuleService.resetValidationCounter();
+            
+            await LogService.info('ValidateController', 'Validation counter đã được reset', {}, req);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Validation counter đã được reset'
+            });
+        } catch (error) {
+            await LogService.error('ValidateController', 'Lỗi khi reset validation counter', error, req);
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi server',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new ValidateController();

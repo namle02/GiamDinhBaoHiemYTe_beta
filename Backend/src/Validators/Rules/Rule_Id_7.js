@@ -1,5 +1,5 @@
 /**
- * Rule 1: Thanh toán dịch vụ PHCN trong điều trị thoái hóa cột sống cổ/cột sống thắt lưng: Hồng ngoại, đắp paraphin, ...không đúng hướng dẫn tại Quyết định số 3109/QĐ-BYT chẩn đoán, điều trị chuyên ngành PHCN
+ * Rule 7: Thanh toán dịch vụ PHCN trong điều trị thoái hóa cột sống cổ/cột sống thắt lưng: Hồng ngoại, đắp paraphin, ...không đúng hướng dẫn tại Quyết định số 3109/QĐ-BYT chẩn đoán, điều trị chuyên ngành PHCN
  * @param {Object} patientData - Toàn bộ dữ liệu bệnh nhân
  * @returns {Object} - Kết quả validation
  */
@@ -19,63 +19,106 @@ const validateRule_Id_7 = async (patientData) => {
     try {
         // Lấy danh sách dịch vụ từ Xml3
         const xml3_data = Array.isArray(patientData.Xml3) ? patientData.Xml3 : [];
-        // Danh sách mã dịch vụ PHCN cần kiểm tra
+        // Lấy thông tin bệnh nhân từ Xml1
+        const xml1_data = Array.isArray(patientData.Xml1) && patientData.Xml1.length > 0 ? patientData.Xml1[0] : {};
+        
+        // Danh sách mã dịch vụ PHCN cần kiểm tra (phải có Ngay_YL khác nhau)
         const danhsachdichvu = [
-            '17.0007.0234',
-            '17.0009.0255',
-            '17.0018.0221',
-            '17.0026.0220',
-            '17.0011.0237',
-            '17.0001.0254',
-            '17.0004.0232'
+            '17.0011.0237',  // Điều trị bằng tia hồng ngoại
+            '17.0018.0221',  // Điều trị bằng Parafin
+            '17.0004.0232',  // Điều trị bằng từ trường
+            '17.0023.0272'   // Điều trị bằng bùn
         ];
 
-        // Regex các mã bệnh hợp lệ
-        const regexMaBenh = [
-            /^I6[0-9](\.\d+)?$/i,      // I60-I69 – Tai biến mạch máu não
-            /^G8[1-3](\.\d+)?$/i,      // G81-G83 – Liệt nửa người, liệt tay chân
-            /^S52(\.\d+)?$/i,          // S52 – Gãy xương chi
-            /^S62(\.\d+)?$/i,          // S62 – Gãy xương chi
-            /^S72(\.\d+)?$/i,          // S72 – Gãy xương chi
-            /^S82(\.\d+)?$/i,          // S82 – Gãy xương chi
-            /^M51(\.\d+)?$/i,          // M51 – Thoát vị đĩa đệm, thoái hóa cột sống
-            /^M48(\.\d+)?$/i,          // M48 – Thoát vị đĩa đệm, thoái hóa cột sống
-            /^M50(\.\d+)?$/i,          // M50 – Thoát vị đĩa đệm, thoái hóa cột sống
-            /^M54(\.\d+)?$/i,          // M54 – Đau cột sống
-            /^G35(\.\d+)?$/i           // G35 – Đa xơ cứng
-        ];
-
-        // Hàm kiểm tra mã bệnh hợp lệ
+        // Hàm kiểm tra mã bệnh là M47 hoặc M54.5
         function isMaBenhHopLe(ma) {
             if (!ma) return false;
             ma = ma.toUpperCase().replace(/\s/g, '');
-            return regexMaBenh.some(regex => regex.test(ma));
+            // Kiểm tra M47 (có thể có hoặc không có phần mở rộng)
+            if (/^M47(\.\d+)?$/i.test(ma)) return true;
+            // Kiểm tra M54.5 (chính xác)
+            if (ma === 'M54.5' || ma === 'M545') return true;
+            return false;
         }
 
-        // Duyệt từng dịch vụ trong xml3, nếu là dịch vụ PHCN thì kiểm tra mã bệnh trong chính record đó
+        // Thu thập tất cả mã bệnh từ XML1 (Ma_Benh và Ma_Benh_Yhct)
+        let dsMaBenh = [];
+        
+        // Lấy từ XML1 - Ma_Benh_Chinh (nếu có)
+        if (xml1_data.Ma_Benh_Chinh) {
+            dsMaBenh.push(String(xml1_data.Ma_Benh_Chinh).trim().toUpperCase());
+        }
+        
+        // Lấy từ XML1 - Ma_Benh_Kt (nếu có)
+        if (xml1_data.Ma_Benh_Kt) {
+            if (typeof xml1_data.Ma_Benh_Kt === 'string') {
+                dsMaBenh = dsMaBenh.concat(xml1_data.Ma_Benh_Kt.split(';').map(s => s.trim().toUpperCase()).filter(Boolean));
+            } else if (Array.isArray(xml1_data.Ma_Benh_Kt)) {
+                dsMaBenh = dsMaBenh.concat(
+                    xml1_data.Ma_Benh_Kt.flatMap(mb => (typeof mb === 'string' ? mb.split(';').map(s => s.trim().toUpperCase()) : [])).filter(Boolean)
+                );
+            }
+        }
+        
+        // Lấy từ XML1 - Ma_Benh_Yhct (nếu có)
+        if (xml1_data.Ma_Benh_Yhct) {
+            if (typeof xml1_data.Ma_Benh_Yhct === 'string') {
+                dsMaBenh = dsMaBenh.concat(xml1_data.Ma_Benh_Yhct.split(';').map(s => s.trim().toUpperCase()).filter(Boolean));
+            } else if (Array.isArray(xml1_data.Ma_Benh_Yhct)) {
+                dsMaBenh = dsMaBenh.concat(
+                    xml1_data.Ma_Benh_Yhct.flatMap(mb => (typeof mb === 'string' ? mb.split(';').map(s => s.trim().toUpperCase()) : [])).filter(Boolean)
+                );
+            }
+        }
+
+        // Lấy từ XML3 - Ma_Benh và Ma_Benh_Yhct
         xml3_data.forEach(item => {
-            if (danhsachdichvu.includes(item.Ma_Dich_Vu)) {
-                // Mã bệnh có thể nằm ở Ma_Benh hoặc Ma_Benh_Yhct trong từng item của xml3
-                let dsMaBenh = [];
-                if (item.Ma_Benh) {
-                    dsMaBenh.push(item.Ma_Benh.toUpperCase());
-                }
-                if (item.Ma_Benh_Yhct) {
-                    dsMaBenh.push(item.Ma_Benh_Yhct.toUpperCase());
-                }
-
-                dsMaBenh = Array.from(new Set(dsMaBenh)); // loại trùng
-
-                const coMaBenhHopLe = dsMaBenh.some(isMaBenhHopLe);
-
-                if (!coMaBenhHopLe) {
-                    result.isValid = false;
-                    result.errors.push(
-                        { Id: item.Id, Error: `Dịch vụ PHCN mã ${item.Ma_Dich_Vu} thanh toán sai mã bệnh: ${item.Ma_Benh}` }
-                    );
-                }
+            if (item.Ma_Benh) {
+                dsMaBenh.push(String(item.Ma_Benh).trim().toUpperCase());
+            }
+            if (item.Ma_Benh_Yhct) {
+                dsMaBenh.push(String(item.Ma_Benh_Yhct).trim().toUpperCase());
             }
         });
+
+        dsMaBenh = Array.from(new Set(dsMaBenh)); // loại trùng
+
+        // Kiểm tra xem bệnh nhân có mã bệnh M47 hoặc M54.5 không
+        const coMaBenhHopLe = dsMaBenh.some(isMaBenhHopLe);
+
+        if (coMaBenhHopLe) {
+            // Lọc các dịch vụ cần kiểm tra (chỉ lấy các dịch vụ trong danh sách và có Ngay_YL)
+            const dichVuCanKiemTra = xml3_data.filter(item => 
+                danhsachdichvu.includes(item.Ma_Dich_Vu) && item.Ngay_Yl
+            );
+
+            // Nhóm các dịch vụ theo Ngay_YL
+            const nhomTheoNgayYL = {};
+            dichVuCanKiemTra.forEach(item => {
+                const ngayYL = String(item.Ngay_Yl).trim();
+                if (!nhomTheoNgayYL[ngayYL]) {
+                    nhomTheoNgayYL[ngayYL] = [];
+                }
+                nhomTheoNgayYL[ngayYL].push(item);
+            });
+
+            // Kiểm tra xem có ngày nào có nhiều hơn 1 dịch vụ không (tức là có cặp trùng)
+            Object.keys(nhomTheoNgayYL).forEach(ngayYL => {
+                const dsDichVu = nhomTheoNgayYL[ngayYL];
+                if (dsDichVu.length > 1) {
+                    // Tìm tất cả các cặp dịch vụ có cùng Ngay_YL
+                    for (let i = 0; i < dsDichVu.length; i++) {
+                        for (let j = i + 1; j < dsDichVu.length; j++) {
+                            result.isValid = false;
+                            result.errors.push({
+                                Id: dsDichVu[i].Id || dsDichVu[j].Id,
+                                Error: `Bệnh nhân có mã bệnh M47 hoặc M54.5, các dịch vụ ${dsDichVu[i].Ma_Dich_Vu} và ${dsDichVu[j].Ma_Dich_Vu} có cùng Ngay_YL: ${ngayYL}`
+                            });
+                        }
+                    }
+                }
+            });
+        }
 
     } catch (error) {
         result.isValid = false;

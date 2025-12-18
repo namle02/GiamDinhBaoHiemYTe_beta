@@ -37,6 +37,7 @@ const XML3Schema = new mongoose.Schema({
   Ma_Khoa:             { type: String, default: null },
   Ma_Giuong:           { type: String, default: null },
   Ma_Bac_Si:           { type: String, default: null },
+  Mo_Ta_Text:          { type: String, default: null },
   Nguoi_Thuc_Hien:     { type: String, default: null },
   Ma_Benh:             { type: String, default: null },
   Ma_Benh_Yhct:        { type: String, default: null },
@@ -49,8 +50,12 @@ const XML3Schema = new mongoose.Schema({
   Vi_Tri_Th_Dvkt:      { type: Number, default: null },
   Ma_May:              { type: String, default: null },
   Ma_Hieu_Sp:          { type: String, default: null },
+  trinhTuThucHien:     { type: String, default: null },
   Tai_Su_Dung:         { type: String, default: null },
-  Du_Phong:            { type: String, default: null }
+  Du_Phong:            { type: String, default: null },
+  chucdanh_id:         { type: Number, default: null },
+  ketQua:              { type: String, default: null },
+  mucBinhThuong:       { type: String, default: null }
 }, {
   timestamps: true,
   strict: false

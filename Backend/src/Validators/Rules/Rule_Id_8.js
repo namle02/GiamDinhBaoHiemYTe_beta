@@ -17,30 +17,35 @@ const validateRule_Id_8 = async (patientData) => {
     };
 
     try {
-        const xml3_data = patientData.Xml3 || [];
-        const dsMaDichVu = xml3_data.map(item => item.Ma_Dich_Vu);
-        const dsDichVuYeuCau = [
-            '22.0133.1409',
-            '25.0030.1751',
-            '25.0090.1757'
+        const xml3_data = Array.isArray(patientData.Xml3) ? patientData.Xml3 : [];
+        
+        // Danh sách các dịch vụ cần kiểm tra
+        const dsDichVuBatBuocPhaiKiemTra = [
+            '02.0304.0134',
+            '02.0307.0136',
+            '02.0309.0138',
+            '02.0293.0138',
+            '02.0311.0139',
+            '02.0262.0136',
+            '03.0161.0136'
         ];
 
-        // Nếu có mã dịch vụ 02.0304.0134 thì phải có kèm theo 1 trong các mã trong danh sách dịch vụ yêu cầu
-        if (dsMaDichVu.includes('02.0304.0134')) {
-            const coDichVuYeuCau = dsDichVuYeuCau.some(ma => dsMaDichVu.includes(ma));
-            if (!coDichVuYeuCau) {
-                // Tìm tất cả các item có mã 02.0304.0134 để báo lỗi chi tiết
-                xml3_data.forEach(item => {
-                    if (item.Ma_Dich_Vu === '02.0304.0134') {
-                        result.isValid = false;
-                        result.errors.push({
-                            Id: item.Id,
-                            Error: `Dịch vụ nội soi có sinh thiết (02.0304.0134) phải kèm theo ít nhất một trong các dịch vụ yêu cầu: ${dsDichVuYeuCau.join(', ')}`
-                        });
-                    }
+        // Kiểm tra xem có dịch vụ nào có đầu 25.xxxx.xxxx không (giải phẫu mô bệnh học)
+        const coDichVuDau25 = xml3_data.some(item => 
+            item.Ma_Dich_Vu && /^25\.\d{4}\.\d{4}$/.test(item.Ma_Dich_Vu)
+        );
+
+        // Tìm các dịch vụ nội soi có sinh thiết trong danh sách
+        // Nếu có dịch vụ này mà không có dịch vụ đầu 25 thì báo lỗi
+        xml3_data.forEach(item => {
+            if (item.Ma_Dich_Vu && dsDichVuBatBuocPhaiKiemTra.includes(item.Ma_Dich_Vu) && !coDichVuDau25) {
+                result.isValid = false;
+                result.errors.push({
+                    Id: item.Id,
+                    Error: `Dịch vụ ${item.Ma_Dich_Vu} nhưng không làm xét nghiệm giải phẫu mô bệnh học, điều chỉnh về mức giá của các DV nội soi không sinh thiết`
                 });
             }
-        }
+        });
 
     } catch (error) {
         result.isValid = false;

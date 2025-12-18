@@ -27,7 +27,6 @@ const validateRule_Id_27 = async (patientData) => {
         // Hàm tính tuổi từ ngày sinh dạng yyyymmddxxxx (ví dụ: 194702020000)
         function tinhTuoiTuNgaySinh12(ngaySinhStr) {
             if (!ngaySinhStr || typeof ngaySinhStr !== 'string' || ngaySinhStr.length < 8) return null;
-            // Lấy 8 ký tự đầu tiên: yyyyMMdd
             const ns = ngaySinhStr.substring(0, 8);
             const nam = Number(ns.substring(0, 4));
             const thang = Number(ns.substring(4, 6));
@@ -57,9 +56,14 @@ const validateRule_Id_27 = async (patientData) => {
         dsMaBenh = Array.from(new Set(dsMaBenh)); // loại trùng
 
         // Thêm trực tiếp xml1_data.Ma_Benh_Chinh vào dsMaBenh
-        dsMaBenh.push(xml1_data.Ma_Benh_Chinh.toUpperCase());
+        if (xml1_data.Ma_Benh_Chinh) {
+            dsMaBenh.push(xml1_data.Ma_Benh_Chinh.toUpperCase());
+        }
+
         // Kiểm tra có thuốc Moxifloxacin (mã 40.231) không
-        const coMoxifloxacin = xml2_data.some(item => item.Ma_Thuoc === '40.231');
+        // Lấy danh sách tất cả thuốc Moxifloxacin (mã 40.231)
+        const moxiList = xml2_data.filter(item => String(item.Ma_Thuoc).trim() === '40.231');
+        const coMoxifloxacin = moxiList.length > 0;
         if (!coMoxifloxacin) {
             return result; // Không có thuốc, không cần kiểm tra
         }
@@ -69,11 +73,14 @@ const validateRule_Id_27 = async (patientData) => {
             /^J15\.\d*$/i, // J15.x
             /^J18\.\d*$/i, // J18.x
             /^J44\.1$/i,   // J44.1
-            /^J01\.\d*$/i, // J01.x (cần xác minh thất bại điều trị trước, cảnh báo)
+            /^J01\.\d*$/i, // J01.x 
             /^A41\.\d*$/i, // A41.x
             /^N39\.0$/i,   // N39.0
             /^K65\.\d*$/i  // K65.x
         ];
+
+        // Danh sách mã bệnh lao trẻ em ngoại lệ A15-A19
+        const isLaoTreEm = dsMaBenh.some(ma => /^A1[5-9](\.\d*)?$/i.test(ma));
 
         // Kiểm tra có ít nhất 1 mã bệnh hợp lệ
         let coMaBenhHopLe = false;
@@ -102,23 +109,40 @@ const validateRule_Id_27 = async (patientData) => {
             tuoiSo = tinhTuoiTuNgaySinh12(ngaySinh);
         }
 
-        // Xử lý logic
+        // Logic kiểm tra và thêm errors/warnings có ID hợp lệ (theo từng thuốc Moxifloxacin)
+        // Chúng ta sẽ lặp qua từng thuốc Moxifloxacin để add error/warning gắn Id vào object
         if (!coMaBenhHopLe) {
             result.isValid = false;
-            xml2_data.filter(it => String(it.Ma_Thuoc).trim() === '40.231').forEach(it => {
+            moxiList.forEach(it => {
                 result.errors.push({ Id: it.Id, Error: 'Moxifloxacin (40.231) không có mã bệnh phù hợp (J15.x, J18.x, J44.1, J01.x, A41.x, N39.0, K65.x)' });
             });
         }
-        if (tuoiSo !== null && tuoiSo < 18) {
+        // Kiểm tra trẻ em < 18 tuổi trừ trường hợp trẻ em mắc bệnh lao (A15, A16, A17, A18, A19)
+        if (tuoiSo !== null && tuoiSo < 18 && !isLaoTreEm) {
             result.isValid = false;
-            result.errors.push('Bệnh nhân sử dụng Moxifloxacin (mã 40.231) nhưng chưa đủ 18 tuổi.');
+            moxiList.forEach(it => {
+                result.errors.push({
+                    Id: it.Id,
+                    Error: 'Bệnh nhân sử dụng Moxifloxacin (mã 40.231) nhưng chưa đủ 18 tuổi (không thuộc trường hợp trẻ em mắc bệnh lao A15-A19).'
+                });
+            });
         }
         if (coMaBenhO) {
             result.isValid = false;
-            result.errors.push('Bệnh nhân sử dụng Moxifloxacin (mã 40.231) nhưng có mã bệnh thuộc nhóm O00-O99 (phụ nữ có thai, sinh, hậu sản, cho con bú).');
+            moxiList.forEach(it => {
+                result.errors.push({
+                    Id: it.Id,
+                    Error: 'Bệnh nhân sử dụng Moxifloxacin (mã 40.231) nhưng có mã bệnh thuộc nhóm O00-O99 (phụ nữ có thai, sinh, hậu sản, cho con bú).'
+                });
+            });
         }
         if (canhBaoJ01) {
-            result.warnings.push('Chỉ định Moxifloxacin cho mã bệnh J01.x (viêm xoang cấp) chỉ hợp lệ khi có chứng minh thất bại điều trị trước bằng kháng sinh khác.');
+            moxiList.forEach(it => {
+                result.warnings.push({
+                    Id: it.Id,
+                    Warning: 'Chỉ định Moxifloxacin cho mã bệnh J01.x (viêm xoang cấp) chỉ hợp lệ khi có chứng minh thất bại điều trị trước bằng kháng sinh khác.'
+                });
+            });
         }
 
         if (result.errors.length > 0) {
@@ -127,11 +151,16 @@ const validateRule_Id_27 = async (patientData) => {
 
     } catch (error) {
         result.isValid = false;
-        result.errors.push(`Lỗi khi validate Thanh toán hoạt chất Moxifloxacin chỉ định sử dụng không phù hợp với tờ hướng dẫn sử dụng: ${error.message}`);
+        // Nếu không lấy được Id thuốc, gán Id là null
+        result.errors.push({
+            Id: null,
+            Error: `Lỗi khi validate Thanh toán hoạt chất Moxifloxacin chỉ định sử dụng không phù hợp với tờ hướng dẫn sử dụng: ${error.message}`
+        });
         result.message = 'Lỗi khi validate Thanh toán hoạt chất Moxifloxacin chỉ định sử dụng không phù hợp với tờ hướng dẫn sử dụng';
     }
 
     return result;
 };
+
 
 module.exports = validateRule_Id_27;

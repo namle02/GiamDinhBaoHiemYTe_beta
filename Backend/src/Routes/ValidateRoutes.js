@@ -25,4 +25,8 @@ router.post('/rules/:ruleName/validate', ValidateController.validateWithRule);
 // Validate dữ liệu với nhiều rule cùng lúc
 router.post('/rules/multiple/validate', ValidateController.validateWithMultipleRules);
 
+// Debug endpoints
+router.get('/debug/stats', ValidateController.getValidationStats);
+router.post('/debug/reset-counter', ValidateController.resetValidationCounter);
+
 module.exports = router;

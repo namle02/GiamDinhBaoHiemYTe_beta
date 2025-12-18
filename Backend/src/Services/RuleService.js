@@ -7,6 +7,8 @@ class RuleService {
     constructor() {
         this.rules = new Map();
         this.rulesPath = path.join(__dirname, '../Validators/Rules');
+        this.validationCallCount = 0;
+        this.lastValidationTime = null;
     }
 
     /**
@@ -88,8 +90,13 @@ class RuleService {
     async validatePatientData(patientData) {
         const validationResults = [];
         let overallValid = true;
-
-        console.log(`Bắt đầu validate patient data với ${this.rules.size} rules...`);
+        const startTime = Date.now();
+        
+        // Track validation calls để debug duplicate issues
+        this.validationCallCount++;
+        this.lastValidationTime = startTime;
+        
+        console.log(`🔄 [${new Date().toISOString()}] Validation call #${this.validationCallCount} - Bắt đầu validate patient data với ${this.rules.size} rules...`);
 
         for (const [ruleName, ruleInfo] of this.rules) {
             if (!ruleInfo.isActive) {
@@ -97,12 +104,13 @@ class RuleService {
             }
 
             try {
-               
+                const ruleStartTime = Date.now();
                 const result = await ruleInfo.function(patientData);
+                const ruleEndTime = Date.now();
 
                 // Đảm bảo result có đúng format
                 if (!result || typeof result !== 'object') {
-                    console.error(`Rule ${ruleName} trả về kết quả không hợp lệ`);
+                    console.error(`❌ Rule ${ruleName} trả về kết quả không hợp lệ`);
                     continue;
                 }
 
@@ -114,9 +122,9 @@ class RuleService {
                 if (result.isValid == false) {
                     validationResults.push(result);
                     overallValid = false;
-                    console.log(`❌ Rule ${ruleName}: FAIL`);
+                    console.log(`❌ [${ruleEndTime - ruleStartTime}ms] Rule ${ruleName}: FAIL`);
                 } else {
-                    console.log(`✅ Rule ${ruleName}: PASS`);
+                    console.log(`✅ [${ruleEndTime - ruleStartTime}ms] Rule ${ruleName}: PASS`);
                 }
             } catch (error) {
                 console.error(`❌ Lỗi khi chạy rule ${ruleName}:`, error.message);
@@ -135,11 +143,17 @@ class RuleService {
             }
         }
 
+        const endTime = Date.now();
+        const totalTime = endTime - startTime;
+        
+        console.log(`🏁 [${new Date().toISOString()}] Hoàn thành validation trong ${totalTime}ms - ${overallValid ? '✅ PASS' : '❌ FAIL'}`);
+
         return {
             overallValid: overallValid,
             totalRules: this.rules.size,
             activeRules: Array.from(this.rules.values()).filter(rule => rule.isActive).length,
             validationResults: validationResults,
+            executionTime: totalTime,
             summary: {
                 passed: this.rules.size - validationResults.length,
                 failed: validationResults.length,
@@ -208,6 +222,27 @@ class RuleService {
      */
     getRuleInfo(ruleName) {
         return this.rules.get(ruleName);
+    }
+
+    /**
+     * Reset validation call counter (để debug)
+     */
+    resetValidationCounter() {
+        this.validationCallCount = 0;
+        this.lastValidationTime = null;
+        console.log('🔄 Validation counter đã được reset');
+    }
+
+    /**
+     * Lấy thông tin validation calls (để debug)
+     */
+    getValidationStats() {
+        return {
+            callCount: this.validationCallCount,
+            lastValidationTime: this.lastValidationTime ? new Date(this.lastValidationTime).toISOString() : null,
+            rulesLoaded: this.rules.size,
+            activeRules: Array.from(this.rules.values()).filter(rule => rule.isActive).length
+        };
     }
 }
 

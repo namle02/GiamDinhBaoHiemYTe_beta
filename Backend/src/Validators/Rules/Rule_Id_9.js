@@ -21,10 +21,7 @@ const validateRule_Id_9 = async (patientData) => {
             const Ma_Dich_Vu = item.Ma_Dich_Vu;
             const Ma_Benh = item.Ma_Benh;
             
-            if (Ma_Dich_Vu === '17.0007.0234' || Ma_Dich_Vu === '17.0009.0255'
-                || Ma_Dich_Vu === '17.0018.0221' || Ma_Dich_Vu === '17.0026.0220'
-                || Ma_Dich_Vu === '17.0011.0237' || Ma_Dich_Vu === '17.0001.0254'
-                || Ma_Dich_Vu === '17.0004.0232') {
+            if (Ma_Dich_Vu === '17.0007.0234' || Ma_Dich_Vu === '17.0004.0232') {
                     let coMaBenhUngThu = false;
                     for (let i = 0; i <= 97; i++) {
                         const code = i < 10 ? `C0${i}` : `C${i}`;
