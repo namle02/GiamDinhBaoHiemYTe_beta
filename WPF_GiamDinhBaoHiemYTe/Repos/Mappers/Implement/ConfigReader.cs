@@ -38,12 +38,31 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 Config = (sheetData?.values ?? new List<List<string>>())
                     .Where(row => row.Count >= 2 && !string.IsNullOrEmpty(row[0]))
                     .ToDictionary(row => row[0], row => row[1]);
-                _httpClient.BaseAddress = new Uri($"{Config["Server_API"]}");
+                
+                // Kiểm tra và set BaseAddress cho HttpClient
+                if (Config.ContainsKey("Server_API") && !string.IsNullOrWhiteSpace(Config["Server_API"]))
+                {
+                    string serverApi = Config["Server_API"].Trim();
+                    // Đảm bảo URL có format đúng (có http:// hoặc https://)
+                    if (!serverApi.EndsWith("/"))
+                    {
+                        serverApi += "/";
+                    }
+                    _httpClient.BaseAddress = new Uri(serverApi);
+                    System.Diagnostics.Debug.WriteLine($"BaseAddress set to: {_httpClient.BaseAddress}");
+                }
+                else
+                {
+                    throw new Exception("Không tìm thấy cấu hình 'Server_API' trong Google Sheet hoặc giá trị rỗng!");
+                }
                 
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                string errorMessage = $"Lỗi khi đọc cấu hình từ Google Sheet: {ex.Message}";
+                MessageBox.Show(errorMessage, "Lỗi cấu hình", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine(errorMessage);
+                throw; // Re-throw để app biết có lỗi
             }
         }
     }

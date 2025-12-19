@@ -67,6 +67,8 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private int? chucdanh_id;
         [ObservableProperty] private string? ketQua;
         [ObservableProperty] private string? mucBinhThuong;
+        [ObservableProperty] private string? mo_Ta_Text;
+        [ObservableProperty] private string? trinhTuThucHien;
 
 
 

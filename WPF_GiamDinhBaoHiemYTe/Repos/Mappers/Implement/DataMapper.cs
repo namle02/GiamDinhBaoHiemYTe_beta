@@ -49,9 +49,9 @@ where MA_LK = N'{IDBenhNhan}' ORDER BY ID" },
         ELSE NULL
     END AS Mo_Ta_Text
 	,
-    TT.TrinhTuThucHien,
-    XNMD.MucBinhThuong,
-    XNMD.KetQua
+    TT.TrinhTuThucHien AS trinhTuThucHien,
+    XNMD.MucBinhThuong AS mucBinhThuong,
+    XNMD.KetQua AS ketQua
 FROM XML130.dbo.TT_03_DVKT_VTYT AS t
 --thời gian y lệnh đổi thành thời gian yêu cầu trong CLS yêu cầu
 LEFT JOIN (

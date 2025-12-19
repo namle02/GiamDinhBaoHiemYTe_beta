@@ -61,12 +61,29 @@ const XML3Schema = new mongoose.Schema({
   strict: false
 });
 
+// Transform để normalize các field PascalCase -> camelCase
+const normalizeTransform = (doc, ret) => {
+  // Normalize TrinhTuThucHien -> trinhTuThucHien
+  if (ret.TrinhTuThucHien && !ret.trinhTuThucHien) {
+    ret.trinhTuThucHien = ret.TrinhTuThucHien;
+  }
+  // Normalize KetQua -> ketQua
+  if (ret.KetQua && !ret.ketQua) {
+    ret.ketQua = ret.KetQua;
+  }
+  // Normalize MucBinhThuong -> mucBinhThuong
+  if (ret.MucBinhThuong && !ret.mucBinhThuong) {
+    ret.mucBinhThuong = ret.MucBinhThuong;
+  }
+  return convertDecimal128(ret);
+};
+
 XML3Schema.set('toJSON',{
-  transform: (_, ret) => convertDecimal128(ret),
+  transform: normalizeTransform,
 });
 
 XML3Schema.set('toObject', {
-  transform: (_, ret) => convertDecimal128(ret),
+  transform: normalizeTransform,
 });
 
 module.exports = mongoose.model('XML3', XML3Schema);
