@@ -68,6 +68,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? moTa_Text;
         [ObservableProperty] private string? trinhTuThucHien;
         [ObservableProperty] private string? ketluan;
+        [ObservableProperty] private decimal? phuTang;
 
 
 

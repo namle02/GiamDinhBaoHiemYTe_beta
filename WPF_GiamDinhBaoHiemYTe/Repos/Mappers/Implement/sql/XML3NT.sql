@@ -1,5 +1,4 @@
 DECLARE @SoTiepNhan VARCHAR(50)  = N'{IDBenhNhan}'
-
 DECLARE @TiepNhan_Id VARCHAR(50)
 SELECT @TiepNhan_Id = TiepNhan_Id FROM TiepNhan WHERE SoTiepNhan = @SoTiepNhan
 DECLARE @BenhAn_Id VARCHAR(50)
@@ -206,7 +205,7 @@ Select	@XacNhanChiPhi_ID = min(XacNhanChiPhi_ID) From	XacNhanChiPhi Where	TiepNh
 			END
 	  ,[ChucDanh_id] = chuc_danh
 	  ,[MoTa_Text] = MoTa_Text
-	  ,[ketluan] = KetLuan
+	  ,[KET_LUAN] = ketluan
 	  ,[TrinhTuThucHien] = TrinhTuThucHien
 	  ,[PhuTang] = PhuTang
 	   FROM (
@@ -452,7 +451,7 @@ Select	@XacNhanChiPhi_ID = min(XacNhanChiPhi_ID) From	XacNhanChiPhi Where	TiepNh
 										else null end
 										)
 						, kq.MoTa_Text
-						, CAST(kq.KetLuan AS NVARCHAR(MAX)) AS KetLuan
+						, kq.KetLuan
 						, yc.LoaiBenhPham_Id
 						, bapt.TrinhTuThucHien
 						, kq.PhuTang

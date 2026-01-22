@@ -36,14 +36,22 @@ const validateRule_Id_8 = async (patientData) => {
         );
 
         // Tìm các dịch vụ nội soi có sinh thiết trong danh sách
-        // Nếu có dịch vụ này mà không có dịch vụ đầu 25 thì báo lỗi
+        // Nếu có dịch vụ này mà không có dịch vụ đầu 25 thì kiểm tra PhuTang
         xml3_data.forEach(item => {
             if (item.Ma_Dich_Vu && dsDichVuBatBuocPhaiKiemTra.includes(item.Ma_Dich_Vu) && !coDichVuDau25) {
-                result.isValid = false;
-                result.errors.push({
-                    Id: item.id || item.Id,
-                    Error: `Dịch vụ ${item.Ma_Dich_Vu} nhưng không làm xét nghiệm giải phẫu mô bệnh học, điều chỉnh về mức giá của các DV nội soi không sinh thiết`
-                });
+                // Kiểm tra PhuTang: nếu null/undefined thì sai, nếu không null thì đúng
+                const phuTang = item.PhuTang;
+                const isPhuTangNull = phuTang === null || phuTang === undefined || 
+                    (typeof phuTang === 'string' && phuTang.trim() === '');
+                
+                if (isPhuTangNull) {
+                    result.isValid = false;
+                    result.errors.push({
+                        Id: item.id || item.Id,
+                        Error: `Dịch vụ ${item.Ma_Dich_Vu} nhưng không làm xét nghiệm giải phẫu mô bệnh học, điều chỉnh về mức giá của các DV nội soi không sinh thiết`
+                    });
+                }
+                // Nếu PhuTang không null thì không báo lỗi (đúng)
             }
         });
 

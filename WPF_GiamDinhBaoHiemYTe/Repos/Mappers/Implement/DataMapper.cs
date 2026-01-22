@@ -1,5 +1,8 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Windows;
 using System.Reflection;
 using System.IO;
@@ -194,6 +197,22 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         public async Task<PatientData> GetDataFromDB(string IDBenhNhan)
         {
             PatientData patient = new() { PatientID = IDBenhNhan };
+            // Khởi tạo tất cả các XML list là empty list để tránh null
+            patient.Xml0 = new List<XML0>();
+            patient.Xml1 = new List<XML1>();
+            patient.Xml2 = new List<XML2>();
+            patient.Xml3 = new List<XML3>();
+            patient.Xml4 = new List<XML4>();
+            patient.Xml5 = new List<XML5>();
+            patient.Xml6 = new List<XML6>();
+            patient.Xml7 = new List<XML7>();
+            patient.Xml8 = new List<XML8>();
+            patient.Xml9 = new List<XML9>();
+            patient.Xml10 = new List<XML10>();
+            patient.Xml11 = new List<XML11>();
+            patient.Xml13 = new List<XML13>();
+            patient.Xml14 = new List<XML14>();
+            patient.Xml15 = new List<XML15>();
 
             string connectionString = _configReader.Config["DB_string"];
             string GetConnectionStringForDatabase(string baseConnectionString)
@@ -272,9 +291,15 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                         XML_Query_List.Add(XMLDataType.XML0, LoadSqlFromFile("XML0.sql", maTN));
                         XML_Query_List.Add(XMLDataType.XML1, LoadSqlFromFile("XML1NT.sql", maTN));
                         XML_Query_List.Add(XMLDataType.XML2, LoadSqlFromFile("XML2NT.sql", maTN));
-                        XML_Query_List.Add(XMLDataType.XML3, LoadSqlFromFile("XML3NT.sql", maTN));
+                        string xml3Query = LoadSqlFromFile("XML3NT.sql", maTN);
+                        XML_Query_List.Add(XMLDataType.XML3, xml3Query);
+                        System.Diagnostics.Debug.WriteLine($"XML3 query loaded. Length: {xml3Query?.Length ?? 0}, IsEmpty: {string.IsNullOrWhiteSpace(xml3Query)}");
                         XML_Query_List.Add(XMLDataType.XML4, LoadSqlFromFile("XML4NT.sql", maTN));
                         XML_Query_List.Add(XMLDataType.XML5, LoadSqlFromFile("XML5NT.sql", maTN));
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"maTN is null or empty, XML3 query will not be added");
                     }
                 }
 
@@ -291,6 +316,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     {
                         if (string.IsNullOrWhiteSpace(query.Value))
                         {
+                            System.Diagnostics.Debug.WriteLine($"Query {query.Key} is empty, skipping...");
                             continue;
                         }
 
@@ -300,9 +326,19 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                             await GetXMLData(query.Key, query.Value, patient, connection);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Ignore errors for individual queries
+                        // Log error for debugging, especially for XML3
+                        if (query.Key == XMLDataType.XML3)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error executing XML3 query: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                            if (ex.InnerException != null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                            }
+                        }
+                        // Don't ignore errors - let them be logged but continue with other queries
                     }
                 }
             }
@@ -320,6 +356,22 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         private async Task<PatientData> GetDataFromDBFallback(string IDBenhNhan, string connectionStringForAll)
         {
             PatientData patient = new() { PatientID = IDBenhNhan };
+            // Khởi tạo tất cả các XML list là empty list để tránh null
+            patient.Xml0 = new List<XML0>();
+            patient.Xml1 = new List<XML1>();
+            patient.Xml2 = new List<XML2>();
+            patient.Xml3 = new List<XML3>();
+            patient.Xml4 = new List<XML4>();
+            patient.Xml5 = new List<XML5>();
+            patient.Xml6 = new List<XML6>();
+            patient.Xml7 = new List<XML7>();
+            patient.Xml8 = new List<XML8>();
+            patient.Xml9 = new List<XML9>();
+            patient.Xml10 = new List<XML10>();
+            patient.Xml11 = new List<XML11>();
+            patient.Xml13 = new List<XML13>();
+            patient.Xml14 = new List<XML14>();
+            patient.Xml15 = new List<XML15>();
 
             // Load tất cả SQL queries (cách cũ)
             Dictionary<XMLDataType, string> XML_Query_List = new Dictionary<XMLDataType, string>
@@ -369,6 +421,14 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         {
             try
             {
+                // Log for XML3 debugging
+                if (type == XMLDataType.XML3)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Executing XML3 query...");
+                    System.Diagnostics.Debug.WriteLine($"Query length: {query.Length}");
+                    System.Diagnostics.Debug.WriteLine($"Query preview: {query.Substring(0, Math.Min(500, query.Length))}...");
+                }
+
                 switch (type)
                 {
                     case XMLDataType.XML0:
@@ -381,7 +441,124 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                         patient.Xml2 = (await connection.QueryAsync<XML2>(query)).ToList();
                         break;
                     case XMLDataType.XML3:
-                        patient.Xml3 = (await connection.QueryAsync<XML3>(query)).ToList();
+                        // Query as dynamic to handle type conversion issues
+                        try
+                        {
+                            var dynamicResult = await connection.QueryAsync(query, commandType: CommandType.Text, commandTimeout: 300);
+                            var xml3List = new List<XML3>();
+                            
+                            foreach (var row in dynamicResult)
+                            {
+                                var xml3 = new XML3();
+                                var rowDict = (IDictionary<string, object>)row;
+                                
+                                foreach (var kvp in rowDict)
+                                {
+                                    try
+                                    {
+                                        var prop = typeof(XML3).GetProperty(kvp.Key, 
+                                            System.Reflection.BindingFlags.IgnoreCase | 
+                                            System.Reflection.BindingFlags.Public | 
+                                            System.Reflection.BindingFlags.Instance);
+                                        
+                                        if (prop != null)
+                                        {
+                                            var value = kvp.Value;
+                                            
+                                            // Handle DBNull
+                                            if (value == null || value == DBNull.Value)
+                                            {
+                                                prop.SetValue(xml3, null);
+                                                continue;
+                                            }
+                                            
+                                            // Handle empty string for int? properties
+                                            if (prop.PropertyType == typeof(int?) && value is string strValue)
+                                            {
+                                                if (string.IsNullOrWhiteSpace(strValue))
+                                                {
+                                                    prop.SetValue(xml3, null);
+                                                    continue;
+                                                }
+                                                if (int.TryParse(strValue, out int intResult))
+                                                {
+                                                    prop.SetValue(xml3, intResult);
+                                                    continue;
+                                                }
+                                                prop.SetValue(xml3, null);
+                                                continue;
+                                            }
+                                            
+                                            // Handle empty string for decimal? properties
+                                            if (prop.PropertyType == typeof(decimal?) && value is string decStrValue)
+                                            {
+                                                if (string.IsNullOrWhiteSpace(decStrValue))
+                                                {
+                                                    prop.SetValue(xml3, null);
+                                                    continue;
+                                                }
+                                                if (decimal.TryParse(decStrValue, out decimal decResult))
+                                                {
+                                                    prop.SetValue(xml3, decResult);
+                                                    continue;
+                                                }
+                                                prop.SetValue(xml3, null);
+                                                continue;
+                                            }
+                                            
+                                            // Try direct conversion
+                                            try
+                                            {
+                                                var convertedValue = Convert.ChangeType(value, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                                                prop.SetValue(xml3, convertedValue);
+                                            }
+                                            catch
+                                            {
+                                                // If conversion fails, try to parse as string first
+                                                if (value is string stringValue && !string.IsNullOrWhiteSpace(stringValue))
+                                                {
+                                                    var underlyingType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                                                    if (underlyingType == typeof(int) && int.TryParse(stringValue, out int intVal))
+                                                    {
+                                                        prop.SetValue(xml3, intVal);
+                                                    }
+                                                    else if (underlyingType == typeof(decimal) && decimal.TryParse(stringValue, out decimal decVal))
+                                                    {
+                                                        prop.SetValue(xml3, decVal);
+                                                    }
+                                                    else
+                                                    {
+                                                        prop.SetValue(xml3, stringValue);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"Error mapping property {kvp.Key}: {ex.Message}");
+                                    }
+                                }
+                                
+                                xml3List.Add(xml3);
+                            }
+                            
+                            patient.Xml3 = xml3List;
+                            System.Diagnostics.Debug.WriteLine($"XML3 query executed successfully. Result count: {patient.Xml3?.Count ?? 0}");
+                            
+                            // Log first few results for debugging
+                            if (patient.Xml3.Count > 0)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"XML3 first record: Id={patient.Xml3[0].Id}, Ma_Lk={patient.Xml3[0].Ma_Lk}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error executing XML3 query: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                            patient.Xml3 = new List<XML3>();
+                            throw; // Re-throw to be caught by outer catch
+                        }
                         break;
                     case XMLDataType.XML4:
                         patient.Xml4 = (await connection.QueryAsync<XML4>(query)).ToList();
@@ -418,8 +595,25 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                         break;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                // Log error for debugging - especially for XML3
+                if (type == XMLDataType.XML3)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading XML3: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Error type: {ex.GetType().Name}");
+                    System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                    if (ex.InnerException != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                    }
+                    System.Diagnostics.Debug.WriteLine($"Query preview: {query.Substring(0, Math.Min(500, query.Length))}...");
+                }
+                // Initialize empty list instead of leaving null
+                if (type == XMLDataType.XML3 && patient.Xml3 == null)
+                {
+                    patient.Xml3 = new List<XML3>();
+                }
                 throw;
             }
         }

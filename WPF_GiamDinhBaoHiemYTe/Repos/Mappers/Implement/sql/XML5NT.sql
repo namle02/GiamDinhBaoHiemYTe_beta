@@ -1,229 +1,207 @@
-﻿
-DECLARE @Sobenhan NVARCHAR(20) = N'{IDBenhNhan}'
+﻿DECLARE @SoTiepNhan VARCHAR(50)  = N'{IDBenhNhan}'
+
+DECLARE @TiepNhan_Id VARCHAR(50)
+SELECT @TiepNhan_Id = TiepNhan_Id FROM TiepNhan WHERE SoTiepNhan = @SoTiepNhan
+DECLARE @BenhAn_Id VARCHAR(50)
+DECLARE @Ma_Lk VARCHAR(50)
+DECLARE @ChanDoan_NT NVARCHAR(1000)
+SELECT @Ma_Lk = convert(varchar (50),SoTiepNhan ) FROM TiepNhan WHERE TiepNhan_Id = @TiepNhan_Id
+DECLARE @ICDCapCuu VARCHAR(20)
+DECLARE @ICD_NT NVARCHAR(1000)
+DECLARE @ICD_NTGopBenh NVARCHAR(1000)
+DECLARE @ICD_phu NVARCHAR(1000)
+DECLARE @Ma_PTTT_QT varchar(250)
+declare @ChanDoan_RV  NVARCHAR(1000)
 
 
 
-DECLARE @benhan_id NVARCHAR(20)
-SELECT	@BenhAn_Id = ba.BenhAn_Id
-FROM	dbo.BenhAn ba (nolock) 
-INNER jOIN XacNhanChiPhi (nolock)   xn on xn.xacnhanchiphi_id=ba.xacnhanchiphi_id
-WHERE	ba.SoBenhAn = @SoBenhAn 
+SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id] (NULL, @TiepNhan_Id)
 
+if @BenhAn_Id is null 
 
-declare @Ma_Lk varchar (20) = null
-DECLARE @TiepNhan_Id int
-DECLARE @ChanDoan_RV NVARCHAR(2000)
-DECLARE @ICD_CHINH NVARCHAR(2000)
-DECLARE @ICD_CHINH_YHCT NVARCHAR(2000)
-DECLARE @ChanDoan NVARCHAR(2000)
-SELECT	@ChanDoan = isnull(ba.ChanDoanVaoKhoa, isnull(icd.TenICD, isnull( cc.ChanDoanNhapVien,icd_cc.TenICD) ) )
-			
-			, @ICD_CHINH = icd.MaICD
-			, @ICD_CHINH_YHCT = icd.MaICD_YHCT
+set @BenhAn_Id  = (select BenhAn_Id from BenhAn where TiepNhan_Id = @TiepNhan_Id)
+
+if @BenhAn_Id is not null
+	begin
+		SELECT	@ChanDoan_NT = isnull(ba.ChanDoanVaoKhoa, isnull(icd.TenICD, isnull( cc.ChanDoanNhapVien,icd_cc.TenICD) ) )
+			, @ICDCapCuu = isnull(icd.MaICD, icd_cc.MaICD)
+			, @ICD_NT = icd.MaICD
+			, @ICD_NTGopBenh = [dbo].[Get_MaICDByTiepNhan_ID_gopbenhPHCN] (@Tiepnhan_id)
+			, @ICD_phu = icd_k.MaICD + ';' + [dbo].[Get_MaICD_ByBenhAn_Id] (@BenhAn_Id,'M')--, @SoBenhAn = ba.SoBenhAn,
+			--, @Ma_Lk =  REPLACE(ba.SoBenhAn,'/','_')
 			, @ChanDoan_RV = isnull(ba.ChanDoanRaVien,icd.TenICD)+ ', ' + isnull(isnull(ba.chandoanphuravien,icd_k.tenicd),'')
-			, @SoBenhAn = ba.SoBenhAn
-			, @Ma_Lk =  REPLACE(ba.SoBenhAn,'/','_')
-			, @TiepNhan_Id = ba.TiepNhan_Id
-	FROM	(
-				SELECT	*
-				FROM	dbo.BenhAn
-				WHERE	BenhAn_Id = @BenhAn_Id
-			) ba
-	INNER JOIN TiepNhan tn  (nolock)  ON ba.TiepNhan_ID= tn.TiepNhan_ID
-	LEFT JOIN	DM_ICD icd  (nolock) ON icd.ICD_Id =ba.ICD_BenhChinh
-	left join ThongTinCapCuu cc (nolock)  on ba.BenhAn_ID = cc.BenhAn_Id 
-	left join DM_ICD icd_cc (nolock)  on isnull(cc.ICD_BenhChinh, cc.ICD_BenhPhu) = icd_cc.ICD_Id
-	LEFT JOIN DM_ICD icd_k (nolock)  ON ba.ICD_BenhPhu  = icd_k.ICD_Id
-	
-	DECLARE @MaCSKCB  NVARCHAR(2000)
-	
-	DECLARE @Ma_TheBHYT VARCHAR(500)
-	
-	DECLARE @ICD NVARCHAR(2000)
-	DECLARE @ICD_Khac NVARCHAR(2000)
+		FROM	(
+					SELECT	*
+					FROM	dbo.BenhAn
+					WHERE	BenhAn_Id = @BenhAn_Id
+				) ba
+		INNER JOIN TiepNhan tn  (nolock)  ON ba.TiepNhan_ID= tn.TiepNhan_ID
+		LEFT JOIN DM_ICD icd  (nolock) ON icd.ICD_Id = ba.ICD_BenhChinh
+		left join ThongTinCapCuu cc (nolock)  on ba.BenhAn_ID = cc.BenhAn_Id 
+		left join DM_ICD icd_cc (nolock)  on isnull(cc.ICD_BenhChinh, cc.ICD_BenhPhu) = icd_cc.ICD_Id
+		LEFT JOIN DM_ICD icd_k (nolock)  ON ba.ICD_BenhPhu  = icd_k.ICD_Id	
 
-
-	DECLARE @ICD_PHU NVARCHAR(2000)
-	DECLARE @ICD_PHU_YHCT NVARCHAR(2000)
+		SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id] (@BenhAn_Id, NULL)
+	end
+	DECLARE @MaCSKCB  NVARCHAR(1000)
 	
-	DECLARE	@NGAY_VAO DATETIME
-	DECLARE	@NGAY_RA DATETIME
+	DECLARE @ChanDoan_PK NVARCHAR(1000)
+	DECLARE @ICD_PK NVARCHAR(1000)
+	DECLARE @ICDKB NVARCHAR(1000)
+	DECLARE @ICD_PHUPK NVARCHAR(1000)
+	
+	DECLARE @ICD_PNT NVARCHAR(1000)
+	
+	DECLARE @ICD_PKBenhChinh NVARCHAR(1000)
+	DECLARE @ICD_PKGopBenh NVARCHAR(1000)
+	DECLARE	@ThoiGianKham DATETIME
+	
+	DECLARE @ChanDoanCapCuu NVARCHAR(1000)
+	
+	declare @CapCuu bit
+	
+	DECLARE @KhamBenh_Id int
+	Declare @Khoa NVARCHAR(200)
+	declare @ICD_Khac NVARCHAR(1000)
+	declare @SoBenhAn varchar(25)
+
+	
 	DECLARE @TT_01_TONGHOP_ID int = null
+	DECLARE @NGAY_VAO DATETIME
 	
-	
+	set @CapCuu = 0
+	----Phòng Khám
+	set @ICD_PK = [dbo].[Get_MaICDPhuByTiepNhan_ID](@TiepNhan_Id)
+	set @ChanDoan_PK = [dbo].[Get_DSChanDoanKB_ByTiepNhan_ID](@TiepNhan_Id)
+	set @ICD_PHUPK = [dbo].[Get_MaICD_ByTiepNhan_ID](@TiepNhan_Id)
+	set @ICD_PKBenhChinh = [dbo].[Get_MaICDByTiepNhan_ID_benhchinh](@TiepNhan_Id)
+	set @ICD_PKGopBenh = [dbo].[Get_MaICDByTiepNhan_ID_gopbenh](@TiepNhan_Id)
+	----end Phòng Khám
+	---Bệnh án Ngoại trú--
+	set @ICD_PNT = [dbo].[Get_MaICD_Phu_ByBenhAn_Id] (@BenhAn_Id,'M') --- icd bệnh phụ
+
+
 	select @MaCSKCB=Value 
 	from Sys_AppSettings  where Code = N'MaBenhVien_BHYT'
-	-- Dùng ?? test
+
+	-- Dùng để test
 	--SET @MaCSKCB = '80005'
-	Declare @MocThoiGian_DuocTyLe varchar(10) = '20190101'
 
-	Declare @MinBHYTChiTra decimal(18,2) = 208500.00
-	SELECT @MinBHYTChiTra = VALUE from sys_appsettings where code = 'LuongToiThieu'
-	SET @ICD_PHU = [dbo].[Get_MaICD_Phu_ByBenhAn_Id] (@BenhAn_Id,'M')
-	SET @ICD_PHU_YHCT = [dbo].[Get_MaICDYHCT_Phu_ByBenhAn_Id_YHCT] (@BenhAn_Id ,'Y3')
-	SET @MocThoiGian_DuocTyLe = dbo.sp_SysGetAppSettingValue('BHYT_NgayTiepNhan_DuocTyLe','VI')
+	Declare @LuongToiThieu Decimal(18,2) = 208500.00
+	SELECT @LuongToiThieu = VALUE from sys_appsettings where code = 'LuongToiThieu'
 
-		
-	
 	
 
--- TUvq2 Tinh TOng Tien Thuoc
-Declare @Tong_Tien_Thuoc Decimal(18, 2) = 0
-Declare @T_BHTT decimal(18,2) = 0
-Declare @Tong_Chi decimal(18,2) = 0
---Declare @Thanh_Tien decimal(18,2) = 0
-Declare @T_BNCCT decimal(18,2) = 0
-Declare @T_BNTT decimal(18,2) = 0
-Declare @T_VTYT Decimal(18,2) = 0
-Declare @T_KTC Decimal(18,2) = 0
-declare @T_ThanhTienBH decimal(18,2) = 0
-Declare @MocThoiGian_BHYT varchar(10) = '20180715'
+	--lấy chẩn đoán của bệnh án ngoại trú
+	select @ChanDoanCapCuu = icd.TenICD ,@ICDCapCuu = icd.MaICD, @CapCuu = 1			
+	from BenhAn ba
+	left join DM_ICD icd   (Nolock)  on icd.ICD_Id = ba.ICD_BenhChinh
+	where TiepNhan_Id = @TiepNhan_Id
+	and ba.SoCapCuu is not null
+
+	--lấy mã bệnh chính của phòng khám đầu tiên
+	SELECT @ICDKB = icd.MaICD	
+	FROM TiepNhan tn (nolock)
+	join	KhamBenh kb (nolock) ON tn.TiepNhan_Id = kb.TiepNhan_Id
+	and kb.ThoiGianKham IN (SELECT min(ThoiGianKham) FROM KhamBenh k1 WHERE k1.TiepNhan_Id = kb.TiepNhan_Id )
+	LEFT JOIN	DM_ICD icd  (Nolock)  ON  icd.ICD_Id = kb.ChanDoanICD_Id
+	where tn.tiepnhan_id = @TiepNhan_Id
+	
+	------------------
+	
+	------DungDV11
+	
+	
+	------End
+	SET @BenhAn_Id = NULL   --Tránh trường hợp bệnh án ngoại trú vẫn có benhan_id
+-- DUNGDV Tinh TOng Tien Thuoc
+	Declare @Tong_Tien_Thuoc Decimal(18, 2) = 0
+	Declare @Tong_Chi decimal(18,2) = 0
+	Declare @XacNhanChiPhi_ID int = null
+	Declare @T_BHTT decimal(18,2) = 0
+	Declare @T_BNCCT decimal(18,2) = 0
+	Declare @T_BNTT decimal(18,2) = 0
+	Declare @T_NguonKhac decimal(18,2) = 0
+	Declare @Tong_Chi_BH decimal(18,2) = 0
+
+	--SET @T_BHTT = dbo.Tong_t_bhtt_ngoaitru (@TiepNhan_Id)
+
+	SELECT 
+		@Tong_Chi = T_TongChi,
+		@T_BHTT = T_BHTT,
+		@T_BNCCT = T_BNCCT,
+		@Tong_Tien_Thuoc = T_Tong_Tien_Thuoc,
+		@T_BNTT=T_BNTT,
+		@T_NguonKhac=T_NguonKhac,
+		@Tong_Chi_BH = T_TONGCHI_BH
+	FROM dbo.Tong_Tien_XML_BangKe01_130 (@TiepNhan_Id)
 
 
-SELECT 
-	@Tong_Chi = T_TongChi,
-	@T_BHTT = T_BHTT,
-	@T_BNCCT = T_BNCCT,
-	@T_BNTT = T_BNTT,
-	@Tong_Tien_Thuoc = T_Tong_Tien_Thuoc,
-	@T_VTYT = T_Tong_Tien_VTYT,
-	@T_KTC = T_Tong_Tien_KTC,
-	@T_ThanhTienBH  = T_ThanhTienBH 
-FROM dbo.Tong_Tien_XML_BangKe02_130 (@BenhAn_Id)
 
-DECLARE @Ma_PTTT_QT varchar(250)
-SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id] (@BenhAn_Id, NULL)
-
-
-
-DECLARE @SoChuyenVien nvarchar (50) = null
+declare @SoChuyenVien nvarchar (50) = null
 SELECT		
-			@SoChuyenVien = right (BenhAnTongQuat.SoBenhAn,9)--tùy ch?nh theo d? án
-			--GIAY_CHUYEN_TUYEN = left (BenhAnTongQuat.SoBenhAn,6),--tùy ch?nh theo d? án
-	FROM (select * from BenhAn where BenhAn.BenhAn_Id = @BenhAn_Id and XacNhanChiPhi_Id is not null) BenhAn
-	JOIN BenhAnTongQuat (nolock)   ON BenhAnTongQuat.BenhAn_Id = BenhAn.BenhAn_Id
-	JOIN BenhAnTongQuat_GCV (nolock)   ON BenhAnTongQuat.BenhAnTongQuat_Id = BenhAnTongQuat_GCV.BenhAnTongQuat_Id
+			@SoChuyenVien = left (SoPhieu,6)  
+			--GIAY_CHUYEN_TUYEN = right(SoPhieu,8)--tùy chỉnh theo dự án
+	FROM ( select * from  TiepNhan where TiepNhan_Id = @TiepNhan_id and XacNhanChiPhi_Id is not null ) TN
+		JOIN DM_BenhNhan (nolock) ON tn.BenhNhan_Id = DM_BenhNhan.BenhNhan_Id
+		left join DM_BenhVien (nolock)  td on td.benhvien_id = tn.NoiGioiThieu_Id
+		join ChuyenVien cv ( nolock ) on cv.TiepNhan_Id = tn.TiepNhan_Id
 
-
+if @BenhAn_Id is null 
+begin
+Select	@XacNhanChiPhi_ID = min(XacNhanChiPhi_ID) From	XacNhanChiPhi Where	TiepNhan_Id = @TiepNhan_Id And SoXacNhan IS NOT NULL
 
 	SELECT  
 	[MA_LK] = @Ma_Lk	
       ,[STT] = row_number () over (order by (select 1))
       ,[DIEN_BIEN_LS] = dien_bien
-      ,[GIAI_DOAN_BENH] = GiaiDoan
+      ,[GIAI_DOAN_BENH] = NULL
       ,[HOI_CHAN] = hoi_chan
       ,[PHAU_THUAT] = phau_thuat
-      ,[THOI_DIEM_DBLS] = ngay_yl
-      ,[NGUOI_THUC_HIEN] = Nguoi_TH
+      ,[THOI_DIEM_DBLS] = NGAY_YL
+      ,[NGUOI_THUC_HIEN] = Ma_Bsi
       ,[DU_PHONG] = NULL
-
 	  
 	From 
 	( 
-		-- phi?u ?i?u tr?
-	SELECT	distinct
+		SELECT	DIEN_BIEN = isnull(pt.ICD_TruocPhauThuat_MoTa,isnull(yc.NoiDungChiTiet,YC.Chandoan) ) 
+					, HOI_CHAN = null
+					, PHAU_THUAT = isnull(pt.CanThiepPhauThuat,' ')	--+ isnull(pt.TrinhTuThucHien_Text,isnull(yc.NoiDungChiTiet,YC.Chandoan))
+					, NGAY_YL = replace(convert(varchar , pt.ThoiGianKetThuc, 112)+convert(varchar(5), pt.ThoiGianKetThuc, 108), ':','')
+					, Ma_Bsi = dbo.Get_MaBacSi_XML3_By_BenhAnPhauThuat_Id(pt.BenhAnPhauThuat_Id)
+		From	(
+					Select	*
+					From	XacNhanChiPhi (nolock) 
+					Where	TiepNhan_Id = @TiepNhan_Id
+						And SoXacNhan IS NOT NULL
+				) xn
+		left Join	XacNhanChiPhiChiTiet (nolock)  xnct On xnct.XacNhanChiPhi_Id = xn.XacNhanChiPhi_Id and xnct.DonGiaHoTroChiTra>0
+		left JOIN	dbo.VienPhiNoiTru_Loai_IDRef (nolock)  LI ON LI.Loai_IDRef = xnct.Loai_IDRef and xnct.DonGiaHoTroChiTra>0
+		left JOIN	dbo.TiepNhan (nolock)  tn ON tn.TiepNhan_Id = xn.TiepNhan_Id
+		left join dbo.DM_DichVu  (nolock) dv on dv.DichVu_Id = xnct.NoiDung_Id AND li.PhanNhom = 'DV'
+		left join DM_NhomDichVu  (nolock) ndv on ndv.NhomDichVu_Id = dv.NhomDichVu_Id
+		left join CLSYeuCauChiTiet (nolock)  clsyc on clsyc.YeuCauChiTiet_Id=xnct.IDRef and xnct.Loai_IDRef='A'
+		left join CLSYeuCau yc (nolock)  on yc.CLSYeuCau_Id=clsyc.CLSYeuCau_Id
+		join BenhAnPhauThuat  pt (Nolock) on pt.CLSYeuCau_Id=yc.CLSYeuCau_Id
+		WHERE	xnct.DonGiaHoTroChiTra > 0
+		AND (xnct.DonGiaHoTro * xnct.SoLuong) <> 0
+		and ndv.LoaiDichVu_ID in (3,8)
+		union all
+		SELECT 
+		dien_bien =  case when hc.HoiChan_Id is not null then isnull(hc.TomTat_TienSuBenh +', ','') + isnull(hc.TinhTrang +', ','') + isnull(TomTat_DienBienBenh,'')  else  '' end
+		, hoi_chan =case when hc.HoiChan_Id is not null then isnull(hc.ChanDoan +', ','') + isnull(hc.HuongXuTri +', ','') + isnull(ChamSoc,'')   else '' end
+		, phau_thuat = ''
+		, ngay_yl = case when hc.HoiChan_Id is not null then replace(convert(varchar , hc.ThoiGianHoiChan, 112)+convert(varchar(5),  hc.ThoiGianHoiChan, 108), ':','')   else  '' end
+		, Ma_Bsi = nv.SoChungChiHanhNghe
+		From	(
+					Select	*
+					From	XacNhanChiPhi (nolock) 
+					Where	TiepNhan_Id = @TiepNhan_Id
+						And SoXacNhan IS NOT NULL
+				) xn
+		left join HoiChan hc (nolock) on hc.BenhAn_Id = xn.TiepNhan_Id
+		left join vw_NhanVien nv on nv.NhanVien_Id = hc.BacSi_Id
+		WHERE	hc.HoiChan_Id is not null
+	) A
 
-			dien_bien =  SUBSTRING(dienbien, 1, 2000)
-			, hoi_chan = null
-			, phau_thuat = null
-			, ngay_yl =  replace(convert(varchar , kb.ThoiGianKham, 112)+convert(varchar(5),  kb.ThoiGianKham, 108), ':','') 
-			, Nguoi_TH = bsi.SoChungChiHanhNghe
-			, GiaiDoan = xn.ChanDoan
-	From	(
-				Select	*
-				From	XacNhanChiPhi (nolock) 
-				Where	BenhAn_Id = @BenhAn_Id
-			) xn
-	
-	join NoiTru_KhamBenh (nolock)  kb on kb.BenhAn_Id = xn.BenhAn_Id
-	left join NoiTru_ToaThuoc nttt on nttt.KhamBenh_Id = kb.KhamBenh_Id
-	join vw_NhanVien (nolock)  bsi on bsi.NhanVien_Id = kb.BasSiKham_Id
-	LEFT JOIN (SELECT SUM(SoLuong) AS sltra,ToaThuoc_Id FROM NoiTru_TraThuocChiTiet GROUP by ToaThuoc_Id )as ntttct ON ntttct.ToaThuoc_Id = nttt.ToaThuoc_Id  
-	where  kb.DienBien is not null
-	and  REPLACE(REPLACE(kb.dienbien, CHAR(13), ''), CHAR(10), '') <> ''
-	and kb.DienBien <> ''
-	AND ((ntttct.sltra!=nttt.SoLuong OR nttt.SoLuong IS NULL OR ntttct.sltra IS NULL) AND ISNULL(HuyToaThuoc, 0) = 0)
-
-union all
-	-- t??ng trình ph?u thu?t
-	SELECT	distinct
-
-			dien_bien =   left(isnull(pt.ICD_TruocPhauThuat_MoTa,isnull(yc.NoiDungChiTiet,YC.Chandoan) ) ,2000)
-			, hoi_chan = null
-			, phau_thuat = isnull(pt.CanThiepPhauThuat,' ')	+ isnull(yc.NoiDungChiTiet,'')
-			, ngay_yl =  replace(convert(varchar , pt.ThoiGianKetThuc, 112)+convert(varchar(5), pt.ThoiGianKetThuc, 108), ':','') 
-			, Nguoi_TH =  bscls.SoChungChiHanhNghe + (dbo.Get_MaBacSi_XML3_By_BenhAnPhauThuat_Id(pt.BenhAnPhauThuat_Id))
-			, GiaiDoan = xn.ChanDoan
-	From	(
-				Select	*
-				From	XacNhanChiPhi (nolock) 
-				Where	BenhAn_Id = @BenhAn_Id
-			) xn
-	left join XacNhanChiPhiChiTiet xncpct (nolock) On xncpct.XacNhanChiPhi_Id = xn.XacNhanChiPhi_Id and xncpct.DonGiaHoTroChiTra>0
-	JOIN	dbo.VienPhiNoiTru_Loai_IDRef LI (nolock) ON LI.Loai_IDRef = xncpct.Loai_IDRef
-	LEFT JOIN	(
-					SELECT	dndv.DichVu_Id, mbc.MoTa, mbc.ID, mbc.Ma,
-					CASE 
-									WHEN mbc.TenField in ('CK','CongKham','KB','TienKham') THEN '01'
-									WHEN mbc.TenField in( 'XN','XetNghiem','XNHH') THEN '03'
-								WHEN mbc.TenField in ('Thuoc','OXY') THEN '16'
-									WHEN mbc.TenField in( 'TTPT','TT','TT_PT') THEN '06'
-									WHEN mbc.TenField in('DVKT_Cao', 'KTC') THEN '07'
-									WHEN mbc.TenField = 'VC' THEN '11'
-									WHEN mbc.TenField in  ('MCPM','Mau','DT','LayMau','DTMD') THEN '08'	
-									WHEN mbc.TenField in ('CDHA','CDHA_TDCN') THEN '04'
-									WHEN mbc.TenField = 'TDCN' THEN '05'
-									WHEN mbc.TenField = 'K' THEN 'Khac'
-									WHEN mbc.TenField in  ('NGCK','Giuong','GB','GI') THEN '12'
-									WHEN mbc.TenField = 'VTYT' THEN '10'
-									WHEN mbc.TenField = 'ThuocK' THEN '17'
-							ELSE mbc.TenField
-					END  as TenField
-					FROM	dbo.DM_MauBaoCao mbc
-					JOIN	dbo.DM_DinhNghiaDichVu dndv ON dndv.NhomBaoCao_Id = mbc.ID
-					WHERE	MauBC = 'BCVP_097'
-				) map  ON map.DichVu_Id = xncpct.NoiDung_Id AND LI.PhanNhom = 'DV'
-	LEFT JOIN	dbo.BenhAn ba (Nolock) ON ba.BenhAn_Id = @BenhAn_Id
-	LEFT JOIN	dbo.TiepNhan tn (Nolock)  ON tn.TiepNhan_Id = ba.TiepNhan_Id
-	LEFT JOIN	dbo.DM_BenhNhan bn (Nolock)  ON bn.BenhNhan_Id = tn.BenhNhan_Id
-	LEFT JOIN	DM_DoiTuong dt  (Nolock)  on dt.DoiTuong_Id = tn.DoiTuong_Id
-	left join dbo.DM_DichVu dv (Nolock)  on dv.DichVu_Id = xncpct.NoiDung_Id AND li.PhanNhom = 'DV'
-	left join DM_NhomDichVu ndv  (nolock) on ndv.NhomDichVu_Id = dv.NhomDichVu_Id
-	left join DM_DIchVU con (nolock)  on con.CapTren_Id = dv.DichVu_ID
-	left join CLSYeuCauChiTiet clsyc  (Nolock) on clsyc.YeuCauChiTiet_Id=xncpct.IDRef
-	left join CLSYeuCau yc  (Nolock) on yc.CLSYeuCau_Id=clsyc.CLSYeuCau_Id
-	join BenhAnPhauThuat pt (Nolock) on pt.CLSYeuCau_Id=yc.CLSYeuCau_Id
-	left join vw_NhanVien bscls  (Nolock) on bscls.NhanVien_Id=yc.BacSiChiDinh_Id
-
-
-	where xncpct.DonGiaHoTro > 0 
-		and xncpct.DonGiaHoTroChiTra > 0
-		and ndv.LoaiDichVu_Id in (3,8)
-	
-	union all 
-	-- biên b?n h?i ch?n
-SELECT	distinct
-
-	dien_bien =  left(
-	N'Tóm tắt tiền sử bệnh: ' +	isnull(hc.TomTat_TienSuBenh,'') 
-	+ N', tình trang: '+ isnull(hc.TinhTrang ,'') 
-	+ N', tóm tắt diễn biến bệnh: ' + isnull(TomTat_DienBienBenh,'')
-	,2000)
-	, hoi_chan = 
-	N'Chẩn đoán: '+ isnull(hc.ChanDoan,'') 
-	+ N', Hướng Xử Lý:' + isnull(hc.HuongXuTri , '') 
-	+ N', Chăm Sóc: ' + isnull(hc.ChamSoc,'')
-	, phau_thuat = ''
-	, ngay_yl =replace(convert(varchar , isnull(hc.ThoiGianHoiChan, hc.NgayTao), 112)+convert(varchar(5),  isnull(hc.ThoiGianHoiChan, hc.NgayTao), 108), ':','')
-	, Nguoi_TH =  dbo.Get_MaBacSi_HoiChan(hc.HoiChan_Id)
-	, GiaiDoan = xn.ChanDoan
-	From	(
-				Select	*
-				From	XacNhanChiPhi (nolock) 
-				Where	BenhAn_Id = @BenhAn_Id
-			) xn
-	join dbo.BenhAn ba (Nolock) ON ba.BenhAn_Id = @BenhAn_Id
-	 join HoiChan hc (nolock) on hc.BenhAn_Id = ba.BenhAn_Id
-	where hc.HoiChan_Id is not null
-	and (hc.ChanDoan is not null or hc.HuongXuTri is not null or hc.ChamSoc is not null)
-	) A order by THOI_DIEM_DBLS
+end

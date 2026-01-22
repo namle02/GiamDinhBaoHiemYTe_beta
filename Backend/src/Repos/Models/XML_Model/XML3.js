@@ -57,7 +57,8 @@ const XML3Schema = new mongoose.Schema({
   ketluan:              { type: String, default: null }, // Thêm field để nhận từ WPF
   Tai_Su_Dung:         { type: String, default: null },
   Du_Phong:            { type: String, default: null },
-  chucdanh_id:         { type: Number, default: null }
+  chucdanh_id:         { type: Number, default: null },
+  PhuTang:             { type: mongoose.Schema.Types.Decimal128, default: null }
 }, {
   timestamps: true,
   strict: false
