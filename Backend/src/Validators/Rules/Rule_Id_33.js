@@ -51,7 +51,7 @@ const validateRule_Id_33 = async (patientData) => {
             // Báo lỗi cho các dịch vụ cắt dạ dày
             dsCatDaDay.forEach(dv => {
                 result.errors.push({
-                    Id: dv.Id,
+                    Id: dv.id || dv.Id,
                     Error: `Không được thanh toán đồng thời phẫu thuật cắt dạ dày (${dv.Ma_Dich_Vu}) và nạo vét hạch`
                 });
             });
@@ -59,7 +59,7 @@ const validateRule_Id_33 = async (patientData) => {
             // Báo lỗi cho các dịch vụ cắt đại tràng
             dsDaiTrang.forEach(dv => {
                 result.errors.push({
-                    Id: dv.Id,
+                    Id: dv.id || dv.Id,
                     Error: `Không được thanh toán đồng thời phẫu thuật cắt đại tràng (${dv.Ma_Dich_Vu}) và nạo vét hạch`
                 });
             });
@@ -67,7 +67,7 @@ const validateRule_Id_33 = async (patientData) => {
             // Báo lỗi cho các dịch vụ nạo vét hạch
             dsNaoVetHach.forEach(dv => {
                 result.errors.push({
-                    Id: dv.Id,
+                    Id: dv.id || dv.Id,
                     Error: `Không được thanh toán đồng thời phẫu thuật cắt dạ dày/đại tràng và nạo vét hạch (${dv.Ma_Dich_Vu})`
                 });
             });

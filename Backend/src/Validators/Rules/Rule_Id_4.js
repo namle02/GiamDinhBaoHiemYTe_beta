@@ -88,9 +88,9 @@ const validateRule_Id_4 = async (patientData) => {
     try {
         const xml3_data = patientData.Xml3 || [];
         
-        // Tìm các dịch vụ tán sỏi niệu quản (mã 20.0084.0440) - chỉ dịch vụ này có TrinhTuThucHien
+        // Tìm các dịch vụ tán sỏi niệu quản (mã 20.0084.0440) - chỉ dịch vụ này có trinhTuThucHien
         const danhSachDichVuTanSoi = xml3_data.filter(
-            item => item.TrinhTuThucHien && item.Ma_Dich_Vu === '20.0084.0440'
+            item => (item.trinhTuThucHien || item.TrinhTuThucHien) && item.Ma_Dich_Vu === '20.0084.0440'
         );
         
         // Tìm các dịch vụ đặt ống thông niệu quản (dịch vụ đi kèm)
@@ -105,7 +105,7 @@ const validateRule_Id_4 = async (patientData) => {
         
         // Xử lý từng dịch vụ tán sỏi
         for (const dichVuTanSoi of danhSachDichVuTanSoi) {
-            const textTrinhTu = parseRtfToString(dichVuTanSoi.TrinhTuThucHien);
+            const textTrinhTu = parseRtfToString(dichVuTanSoi.trinhTuThucHien || dichVuTanSoi.TrinhTuThucHien);
             
             if (!textTrinhTu) {
                 continue;
@@ -166,14 +166,14 @@ const validateRule_Id_4 = async (patientData) => {
                 
                 // Báo lỗi cho dịch vụ tán sỏi
                 result.errors.push({
-                    Id: dichVuTanSoi.Id,
+                    Id: dichVuTanSoi.id || dichVuTanSoi.Id,
                     Error: `Dịch vụ tán sỏi niệu quản (${dichVuTanSoi.Ma_Dich_Vu}) và dịch vụ đặt ống thông đều thực hiện ở bên ${viTriStr}. Không được thanh toán đồng thời dịch vụ đặt ống thông niệu quản khi đã thanh toán dịch vụ nội soi tán sỏi niệu quản cùng bên.`
                 });
                 
                 // Báo lỗi cho các dịch vụ đặt ống thông
                 for (const dichVuDatOng of danhSachDichVuDatOng) {
                     result.errors.push({
-                        Id: dichVuDatOng.Id,
+                        Id: dichVuDatOng.id || dichVuDatOng.Id,
                         Error: `Dịch vụ tán sỏi niệu quản (${dichVuTanSoi.Ma_Dich_Vu}) và dịch vụ đặt ống thông (${dichVuDatOng.Ma_Dich_Vu}) đều thực hiện ở bên ${viTriStr}. Không được thanh toán thêm dịch vụ đặt ống thông niệu quản khi đã thanh toán dịch vụ nội soi tán sỏi niệu quản cùng bên.`
                     });
                 }

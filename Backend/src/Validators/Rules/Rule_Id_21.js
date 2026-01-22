@@ -59,7 +59,7 @@ const validateRule_Id_21 = async (patientData) => {
             result.isValid = false;
             // Gắn lỗi vào tất cả các bản ghi nhóm 15 để phía client highlight theo ngày y lệnh
             dichVuNhom15.forEach(item => {
-                result.errors.push({ Id: item.Id, Error: `Số ngày điều trị (${soNgayDieuTri}) < số ngày giường theo ngày y lệnh (${soNgayGiuong})` });
+                result.errors.push({ Id: item.id || item.Id, Error: `Số ngày điều trị (${soNgayDieuTri}) < số ngày giường theo ngày y lệnh (${soNgayGiuong})` });
             });
         }
     } catch (error) {

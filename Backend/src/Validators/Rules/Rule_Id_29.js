@@ -74,7 +74,7 @@ const validateRule_Id_29 = async (patientData) => {
                 const coMaBenhHopLe = dsMaBenh.some(isMaBenhHopLe);
                 if (!coMaBenhHopLe) {
                     result.isValid = false;
-                    result.errors.push({ Id: thuoc.Id, Error: 'Sylimarin (40.751) chỉ thanh toán khi có mã bệnh: B18.0/B18.1/B18.2/B18.8/K76.0/K76.9/K71.x/K74.x' });
+                    result.errors.push({ Id: thuoc.id || thuoc.Id, Error: 'Sylimarin (40.751) chỉ thanh toán khi có mã bệnh: B18.0/B18.1/B18.2/B18.8/K76.0/K76.9/K71.x/K74.x' });
                 }
             }
         });

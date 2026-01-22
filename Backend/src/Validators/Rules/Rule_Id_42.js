@@ -29,7 +29,7 @@ const validateRule_Id_42 = async (patientData) => {
             if (thuoc.Ma_Thuoc === '40.64') {
                 if (!dsMaBenh.some(ma => maBenhHopLe.test(ma)) || !dsMaBenhKt.some(ma => maBenhHopLe.test(ma))) {
                     result.isValid = false;
-                    result.errors.push({ Id: thuoc.Id, Error: 'Glucosamin (40.64) chỉ được sử dụng khi có mã bệnh M17' });
+                    result.errors.push({ Id: thuoc.id || thuoc.Id, Error: 'Glucosamin (40.64) chỉ được sử dụng khi có mã bệnh M17' });
                 }
             }
         });

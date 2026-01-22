@@ -35,7 +35,7 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync("/api/patient", content);
                 var a = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<ValidateData>>(a, new JsonSerializerOptions
+                    var result = JsonSerializer.Deserialize<ApiResponse<ValidateData>>(a, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });

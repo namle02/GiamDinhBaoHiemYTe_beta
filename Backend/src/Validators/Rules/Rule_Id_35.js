@@ -38,7 +38,7 @@ const validateRule_Id_35 = async (patientData) => {
                 // Nếu MA_BAC_SI không nằm trong danh sách bác sĩ ung thư thì báo lỗi
                 if (!maBacSiUngThu.includes(item.MA_BAC_SI)) {
                     result.errors.push({
-                       Id: item.Id,
+                       Id: item.id || item.Id,
                         Error: `Bác sĩ chỉ định thuốc ung thư (${item.Ma_Thuoc}) không đúng phạm vi chuyên môn (MA_BAC_SI: ${item.MA_BAC_SI})`
                     });
                     result.isValid = false;

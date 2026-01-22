@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using WPF_GiamDinhBaoHiem.Services.Interface;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
@@ -12,6 +12,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? ma_Chi_So;
         [ObservableProperty] private string? ten_Chi_So;
         [ObservableProperty] private string? gia_Tri;
+        [ObservableProperty] private string? mUC_BINH_THUONG;
         [ObservableProperty] private string? don_Vi_Do;
         [ObservableProperty] private string? mo_Ta;
         [ObservableProperty] private string? ket_Luan;

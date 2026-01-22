@@ -93,17 +93,19 @@ const validateRule_Id_34 = async (patientData) => {
           if (isSimultaneous(service1, service2)) {
             // Một trong hai dịch vụ không được có Tyle_Tt_Dv = 100
             if (tyle1 === 100 || tyle2 === 100) {
+              const service1Id = service1.id || service1.Id;
+              const service2Id = service2.id || service2.Id;
               const errorIds = [];
               const errorMessages = [];
               
               if (tyle1 === 100) {
-                errorIds.push(service1.Id);
-                errorMessages.push(`Dịch vụ phẫu thuật (ID: ${service1.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ khi diễn ra và kết thúc đồng thời với dịch vụ khác (ID: ${service2.Id})`);
+                errorIds.push(service1Id);
+                errorMessages.push(`Dịch vụ phẫu thuật (ID: ${service1Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ khi diễn ra và kết thúc đồng thời với dịch vụ khác (ID: ${service2Id})`);
               }
               
               if (tyle2 === 100) {
-                errorIds.push(service2.Id);
-                errorMessages.push(`Dịch vụ phẫu thuật (ID: ${service2.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ khi diễn ra và kết thúc đồng thời với dịch vụ khác (ID: ${service1.Id})`);
+                errorIds.push(service2Id);
+                errorMessages.push(`Dịch vụ phẫu thuật (ID: ${service2Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ khi diễn ra và kết thúc đồng thời với dịch vụ khác (ID: ${service1Id})`);
               }
 
               result.errors.push({
@@ -127,9 +129,11 @@ const validateRule_Id_34 = async (patientData) => {
             
             // Dịch vụ diễn ra sau có Tyle_Tt_Dv = 100 thì sai
             if (laterTyLe === 100) {
+              const laterServiceId = laterService.id || laterService.Id;
+              const earlierServiceId = earlierService.id || earlierService.Id;
               result.errors.push({
-                Id: laterService.Id,
-                Error: `Dịch vụ phẫu thuật (ID: ${laterService.Id}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ vì diễn ra sau dịch vụ phẫu thuật khác (ID: ${earlierService.Id}) có khoảng thời gian giao nhau. Dịch vụ ${earlierService.Id}: từ ${earlierService.Ngay_Th_Yl} đến ${earlierService.Ngay_Kq}, Dịch vụ ${laterService.Id}: từ ${laterService.Ngay_Th_Yl} đến ${laterService.Ngay_Kq}`,
+                Id: laterServiceId,
+                Error: `Dịch vụ phẫu thuật (ID: ${laterServiceId}) có Tỷ lệ thanh toán (Tyle_Tt_Dv) = 100 không hợp lệ vì diễn ra sau dịch vụ phẫu thuật khác (ID: ${earlierServiceId}) có khoảng thời gian giao nhau. Dịch vụ ${earlierServiceId}: từ ${earlierService.Ngay_Th_Yl} đến ${earlierService.Ngay_Kq}, Dịch vụ ${laterServiceId}: từ ${laterService.Ngay_Th_Yl} đến ${laterService.Ngay_Kq}`,
               });
               result.isValid = false;
             }

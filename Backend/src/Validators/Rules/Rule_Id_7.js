@@ -111,7 +111,7 @@ const validateRule_Id_7 = async (patientData) => {
                         for (let j = i + 1; j < dsDichVu.length; j++) {
                             result.isValid = false;
                             result.errors.push({
-                                Id: dsDichVu[i].Id || dsDichVu[j].Id,
+                                Id: (dsDichVu[i].id || dsDichVu[i].Id) || (dsDichVu[j].id || dsDichVu[j].Id),
                                 Error: `Bệnh nhân có mã bệnh M47 hoặc M54.5, các dịch vụ ${dsDichVu[i].Ma_Dich_Vu} và ${dsDichVu[j].Ma_Dich_Vu} có cùng Ngay_YL: ${ngayYL}`
                             });
                         }

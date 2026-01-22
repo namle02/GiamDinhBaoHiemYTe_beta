@@ -264,13 +264,11 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                         {
                             // Format ngày từ Excel (có thể là dd/MM/yyyy hoặc yyyyMMdd)
                             string ngayVaoFormatted = FormatDateForQuery(rowData.NgayVao, isEndDate: false);
-                            string ngayRaFormatted = FormatDateForQuery(rowData.NgayRa, isEndDate: true);
 
-                            // Tìm MA_LK từ MA_BN + dates
+                            // Tìm MA_LK từ MA_BN + ngày vào
                             var maLkResults = await _dataMapper.GetMaLkByMaBnAndDate(
                                 rowData.MaBn!, 
-                                ngayVaoFormatted, 
-                                ngayRaFormatted);
+                                ngayVaoFormatted);
 
                             if (maLkResults == null || maLkResults.Count == 0)
                             {
@@ -308,8 +306,9 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                                 }
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
+                            // Ignore errors when finding MA_LK
                         }
                     }
 

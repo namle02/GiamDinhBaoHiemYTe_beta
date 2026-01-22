@@ -28,11 +28,11 @@ const validateRule_Id_5 = async (patientData) => {
             if (Ma_Dich_Vu === '23.0083.1523') {
                 if (Khoang_Cach < 87) {
                     result.isValid = false;
-                    result.errors.push({ Id: item.Id, Error: 'Khoảng cách giữa 2 lần XN HbA1c tối thiểu là 87 ngày' });
+                    result.errors.push({ Id: item.id || item.Id, Error: 'Khoảng cách giữa 2 lần XN HbA1c tối thiểu là 87 ngày' });
                 }
                 else if (!Ma_Benh.includes('E10') && !Ma_Benh.includes('E11') && !Ma_Benh.includes('E12') && !Ma_Benh.includes('E13') && !Ma_Benh.includes('E14') && !Ma_Benh.includes('O24')) {
                     result.isValid = false;
-                    result.errors.push({ Id: item.Id, Error: 'Mã ICD không hợp lệ' });
+                    result.errors.push({ Id: item.id || item.Id, Error: 'Mã ICD không hợp lệ' });
                 }
             }
 

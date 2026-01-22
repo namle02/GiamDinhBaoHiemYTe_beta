@@ -24,7 +24,7 @@ const validateRule_Id_23 = async (patientData) => {
             result.isValid = false;
             xml3_data.forEach(it => {
                 if (it.Ma_Dich_Vu === '22.0605.1299' || it.Ma_Dich_Vu === '22.0134.1296') {
-                    result.errors.push({ Id: it.Id, Error: 'Không thanh toán đồng thời xét nghiệm Hồng cầu lưới và Huyết đồ' });
+                    result.errors.push({ Id: it.id || it.Id, Error: 'Không thanh toán đồng thời xét nghiệm Hồng cầu lưới và Huyết đồ' });
                 }
             });
         }

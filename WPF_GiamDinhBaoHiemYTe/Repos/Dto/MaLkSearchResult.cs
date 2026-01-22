@@ -9,11 +9,12 @@ namespace WPF_GiamDinhBaoHiem.Repos.Dto
         public string? Ma_Lk { get; set; }
         public string? Ngay_Vao { get; set; }
         public string? Ngay_Ra { get; set; }
+        public int? LoaiBenhAn_Id { get; set; }
         
         /// <summary>
-        /// Hiển thị thông tin dạng: MA_LK - Ngày vào: ... - Ngày ra: ...
+        /// Hiển thị thông tin dạng: MA_LK - Ngày vào: ...
         /// </summary>
-        public string DisplayText => $"{Ma_Lk} - Vào: {FormatDate(Ngay_Vao)} - Ra: {FormatDate(Ngay_Ra)}";
+        public string DisplayText => $"{Ma_Lk} - Vào: {FormatDate(Ngay_Vao)}";
 
         private string FormatDate(string? date)
         {

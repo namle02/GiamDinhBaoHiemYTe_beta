@@ -57,7 +57,7 @@ const validateRule_Id_16 = async (patientData) => {
                 if (danhsachdichvu.includes(item.Ma_Dich_Vu)) {
                     const ngay = item.Ngay_Yl ? item.Ngay_Yl.toString().substring(0, 8) : 'unknown';
                     if (ngayViPham.includes(ngay)) {
-                        result.errors.push({ Id: item.Id, Error: 'Vật lý trị liệu vượt quá 04 kỹ thuật/ngày (TT 50/2017/TT-BYT)' });
+                        result.errors.push({ Id: item.id || item.Id, Error: 'Vật lý trị liệu vượt quá 04 kỹ thuật/ngày (TT 50/2017/TT-BYT)' });
                     }
                 }
             }

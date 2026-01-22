@@ -109,13 +109,82 @@ const validateRule_Id_18 = async (patientData) => {
         // Kiểm tra có dịch vụ phụ không
         const coDichVuPhu = DanhSachDichVuPhu.some(ma => maDichVuDaSuDung.includes(ma));
 
+        // Nếu có cả dịch vụ chính và dịch vụ phụ, kiểm tra xem có "để lại phần lành" không
         if (coDichVuChinh && coDichVuPhu) {
-            result.isValid = false;
-            xml3_data.forEach(item => {
-                if (DanhSachDichVuPhu.includes(item.Ma_Dich_Vu)) {
-                    result.errors.push({ Id: item.Id, Error: 'Không thanh toán đồng thời với phẫu thuật mở bụng cắt tử cung hoàn toàn (QĐ 1377/QĐ-BYT)' });
+            // Tìm các dịch vụ chính có trinhTuThucHien
+            const danhSachDichVuChinhCoTrinhTu = xml3_data.filter(
+                item => DanhSachDichVuChinh.includes(item.Ma_Dich_Vu) && 
+                        (item.trinhTuThucHien || item.TrinhTuThucHien)
+            );
+
+            let coDeLaiPhanLanh = false;
+            let daKiemTraGemini = false;
+
+            // Nếu có dịch vụ chính có trinhTuThucHien, gọi Gemini để kiểm tra
+            if (danhSachDichVuChinhCoTrinhTu.length > 0) {
+                for (const dichVuChinh of danhSachDichVuChinhCoTrinhTu) {
+                    const rawTrinhTu = dichVuChinh.trinhTuThucHien || dichVuChinh.TrinhTuThucHien;
+                    const textTrinhTu = parseRtfToString(rawTrinhTu);
+                    
+                    if (!textTrinhTu) {
+                        continue;
+                    }
+
+                    try {
+                        const prompt = makeGeminiPrompt(textTrinhTu);
+                        const response = await ai.models.generateContent({
+                            model: "gemini-2.5-flash",
+                            contents: [{ role: "user", parts: [{ text: prompt }] }],
+                        });
+
+                        const responseText = response?.response?.candidates?.[0]?.content?.parts?.[0]?.text
+                            || response.text
+                            || "";
+
+                        // Parse JSON từ response
+                        const jsonMatch = responseText.match(/\{[^}]+\}/);
+                        if (jsonMatch) {
+                            try {
+                                const parsed = JSON.parse(jsonMatch[0]);
+                                
+                                if (parsed.coDeLaiPhanLanh === true) {
+                                    coDeLaiPhanLanh = true;
+                                    daKiemTraGemini = true;
+                                    break; // Nếu tìm thấy một dịch vụ có "để lại phần lành", dừng lại
+                                }
+                                daKiemTraGemini = true;
+                            } catch (parseError) {
+                                // JSON parse error - fallback
+                            }
+                        }
+                    } catch (err) {
+                        // Nếu lỗi Gemini thì warning chứ không fail hard rule
+                        result.warnings.push(
+                            `Không thể phân tích trình tự thực hiện bằng AI cho dịch vụ ${dichVuChinh.Ma_Dich_Vu}: ${err.message}`
+                        );
+                    }
                 }
-            });
+            }
+
+            // Nếu có "để lại phần lành" (coDeLaiPhanLanh = true), cho phép thanh toán cả hai
+            // Nếu không có hoặc không xác định được, áp dụng rule (không cho phép)
+            
+            // Nếu không kiểm tra được bằng Gemini (API fail), không áp dụng rule
+            if (!daKiemTraGemini) {
+                result.message = 'Không thể kiểm tra trình tự thực hiện bằng AI (API không khả dụng), cho phép thanh toán đồng thời';
+                // Không báo lỗi, chỉ warning
+            } else if (!coDeLaiPhanLanh) {
+                // Đã kiểm tra được và không có "để lại phần lành", áp dụng rule
+                result.isValid = false;
+                xml3_data.forEach(item => {
+                    if (DanhSachDichVuPhu.includes(item.Ma_Dich_Vu)) {
+                        result.errors.push({ Id: item.id || item.Id, Error: 'Không thanh toán đồng thời với phẫu thuật mở bụng cắt tử cung hoàn toàn (QĐ 1377/QĐ-BYT)' });
+                    }
+                });
+            } else {
+                // Có "để lại phần lành", cho phép thanh toán cả hai (không báo lỗi)
+                result.message = 'Phát hiện có "để lại phần lành" trong trình tự thực hiện, cho phép thanh toán đồng thời';
+            }
         }
     } catch (error) {
         result.isValid = false;

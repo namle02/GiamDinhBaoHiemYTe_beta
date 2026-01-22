@@ -25,7 +25,7 @@ const validateRule_Id_19 = async (patientData) => {
             result.isValid = false;
             xml3_data.forEach(item => {
                 if (item.Ma_Dich_Vu === '18.0015.0001' || item.Ma_Dich_Vu === '18.0016.0001') {
-                    result.errors.push({ Id: item.Id, Error: 'Không được đồng thời có 18.0015.0001 và 18.0016.0001 trong cùng hồ sơ' });
+                    result.errors.push({ Id: item.id || item.Id, Error: 'Không được đồng thời có 18.0015.0001 và 18.0016.0001 trong cùng hồ sơ' });
                 }
             });
         }

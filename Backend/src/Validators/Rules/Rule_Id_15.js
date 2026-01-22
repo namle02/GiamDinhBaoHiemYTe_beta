@@ -53,15 +53,17 @@ const validateRule_Id_15 = async (patientData) => {
         const maLoaiKcb = xml1.Ma_Loai_Kcb;
         const maLoaiKcbStr = maLoaiKcb !== null && maLoaiKcb !== undefined ? String(maLoaiKcb).trim() : '';
 
-        // Kiểm tra nếu Ma_Loai_Kcb là 1 hoặc 2
-        if (maLoaiKcbStr === '1' || maLoaiKcbStr === '2') {
+        // Kiểm tra nếu Ma_Loai_Kcb KHÔNG phải 1 hoặc 2 (tức là nội trú)
+        // Ma_Loai_Kcb = '1' hoặc '2' → ngoại trú (được thanh toán)
+        // Ma_Loai_Kcb khác '1', '2' hoặc không có → nội trú (không được thanh toán)
+        if (maLoaiKcbStr !== '1' && maLoaiKcbStr !== '2') {
             // Tìm các dịch vụ trong xml3_data có mã trong danh sách cần kiểm tra
             xml3_data.forEach(item => {
                 if (item.Ma_Dich_Vu && danhSachMaDichVuCanKiemTra.includes(item.Ma_Dich_Vu)) {
                     result.isValid = false;
                     result.errors.push({
-                        Id: item.Id,
-                        Error: `Dịch vụ ${item.Ma_Dich_Vu} không được thanh toán khi Ma_Loai_KCB là ${maLoaiKcbStr}`
+                        Id: item.id || item.Id,
+                        Error: `Dịch vụ ${item.Ma_Dich_Vu} không được thanh toán trong điều trị nội trú (Ma_Loai_KCB: ${maLoaiKcbStr || 'không có'})`
                     });
                 }
             });

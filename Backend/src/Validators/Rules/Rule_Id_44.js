@@ -123,7 +123,7 @@ const validateRule_Id_44 = async (patientData) => {
             if (soLuongHours <= diffHours) {
                 result.isValid = false;
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: `Chặn thanh toán BHYT: Số lượng quy đổi (${soLuongHours} giờ = ${soLuong}*24) <= số giờ chênh lệch (${diffHours} giờ) giữa ngày kết quả và ngày thực hiện y lệnh`
                 });
             }

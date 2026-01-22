@@ -55,37 +55,38 @@ const validateRule_Id_17 = async (patientData) => {
             // Lấy 2 lần đầu tiên
             const firstTwo = items.slice(0, 2);
             const loaiBenhPhamFirstTwo = [
-                firstTwo[0].LoaiBenhPham_Id,
-                firstTwo[1].LoaiBenhPham_Id
+                firstTwo[0].loaiBenhPham_Id || firstTwo[0].LoaiBenhPham_Id,
+                firstTwo[1].loaiBenhPham_Id || firstTwo[1].LoaiBenhPham_Id
             ];
 
             // Đếm số lần xuất hiện của mỗi loại bệnh phẩm
             const countByLoaiBenhPham = {};
             for (const item of items) {
-                const loaiBenhPham = item.LoaiBenhPham_Id || 'null';
+                const loaiBenhPham = (item.loaiBenhPham_Id || item.LoaiBenhPham_Id) || 'null';
                 countByLoaiBenhPham[loaiBenhPham] = (countByLoaiBenhPham[loaiBenhPham] || 0) + 1;
             }
 
             // Kiểm tra từ lần thứ 3 trở đi
             const itemsViPhamInDay = new Set(); // Dùng Set để tránh trùng lặp
 
-            // Điều kiện 1: Lần thứ 3 trở đi phải có LoaiBenhPham_Id khác với cả 2 lần đầu
+            // Điều kiện 1: Lần thứ 3 trở đi phải có loaiBenhPham_Id khác với cả 2 lần đầu
             for (let i = 2; i < items.length; i++) {
                 const item = items[i];
-                const loaiBenhPham = item.LoaiBenhPham_Id;
+                const loaiBenhPham = item.loaiBenhPham_Id || item.LoaiBenhPham_Id;
 
                 if (loaiBenhPhamFirstTwo.includes(loaiBenhPham)) {
-                    itemsViPhamInDay.add(item.Id);
+                    itemsViPhamInDay.add(item.id || item.Id);
                 }
             }
 
-            // Điều kiện 2: Không được có 3 lần nào cùng LoaiBenhPham_Id
+            // Điều kiện 2: Không được có 3 lần nào cùng loaiBenhPham_Id
             for (const [loaiBenhPham, count] of Object.entries(countByLoaiBenhPham)) {
                 if (count >= 3) {
                     // Tìm tất cả các item có loại bệnh phẩm này và thêm vào lỗi
                     for (const item of items) {
-                        if (item.LoaiBenhPham_Id == loaiBenhPham) {
-                            itemsViPhamInDay.add(item.Id);
+                        const itemLoaiBenhPham = item.loaiBenhPham_Id || item.LoaiBenhPham_Id;
+                        if (itemLoaiBenhPham == loaiBenhPham) {
+                            itemsViPhamInDay.add(item.id || item.Id);
                         }
                     }
                 }
@@ -101,13 +102,13 @@ const validateRule_Id_17 = async (patientData) => {
             if (countPairs > 1) {
                 // Có nhiều hơn 1 cặp bệnh phẩm, đánh dấu tất cả các item vi phạm
                 for (const item of items) {
-                    itemsViPhamInDay.add(item.Id);
+                    itemsViPhamInDay.add(item.id || item.Id);
                 }
             }
 
             // Thêm các item vi phạm vào danh sách chung
             for (const item of items) {
-                if (itemsViPhamInDay.has(item.Id)) {
+                if (itemsViPhamInDay.has(item.id || item.Id)) {
                     itemsViPham.push(item);
                 }
             }
@@ -118,7 +119,7 @@ const validateRule_Id_17 = async (patientData) => {
             result.isValid = false;
             for (const item of itemsViPham) {
                 result.errors.push({ 
-                    Id: item.Id, 
+                    Id: item.id || item.Id, 
                     Error: 'Xét nghiệm AFB vượt quá 2 lần/ngày theo Quyết định 3126/QĐ-BYT' 
                 });
             }

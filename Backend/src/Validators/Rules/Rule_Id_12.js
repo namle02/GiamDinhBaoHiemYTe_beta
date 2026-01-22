@@ -32,7 +32,7 @@ const validateRule_Id_12 = async (patientData) => {
             // Báo lỗi cho tất cả các dịch vụ chọc sinh thiết
             dichVuChocSinhThiet.forEach(item => {
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: 'Thanh toán dịch vụ Chọc sinh thiết u, hạch dưới hướng dẫn siêu âm, Sinh thiết tuyến giáp dưới hướng dẫn siêu âm, Tiêm khớp dưới hướng dẫn siêu âm không được thanh toán thêm dịch vụ Siêu âm (18.0001.0001)'
                 });
             });
@@ -40,7 +40,7 @@ const validateRule_Id_12 = async (patientData) => {
             // Báo lỗi cho tất cả các dịch vụ siêu âm
             dichVuSieuAm.forEach(item => {
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: 'Dịch vụ Siêu âm (18.0001.0001) không được thanh toán cùng với dịch vụ Chọc sinh thiết u, hạch dưới hướng dẫn siêu âm (18.0621.0090) do đã có trong cơ cấu giá kỹ thuật'
                 });
             });

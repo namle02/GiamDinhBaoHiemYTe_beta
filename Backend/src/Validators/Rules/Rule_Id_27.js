@@ -114,7 +114,7 @@ const validateRule_Id_27 = async (patientData) => {
         if (!coMaBenhHopLe) {
             result.isValid = false;
             moxiList.forEach(it => {
-                result.errors.push({ Id: it.Id, Error: 'Moxifloxacin (40.231) không có mã bệnh phù hợp (J15.x, J18.x, J44.1, J01.x, A41.x, N39.0, K65.x)' });
+                result.errors.push({ Id: it.id || it.Id, Error: 'Moxifloxacin (40.231) không có mã bệnh phù hợp (J15.x, J18.x, J44.1, J01.x, A41.x, N39.0, K65.x)' });
             });
         }
         // Kiểm tra trẻ em < 18 tuổi trừ trường hợp trẻ em mắc bệnh lao (A15, A16, A17, A18, A19)
@@ -122,7 +122,7 @@ const validateRule_Id_27 = async (patientData) => {
             result.isValid = false;
             moxiList.forEach(it => {
                 result.errors.push({
-                    Id: it.Id,
+                    Id: it.id || it.Id,
                     Error: 'Bệnh nhân sử dụng Moxifloxacin (mã 40.231) nhưng chưa đủ 18 tuổi (không thuộc trường hợp trẻ em mắc bệnh lao A15-A19).'
                 });
             });
@@ -131,7 +131,7 @@ const validateRule_Id_27 = async (patientData) => {
             result.isValid = false;
             moxiList.forEach(it => {
                 result.errors.push({
-                    Id: it.Id,
+                    Id: it.id || it.Id,
                     Error: 'Bệnh nhân sử dụng Moxifloxacin (mã 40.231) nhưng có mã bệnh thuộc nhóm O00-O99 (phụ nữ có thai, sinh, hậu sản, cho con bú).'
                 });
             });
@@ -139,7 +139,7 @@ const validateRule_Id_27 = async (patientData) => {
         if (canhBaoJ01) {
             moxiList.forEach(it => {
                 result.warnings.push({
-                    Id: it.Id,
+                    Id: it.id || it.Id,
                     Warning: 'Chỉ định Moxifloxacin cho mã bệnh J01.x (viêm xoang cấp) chỉ hợp lệ khi có chứng minh thất bại điều trị trước bằng kháng sinh khác.'
                 });
             });

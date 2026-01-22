@@ -85,9 +85,47 @@ class RuleService {
     }
 
     /**
+     * Normalize dữ liệu patient trước khi validate
+     * Chuyển các field PascalCase -> camelCase để đảm bảo tương thích
+     */
+    normalizePatientData(patientData) {
+        if (!patientData || typeof patientData !== 'object') {
+            return patientData;
+        }
+
+        const normalized = { ...patientData };
+
+        // Normalize Xml3 array
+        if (Array.isArray(normalized.Xml3)) {
+            normalized.Xml3 = normalized.Xml3.map(item => {
+                if (!item || typeof item !== 'object') return item;
+                
+                const normalizedItem = { ...item };
+                
+                // Normalize TrinhTuThucHien -> trinhTuThucHien
+                if (normalizedItem.TrinhTuThucHien && !normalizedItem.trinhTuThucHien) {
+                    normalizedItem.trinhTuThucHien = normalizedItem.TrinhTuThucHien;
+                }
+                
+                // Normalize Id -> id (nếu cần)
+                if (normalizedItem.Id !== undefined && normalizedItem.id === undefined) {
+                    normalizedItem.id = normalizedItem.Id;
+                }
+                
+                return normalizedItem;
+            });
+        }
+
+        return normalized;
+    }
+
+    /**
      * Validate patient data với tất cả rules đang active
      */
     async validatePatientData(patientData) {
+        // Normalize dữ liệu trước khi validate
+        const normalizedData = this.normalizePatientData(patientData);
+        
         const validationResults = [];
         let overallValid = true;
         const startTime = Date.now();
@@ -105,7 +143,7 @@ class RuleService {
 
             try {
                 const ruleStartTime = Date.now();
-                const result = await ruleInfo.function(patientData);
+                const result = await ruleInfo.function(normalizedData);
                 const ruleEndTime = Date.now();
 
                 // Đảm bảo result có đúng format

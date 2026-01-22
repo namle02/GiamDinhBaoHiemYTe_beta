@@ -4,7 +4,7 @@
  * @returns {Object} - Kết quả validation
  */
 
-const validateRule_Id_31 = async (patientData) => {
+const validateRule_Id_32 = async (patientData) => {
     const result = {
         ruleName: 'Không thanh toán Hirzt và Blondeau đồng thời',
         ruleId: 'Rule_Id_31',
@@ -26,13 +26,13 @@ const validateRule_Id_31 = async (patientData) => {
             // Nếu vừa có dịch vụ Hirzt vừa có Blondeau thì báo lỗi cho tất cả các dịch vụ này
             dsHirzt.forEach(item => {
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: 'Không được đồng thời thanh toán dịch vụ Hirzt (18.0072.0028) và Blondeau (18.0073.0028)'
                 });
             });
             dsBlondeau.forEach(item => {
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: 'Không được đồng thời thanh toán dịch vụ Hirzt (18.0072.0028) và Blondeau (18.0073.0028)'
                 });
             });
@@ -47,4 +47,4 @@ const validateRule_Id_31 = async (patientData) => {
     return result;
 };
 
-module.exports = validateRule_Id_31;
+module.exports = validateRule_Id_32;

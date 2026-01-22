@@ -24,7 +24,7 @@ const validateRule_Id_14 = async (patientData) => {
             result.isValid = false;
             // Ghi lỗi cho từ lần thứ 4 trở đi
             itemsDichVu.slice(3).forEach(it => {
-                result.errors.push({ Id: it.Id, Error: 'Không thanh toán dịch vụ “thay băng vết mổ có chiều dài trên 15cm đến 30cm” từ lần thứ 4 trở đi đối với mổ lấy thai (điểm d khoản 4 Điều 4d Thông tư 39/2024/TT-BYT)' });
+                result.errors.push({ Id: it.id || it.Id, Error: 'Không thanh toán dịch vụ “thay băng vết mổ có chiều dài trên 15cm đến 30cm” từ lần thứ 4 trở đi đối với mổ lấy thai (điểm d khoản 4 Điều 4d Thông tư 39/2024/TT-BYT)' });
             });
         }
 

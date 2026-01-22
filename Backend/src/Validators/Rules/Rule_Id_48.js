@@ -104,7 +104,7 @@ const validateRule_Id_48 = async (patientData) => {
                 // Báo lỗi cho tất cả các dịch vụ trong ngày đó
                 dsDichVu.forEach(item => {
                     result.errors.push({
-                        Id: item.Id,
+                        Id: item.id || item.Id,
                         Error: `Các dịch vụ châm, cứu chỉ được thanh toán 1 lần/ngày. Ngày ${ngay} có ${dsDichVu.length} dịch vụ: ${danhSachMaDichVu}. Tên dịch vụ: ${danhSachTenDichVu}`
                     });
                 });

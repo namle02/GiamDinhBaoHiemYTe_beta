@@ -89,7 +89,7 @@ const validateRule_Id_10 = async (patientData) => {
             if (!coNamTrongKhoangThoiGian) {
                 result.isValid = false;
                 result.errors.push({
-                    Id: dv1757.Id,
+                    Id: dv1757.id || dv1757.Id,
                     Error: `Dịch vụ "Xét nghiệm sinh thiết tức thì bằng cắt lạnh" (Ma_Dich_Vu: 25.0090.1757) không nằm trong khoảng thời gian thực hiện của dịch vụ có Ma_Nhom = 8. Ngày thực hiện dịch vụ: từ ${dv1757.Ngay_Th_Yl} đến ${dv1757.Ngay_Kq}`
                 });
             }

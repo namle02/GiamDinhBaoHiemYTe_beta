@@ -32,7 +32,7 @@ const validateRule_Id_9 = async (patientData) => {
                     }
                     if (coMaBenhUngThu) {
                         result.isValid = false;
-                        result.errors.push({ Id: item.Id, Error: 'Bệnh nhân có mã bệnh ung thư ác tính ( C00 - C97), không thanh toán DVKT phục hồi chức năng' });
+                        result.errors.push({ Id: item.id || item.Id, Error: 'Bệnh nhân có mã bệnh ung thư ác tính ( C00 - C97), không thanh toán DVKT phục hồi chức năng' });
                     }
                 }
         }

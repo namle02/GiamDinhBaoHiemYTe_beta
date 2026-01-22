@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 const { convertDecimal128 } = require('../../../Utils/ConvertDecimal');
 
 const XML3Schema = new mongoose.Schema({
-  id:                  { type: Number, required: false },
-  LoaiBenhPham_Id:     { type: String, required: false },
+  Id:                  { type: Number, required: false },
+  loaiBenhPham_Id:     { type: String, required: false },
+  LoaiBenhPham_Id:     { type: String, required: false }, // Thêm field PascalCase để nhận từ WPF
   Ma_Lk:               { type: String, default: null },
   Stt:                 { type: Number, default: null },
   Ma_Dich_Vu:          { type: String, default: null },
@@ -37,7 +38,8 @@ const XML3Schema = new mongoose.Schema({
   Ma_Khoa:             { type: String, default: null },
   Ma_Giuong:           { type: String, default: null },
   Ma_Bac_Si:           { type: String, default: null },
-  Mo_Ta_Text:          { type: String, default: null },
+  moTa_Text:           { type: String, default: null },
+  MoTa_Text:           { type: String, default: null }, // Thêm field PascalCase để nhận từ WPF
   Nguoi_Thuc_Hien:     { type: String, default: null },
   Ma_Benh:             { type: String, default: null },
   Ma_Benh_Yhct:        { type: String, default: null },
@@ -51,29 +53,54 @@ const XML3Schema = new mongoose.Schema({
   Ma_May:              { type: String, default: null },
   Ma_Hieu_Sp:          { type: String, default: null },
   trinhTuThucHien:     { type: String, default: null },
+  ket_luan:             { type: String, default: null },
+  ketluan:              { type: String, default: null }, // Thêm field để nhận từ WPF
   Tai_Su_Dung:         { type: String, default: null },
   Du_Phong:            { type: String, default: null },
-  chucdanh_id:         { type: Number, default: null },
-  ketQua:              { type: String, default: null },
-  mucBinhThuong:       { type: String, default: null }
+  chucdanh_id:         { type: Number, default: null }
 }, {
   timestamps: true,
   strict: false
 });
 
-// Transform để normalize các field PascalCase -> camelCase
+// Pre-save hook để normalize các field PascalCase -> camelCase khi lưu vào DB
+XML3Schema.pre('save', function(next) {
+  // Normalize TrinhTuThucHien -> trinhTuThucHien
+  if (this.TrinhTuThucHien && !this.trinhTuThucHien) {
+    this.trinhTuThucHien = this.TrinhTuThucHien;
+  }
+  // Normalize MoTa_Text -> moTa_Text
+  if (this.MoTa_Text && !this.moTa_Text) {
+    this.moTa_Text = this.MoTa_Text;
+  }
+  // Normalize LoaiBenhPham_Id -> loaiBenhPham_Id
+  if (this.LoaiBenhPham_Id && !this.loaiBenhPham_Id) {
+    this.loaiBenhPham_Id = this.LoaiBenhPham_Id;
+  }
+  // Normalize ketluan -> ket_luan (chuẩn hóa từ WPF)
+  if (this.ketluan && !this.ket_luan) {
+    this.ket_luan = this.ketluan;
+  }
+  next();
+});
+
+// Transform để normalize các field PascalCase -> camelCase khi output
 const normalizeTransform = (doc, ret) => {
   // Normalize TrinhTuThucHien -> trinhTuThucHien
   if (ret.TrinhTuThucHien && !ret.trinhTuThucHien) {
     ret.trinhTuThucHien = ret.TrinhTuThucHien;
   }
-  // Normalize KetQua -> ketQua
-  if (ret.KetQua && !ret.ketQua) {
-    ret.ketQua = ret.KetQua;
+  // Normalize MoTa_Text -> moTa_Text
+  if (ret.MoTa_Text && !ret.moTa_Text) {
+    ret.moTa_Text = ret.MoTa_Text;
   }
-  // Normalize MucBinhThuong -> mucBinhThuong
-  if (ret.MucBinhThuong && !ret.mucBinhThuong) {
-    ret.mucBinhThuong = ret.MucBinhThuong;
+  // Normalize LoaiBenhPham_Id -> loaiBenhPham_Id
+  if (ret.LoaiBenhPham_Id && !ret.loaiBenhPham_Id) {
+    ret.loaiBenhPham_Id = ret.LoaiBenhPham_Id;
+  }
+  // Normalize ketluan -> ket_luan (chuẩn hóa từ WPF)
+  if (ret.ketluan && !ret.ket_luan) {
+    ret.ket_luan = ret.ketluan;
   }
   return convertDecimal128(ret);
 };

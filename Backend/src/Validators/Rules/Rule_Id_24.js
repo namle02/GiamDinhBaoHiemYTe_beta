@@ -46,7 +46,29 @@ const validateRule_Id_24 = async (patientData) => {
                         isValidThucHien = false;
                     } else {
                         if (Array.isArray(doctorThucHien.PHAMVI_CM)) {
-                            if (!doctorThucHien.PHAMVI_CM.includes(108)) {
+                            const phamViCM = doctorThucHien.PHAMVI_CM;
+                            
+                            // Kiểm tra các điều kiện hợp lệ:
+                            // 1. PHAMVI_CM chứa 108 → hợp lệ
+                            // 2. HOẶC PHAMVI_CM chứa 310 → hợp lệ
+                            // 3. HOẶC PHAMVI_CM chứa 301 VÀ DVKT_KHAC chứa '08.0006' → hợp lệ
+                            const coMa108 = phamViCM.includes(108);
+                            const coMa310 = phamViCM.includes(310);
+                            const coMa301 = phamViCM.includes(301);
+                            
+                            let coDvktKhac = false;
+                            if (coMa301) {
+                                // Kiểm tra DVKT_KHAC nếu có mã 301
+                                if (Array.isArray(doctorThucHien.DVKT_KHAC)) {
+                                    coDvktKhac = doctorThucHien.DVKT_KHAC.includes('08.0006');
+                                } else if (typeof doctorThucHien.DVKT_KHAC === 'string') {
+                                    // Xử lý trường hợp DVKT_KHAC là string (có thể có dạng "08.0006;08.0007")
+                                    coDvktKhac = doctorThucHien.DVKT_KHAC.split(';').map(s => s.trim()).includes('08.0006');
+                                }
+                            }
+                            
+                            // Hợp lệ nếu: có 108 HOẶC có 310 HOẶC (có 301 VÀ có 08.0006 trong DVKT_KHAC)
+                            if (!coMa108 && !coMa310 && !(coMa301 && coDvktKhac)) {
                                 isValidThucHien = false;
                             }
                         } else {
@@ -59,7 +81,7 @@ const validateRule_Id_24 = async (patientData) => {
 
                 if (!isValidThucHien) {
                     result.isValid = false;
-                    result.errors.push({ Id: item.Id, Error: 'Thủy châm: người thực hiện không đúng chức danh chuyên môn (TT 32/2023/TT-BYT)' });
+                    result.errors.push({ Id: item.id || item.Id, Error: 'Thủy châm: người thực hiện không đúng chức danh chuyên môn (TT 32/2023/TT-BYT)' });
                 }
             }
         }

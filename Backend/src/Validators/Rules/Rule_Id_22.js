@@ -42,7 +42,7 @@ const validateRule_Id_22 = async (patientData) => {
             result.isValid = false;
             xml3_data.forEach(item => {
                 if (danhsachdichvugiuong.includes(item.Ma_Dich_Vu) || danhsachdichvukhambenh.includes(item.Ma_Dich_Vu)) {
-                    result.errors.push({ Id: item.Id, Error: 'Không thanh toán đồng thời dịch vụ giường và khám bệnh (TT 22/2023/TT-BYT)' });
+                    result.errors.push({ Id: item.id || item.Id, Error: 'Không thanh toán đồng thời dịch vụ giường và khám bệnh (TT 22/2023/TT-BYT)' });
                 }
             });
         }

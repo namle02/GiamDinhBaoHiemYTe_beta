@@ -67,11 +67,6 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         [ObservableProperty]
         private DateTime? ngayVaoFrom = DateTime.Now.AddMonths(-1);
 
-        /// <summary>
-        /// Ngày ra (to)
-        /// </summary>
-        [ObservableProperty]
-        private DateTime? ngayRaTo = DateTime.Now;
 
         /// <summary>
         /// Danh sách MA_LK tìm được (khi tìm theo MA_BN)
@@ -194,15 +189,9 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 return;
             }
 
-            if (NgayVaoFrom == null || NgayRaTo == null)
+            if (NgayVaoFrom == null)
             {
-                _dialogService.ShowWarning("Vui lòng chọn khoảng thời gian", "Thông báo");
-                return;
-            }
-
-            if (NgayVaoFrom > NgayRaTo)
-            {
-                _dialogService.ShowWarning("Ngày vào phải nhỏ hơn hoặc bằng ngày ra", "Thông báo");
+                _dialogService.ShowWarning("Vui lòng chọn ngày vào", "Thông báo");
                 return;
             }
 
@@ -211,13 +200,12 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 IsLoading = true;
                 MaLkSearchResults.Clear();
 
-                // Format ngày sang yyyyMMdd0000 và yyyyMMdd2359
-                string ngayVaoFromStr = NgayVaoFrom.Value.ToString("yyyyMMdd") + "0000";
-                string ngayRaToStr = NgayRaTo.Value.ToString("yyyyMMdd") + "2359";
+                // Format ngày sang yyyyMMdd (8 ký tự)
+                string ngayVaoFromStr = NgayVaoFrom.Value.ToString("yyyyMMdd");
 
-                System.Diagnostics.Debug.WriteLine($"Tìm kiếm MA_LK với MA_BN: {MaBenhNhan}, từ {ngayVaoFromStr} đến {ngayRaToStr}");
+                System.Diagnostics.Debug.WriteLine($"Tìm kiếm MA_LK với MA_BN: {MaBenhNhan}, từ {ngayVaoFromStr}");
 
-                var results = await _dataMapper.GetMaLkByMaBnAndDate(MaBenhNhan, ngayVaoFromStr, ngayRaToStr);
+                var results = await _dataMapper.GetMaLkByMaBnAndDate(MaBenhNhan, ngayVaoFromStr);
 
                 System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Nhận được {results?.Count ?? 0} kết quả từ database");
 
@@ -228,6 +216,22 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                     return;
                 }
 
+                // Nếu chỉ có 1 kết quả, tự động chạy search luôn (giống như nhập ma_tn hoặc ma_ba)
+                if (results.Count == 1)
+                {
+                    var singleResult = results[0];
+                    System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Chỉ có 1 kết quả duy nhất: {singleResult.Ma_Lk}, tự động chạy search");
+                    
+                    if (!string.IsNullOrWhiteSpace(singleResult.Ma_Lk))
+                    {
+                        // Gán MA_LK vào PatientID và chạy search
+                        PatientID = singleResult.Ma_Lk;
+                        await Search(singleResult.Ma_Lk);
+                    }
+                    return;
+                }
+
+                // Nếu có nhiều kết quả, hiển thị danh sách để user chọn
                 // Thêm kết quả vào ObservableCollection trên UI thread
                 System.Diagnostics.Debug.WriteLine($"SearchByMaBn: Bắt đầu thêm {results.Count} kết quả vào MaLkSearchResults");
                 
@@ -698,7 +702,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         /// <summary>
         /// Kiểm tra số lượng bệnh nhân và tìm những MA_LK không hiển thị kết quả
         /// </summary>
-        private async Task ValidatePatientCounts(BatchProcessingResult batchResult)
+        private Task ValidatePatientCounts(BatchProcessingResult batchResult)
         {
             // Kiểm tra số lượng bệnh nhân
             if (batchResult.SuccessCount != ValidationResults.Count)
@@ -734,6 +738,8 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                     _dialogService.ShowWarning(errorMessage, "Cảnh báo: MA_LK không hiển thị");
                 }
             }
+            
+            return Task.CompletedTask;
         }
 
         // ==================== BATCH CANCELLATION ====================

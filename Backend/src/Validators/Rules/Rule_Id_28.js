@@ -41,36 +41,26 @@ const validateRule_Id_28 = async (patientData) => {
         dsMaBenh = Array.from(new Set(dsMaBenh)); // loại trùng
 
         // Thêm trực tiếp xml1_data.Ma_Benh_Chinh vào dsMaBenh
-        dsMaBenh.push(xml1_data.Ma_Benh_Chinh.toUpperCase());
+        if (xml1_data.Ma_Benh_Chinh) {
+            const maBenhChinh = String(xml1_data.Ma_Benh_Chinh).trim().toUpperCase();
+            if (maBenhChinh) {
+                dsMaBenh.push(maBenhChinh);
+            }
+        }
 
         // Các mã bệnh hợp lệ
         const maBenhDung = [
-            // Cụm J00-J06
-            { type: 'range', from: 'J00', to: 'J06' },
-            // J20
-            { type: 'exact', code: 'J20' },
-            // T14.x
-            { type: 'prefix', code: 'T14' },
-            // S00-S09
-            { type: 'range', from: 'S00', to: 'S09' },
-            // S10-S19
-            { type: 'range', from: 'S10', to: 'S19' },
-            // S40-S49
-            { type: 'range', from: 'S40', to: 'S49' },
-            // S50-S59
-            { type: 'range', from: 'S50', to: 'S59' },
-            // S60-S69
-            { type: 'range', from: 'S60', to: 'S69' },
-            // S70-S79
-            { type: 'range', from: 'S70', to: 'S79' },
-            // S80-S89
-            { type: 'range', from: 'S80', to: 'S89' },
-            // S90-S99
-            { type: 'range', from: 'S90', to: 'S99' },
+            // T20-T32
+            { type: 'range', from: 'T20', to: 'T32' },
+            // X00-X19
+            { type: 'range', from: 'X00', to: 'X19' },
+            // W85-W87
+            { type: 'range', from: 'W85', to: 'W87' },
         ];
 
         // Hàm kiểm tra mã bệnh có hợp lệ không
         function isMaBenhHopLe(ma) {
+            if (!ma) return false;
             // Chuẩn hóa mã bệnh
             ma = ma.toUpperCase().replace(/\s/g, '');
             for (const rule of maBenhDung) {
@@ -93,14 +83,45 @@ const validateRule_Id_28 = async (patientData) => {
             return false;
         }
 
+        // Hàm kiểm tra XML5 DienBien_ls có chứa "chấn thương" hoặc "phù nề"
+        function checkDienBienLS() {
+            const dsXml5 = Array.isArray(patientData.Xml5) ? patientData.Xml5 : 
+                          Array.isArray(patientData.xml5) ? patientData.xml5 : [];
+            
+            for (const xml5Item of dsXml5) {
+                const dienBien = xml5Item?.DienBien_ls || 
+                               xml5Item?.Dien_Bien_Ls || 
+                               xml5Item?.dienBien_ls || 
+                               xml5Item?.dien_bien_ls || 
+                               '';
+                
+                if (typeof dienBien === 'string' && dienBien.trim()) {
+                    const dienBienLower = dienBien.toLowerCase();
+                    if (dienBienLower.includes('chấn thương') || 
+                        dienBienLower.includes('chan thuong') ||
+                        dienBienLower.includes('phù nề') || 
+                        dienBienLower.includes('phu ne')) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         // Duyệt từng thuốc, nếu Ma_Thuoc là 40.67 thì kiểm tra mã bệnh
         dsThuoc.forEach((thuoc, idx) => {
             if ((thuoc.Ma_Thuoc || thuoc.Ma_Thuoc === 0) && String(thuoc.Ma_Thuoc).trim() === '40.67') {
                 // Kiểm tra có mã bệnh hợp lệ không
                 const coMaBenhHopLe = dsMaBenh.some(isMaBenhHopLe);
+                
                 if (!coMaBenhHopLe) {
-                    result.isValid = false;
-                    result.errors.push({ Id: thuoc.Id, Error: 'Alphachymotrypsin (40.67) không có mã bệnh phù hợp theo quy định' });
+                    // Nếu không có mã bệnh hợp lệ, kiểm tra XML5 DienBien_ls
+                    const coDienBienHopLe = checkDienBienLS();
+                    
+                    if (!coDienBienHopLe) {
+                        result.isValid = false;
+                        result.errors.push({ Id: thuoc.id || thuoc.Id, Error: 'Alphachymotrypsin (40.67) không có mã bệnh phù hợp theo quy định và không có thông tin chấn thương/phù nề trong diễn biến lâm sàng' });
+                    }
                 }
             }
         });

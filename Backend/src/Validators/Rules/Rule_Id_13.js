@@ -33,6 +33,19 @@ const validateRule_Id_13 = async (patientData) => {
         // Danh sách mã thuốc chống đông (MA_CP)
         const danhSachMaThuocChongDong = ['40.443', '40.445'];
 
+        // Danh sách mã bệnh ngoại lệ (cho phép thanh toán đồng thời)
+        const danhSachMaBenhNgoaiLe = ['Z95', 'I26', 'I80', 'I35'];
+
+        // Hàm kiểm tra mã bệnh có thuộc danh sách ngoại lệ không
+        function isMaBenhNgoaiLe(maBenh) {
+            if (!maBenh) return false;
+            const maBenhStr = String(maBenh).trim().toUpperCase();
+            // Kiểm tra chính xác hoặc bắt đầu với mã bệnh ngoại lệ (ví dụ: I26.0, I26.1, Z95.0, v.v.)
+            return danhSachMaBenhNgoaiLe.some(maNgoaiLe => 
+                maBenhStr === maNgoaiLe || maBenhStr.startsWith(maNgoaiLe + '.')
+            );
+        }
+
         // Hàm lấy phần ngày từ Ngay_Yl (dạng yyyyMMddHHmm - 14 ký tự)
         // Trả về yyyyMMdd (8 ký tự đầu) để so sánh cùng ngày
         function getNgayFromNgayYl(ngayYl) {
@@ -56,6 +69,25 @@ const validateRule_Id_13 = async (patientData) => {
         dsChayThan.forEach(dichVu => {
             const ngayDichVu = getNgayFromNgayYl(dichVu.Ngay_Yl);
             
+            // Kiểm tra mã bệnh ngoại lệ từ xml3
+            let coMaBenhNgoaiLe = false;
+            if (dichVu.Ma_Benh) {
+                // Mã bệnh có thể là string hoặc chứa nhiều mã phân cách bằng ";"
+                const maBenhStr = String(dichVu.Ma_Benh).trim();
+                const danhSachMaBenh = maBenhStr.split(';').map(s => s.trim()).filter(Boolean);
+                coMaBenhNgoaiLe = danhSachMaBenh.some(ma => isMaBenhNgoaiLe(ma));
+            }
+            if (!coMaBenhNgoaiLe && dichVu.Ma_Benh_Yhct) {
+                const maBenhYhctStr = String(dichVu.Ma_Benh_Yhct).trim();
+                const danhSachMaBenhYhct = maBenhYhctStr.split(';').map(s => s.trim()).filter(Boolean);
+                coMaBenhNgoaiLe = danhSachMaBenhYhct.some(ma => isMaBenhNgoaiLe(ma));
+            }
+
+            // Nếu có mã bệnh ngoại lệ, bỏ qua validation (cho phép thanh toán đồng thời)
+            if (coMaBenhNgoaiLe) {
+                return; // Bỏ qua dịch vụ này, không báo lỗi
+            }
+            
             // Tìm các thuốc chống đông cùng ngày
             const thuocCungNgay = dsThuocChongDong.filter(thuoc => {
                 const ngayThuoc = getNgayFromNgayYl(thuoc.Ngay_Yl);
@@ -66,14 +98,14 @@ const validateRule_Id_13 = async (patientData) => {
                 result.isValid = false;
                 // Báo lỗi cho dịch vụ
                 result.errors.push({
-                    Id: dichVu.Id,
+                    Id: dichVu.id || dichVu.Id,
                     Error: `Không được đồng thời thanh toán dịch vụ thận nhân tạo (${dichVu.Ma_Dich_Vu}) và thuốc chống đông (${thuocCungNgay.map(t => t.Ma_Thuoc).join(', ')}) cùng thời điểm (ngày ${ngayDichVu}) do đã có trong cơ cấu giá kỹ thuật chạy thận nhân tạo.`
                 });
 
                 // Báo lỗi cho các thuốc chống đông cùng ngày
                 thuocCungNgay.forEach(thuoc => {
                     result.errors.push({
-                        Id: thuoc.Id,
+                        Id: thuoc.id || thuoc.Id,
                         Error: `Thuốc chống đông (${thuoc.Ma_Thuoc}) không được thanh toán cùng thời điểm với dịch vụ thận nhân tạo (${dichVu.Ma_Dich_Vu}) vào ngày ${ngayDichVu} do đã có trong cơ cấu giá kỹ thuật chạy thận nhân tạo.`
                     });
                 });

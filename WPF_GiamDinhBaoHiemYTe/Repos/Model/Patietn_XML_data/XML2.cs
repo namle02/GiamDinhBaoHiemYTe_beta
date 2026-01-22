@@ -50,7 +50,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private int? vet_Thuong_Tp;
         [ObservableProperty] private string? du_Phong;
         [ObservableProperty] private string? ngay_Th_Yl;
-        [ObservableProperty] private int? chucdanh_id;
+        [ObservableProperty] private int? cHUC_DANH_ID;
         [ObservableProperty] private bool isError;
     }
 }

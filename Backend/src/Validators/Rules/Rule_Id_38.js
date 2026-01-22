@@ -69,7 +69,7 @@ const validateRule_Id_38 = async (patientData) => {
         for (const item of dichVuSai) {
            if(item.Chucdanh_id === 7232 || item.Chucdanh_id === 7362) {
             result.errors.push({
-                Id: item.Id,
+                Id: item.id || item.Id,
                 Error: 'Điều dưỡng chỉ đinh sai dịch vụ'
             });
             result.isValid = false;

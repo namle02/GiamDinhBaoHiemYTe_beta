@@ -8,6 +8,7 @@ const XML4Schema = new mongoose.Schema({
   Ma_Chi_So:      { type: String, default: null },
   Ten_Chi_So:     { type: String, default: null },
   Gia_Tri:        { type: String, default: null },
+  mUC_BINH_THUONG:{ type: String, default: null },
   Don_Vi_Do:      { type: String, default: null },
   Mo_Ta:          { type: String, default: null },
   Ket_Luan:       { type: String, default: null },

@@ -30,11 +30,11 @@ const validateRule_Id_1 = async (patientData) => {
         const mapLoaiBenhPham = {};
 
         dsDichVu.forEach(dv => {
-            const lbp = dv.LoaiBenhPham_Id;
+            const lbp = dv.loaiBenhPham_Id || dv.LoaiBenhPham_Id;
             const maDV = dv.Ma_Dich_Vu;
             if (!lbp || !maDV) return;
             if (!mapLoaiBenhPham[lbp]) mapLoaiBenhPham[lbp] = [];
-            mapLoaiBenhPham[lbp].push({ Ma_Dich_Vu: maDV, Id: dv.Id });
+            mapLoaiBenhPham[lbp].push({ Ma_Dich_Vu: maDV, Id: dv.id || dv.Id });
         });
 
         // Kiểm tra từng loại bệnh phẩm xem có đồng thời các mã dịch vụ không hợp lệ không
@@ -54,7 +54,7 @@ const validateRule_Id_1 = async (patientData) => {
                         dv.Ma_Dich_Vu === maDV3
                     ) {
                         result.errors.push({
-                            Id: dv.Id,
+                            Id: dv.Id || dv.id,
                             Error: `Không được đồng thời thanh toán các dịch vụ 24.0001.1714 và (24.0005.1716 hoặc 24.0003.1715) cho cùng một loại bệnh phẩm`
                         });
                     }

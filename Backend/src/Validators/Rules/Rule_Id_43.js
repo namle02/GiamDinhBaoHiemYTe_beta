@@ -78,7 +78,7 @@ const validateRule_Id_43 = async (patientData) => {
             if (!ngayCoDichVuBangGac.has(ngayYl)) {
                 result.isValid = false;
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: `VTYT ${item.Ma_Vat_Tu} không được thanh toán vì không có dịch vụ kỹ thuật thay băng trong cùng ngày ${ngayYl}`
                 });
             }

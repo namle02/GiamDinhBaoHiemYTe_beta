@@ -141,7 +141,7 @@ const validateRule_Id_36 = async (patientData) => {
             const doctor = await Doctor.findOne({ MACCHN: maBacSi }).lean();
             if (doctor && Array.isArray(doctor.PHAMVI_CM) && doctor.PHAMVI_CM.includes(302)) {
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: `Điều dưỡng đại học (MACCHN: ${maBacSi}) không được chỉ định dịch vụ có sao (*) (Mã dịch vụ: ${item.Ma_Dich_Vu})`
                 });
                 result.isValid = false;

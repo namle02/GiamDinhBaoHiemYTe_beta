@@ -1,8 +1,9 @@
-﻿    using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using WPF_GiamDinhBaoHiem.Services.Interface;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
 {
-    public partial class XML1 : ObservableObject
+    public partial class XML1 : ObservableObject, IHasStt
     {
         [ObservableProperty] private int id;
         [ObservableProperty] private string? ma_Lk;
@@ -44,7 +45,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         [ObservableProperty] private string? giay_Chuyen_Tuyen;
         [ObservableProperty] private int? so_Ngay_Dtri;
         [ObservableProperty] private string? pp_Dieu_Tri;
-        [ObservableProperty] private int? ket_Qua_Dtri;
+        [ObservableProperty] private string? ket_Qua_Dtri;
         [ObservableProperty] private int? ma_Loai_Rv;
         [ObservableProperty] private string? ghi_Chu;
         [ObservableProperty] private string? ngay_Ttoan;

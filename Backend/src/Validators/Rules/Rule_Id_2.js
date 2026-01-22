@@ -103,7 +103,7 @@ const validateRule_Id_2 = async (patientData) => {
         result.isValid = false;
         result.errors.push(
           {
-            Id: dv.Id,
+            Id: dv.id || dv.Id,
             Error: `Dịch vụ mã ${dv.Ma_Dich_Vu} ghi nhận vùng bị u: ${regionsBiU.join(", ")}. Không được thanh toán thêm Nội soi thực quản - dạ dày - tá tràng.`
           });
       }

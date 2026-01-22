@@ -22,7 +22,7 @@ const validateRule_Id_37 = async (patientData) => {
         xml2_data.forEach(item => {
             if (item.Chucdanh_id === 7232 || item.Chucdanh_id === 7362) {
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: 'Điều dưỡng không được chỉ định thuốc'
                 });
                 result.isValid = false;

@@ -29,57 +29,66 @@ const validateRule_Id_20 = async (patientData) => {
     }
 
     try {
-        // Danh sách mã dịch vụ thở máy
+        // Danh sách mã dịch vụ thở máy (đã loại bỏ trùng lặp)
         const dsMaDichVuThoMay = [
-            '01.0136.0209',
-            '01.0128.0209',
-            '01.0131.0209',
-            '01.0134.0209',
-            '01.0137.0209',
-            '01.0138.0209',
-            '01.0137.0209',
-            '01.0128.0209',
-            '01.0130.0209',
-            '01.0135.0209',
-            '01.0135.0209',
-            '01.0132.0209',
-            '01.0133.0209',
-            '01.0130.0209',
-            '01.0144.0209',
-            '01.0134.0209',
-            '01.0133.0209'
+            '01.0128.0209', // Thông khí nhân tạo không xâm nhập
+            '01.0131.0209', // Thông khí nhân tạo không xâm nhập phương thức BiPAP
+            '01.0130.0209', // Thông khí nhân tạo không xâm nhập phương thức CPAP
+            '01.0132.0209', // Thông khí nhân tạo xâm nhập
+            '01.0135.0209', // Thông khí nhân tạo xâm nhập phương thức A/C (VCV)
+            '01.0139.0209', // Thông khí nhân tạo xâm nhập phương thức APRV
+            '01.0138.0209', // Thông khí nhân tạo xâm nhập phương thức CPAP
+            '01.0141.0209', // Thông khí nhân tạo xâm nhập phương thức HFO
+            '01.0140.0209', // Thông khí nhân tạo xâm nhập phương thức NAVA
+            '01.0134.0209', // Thông khí nhân tạo xâm nhập phương thức PCV
+            '01.0137.0209', // Thông khí nhân tạo xâm nhập phương thức PSV
+            '01.0136.0209', // Thông khí nhân tạo xâm nhập phương thức SIMV
+            '01.0133.0209', // Thông khí nhân tạo xâm nhập phương thức VCV
+            '01.0153.0297', // Thở máy xâm nhập hai phổi độc lập
+            '03.0083.0209', // Hỗ trợ hô hấp xâm nhập qua nội khí quản
+            '03.0058.0209', // Thở máy bằng xâm nhập
+            '03.0082.0209', // Thở máy không xâm nhập (thở CPAP, thở BiPAP)
+            '13.0187.0209'  // Hô hấp áp lực dương liên tục (CPAP) không xâm nhập ở trẻ sơ sinh
         ];
 
         // Lấy dữ liệu dịch vụ và thuốc
         const xml3_data = patientData.Xml3 || [];
         const xml2_data = patientData.Xml2 || [];
 
-        // Duyệt qua từng dịch vụ thở máy
-        xml3_data.forEach(dv => {
-            if (dsMaDichVuThoMay.includes(dv.Ma_Dich_Vu)) {
-                // Lấy ngày y lệnh và ngày kết quả (dạng 202403080856)
-                const tuNgay = dv.Ngay_Th_Yl ? parseDateFromString(dv.Ngay_Th_Yl) : null;
-                const denNgay = dv.Ngay_Kq ? parseDateFromString(dv.Ngay_Kq) : null;
+        // Duyệt qua từng thuốc Oxy (mã 40.17) từ XML2
+        xml2_data.forEach(thuoc => {
+            if (thuoc.Ma_Thuoc === '40.17') {
+                // Lấy khoảng thời gian của thuốc Oxy: từ Ngay_Yl đến Ngay_Kq
+                const oxyTuNgay = thuoc.Ngay_Yl ? parseDateFromString(thuoc.Ngay_Yl) : null;
+                const oxyDenNgay = thuoc.Ngay_Kq ? parseDateFromString(thuoc.Ngay_Kq) : null;
 
-                if (!tuNgay || !denNgay) return; // Nếu thiếu ngày thì bỏ qua
+                // Nếu không có Ngay_Yl thì bỏ qua
+                if (!oxyTuNgay) return;
 
-                // Kiểm tra trong khoảng thời gian này có thuốc Oxy không
-                xml2_data.forEach(thuoc => {
-                    if (thuoc.Ma_Thuoc === '40.17') {
-                        // Lấy ngày cấp thuốc (dạng 202403080856)
-                        const ngayYLenhThuoc = thuoc.Ngay_Yl ? parseDateFromString(thuoc.Ngay_Yl) : null;
-                        if (!ngayYLenhThuoc) return;
+                // Nếu không có Ngay_Kq, coi như chỉ có một thời điểm (Ngay_Yl)
+                const oxyDenNgayFinal = oxyDenNgay || oxyTuNgay;
 
-                        // Nếu ngày cấp thuốc nằm trong khoảng từ ngày y lệnh đến ngày kết quả của dịch vụ thở máy
-                        if (ngayYLenhThuoc >= tuNgay && ngayYLenhThuoc <= denNgay) {
+                // Kiểm tra các dịch vụ thở máy trong XML3
+                xml3_data.forEach(dv => {
+                    if (dsMaDichVuThoMay.includes(dv.Ma_Dich_Vu)) {
+                        // Lấy khoảng thời gian của dịch vụ thở máy: từ Ngay_Th_Yl đến Ngay_Kq
+                        const dvTuNgay = (dv.Ngay_Th_Yl || dv.Ngay_th_yl) ? parseDateFromString(dv.Ngay_Th_Yl || dv.Ngay_th_yl) : null;
+                        const dvDenNgay = dv.Ngay_Kq ? parseDateFromString(dv.Ngay_Kq) : null;
+
+                        // Nếu thiếu một trong hai ngày thì bỏ qua
+                        if (!dvTuNgay || !dvDenNgay) return;
+
+                        // Kiểm tra nếu khoảng thời gian của Oxy NẰM TRONG khoảng thời gian của dịch vụ thở máy
+                        // Oxy nằm trong dịch vụ thở máy khi: oxyTuNgay >= dvTuNgay && oxyDenNgayFinal <= dvDenNgay
+                        if (oxyTuNgay >= dvTuNgay && oxyDenNgayFinal <= dvDenNgay) {
                             result.isValid = false;
                             result.errors.push({
-                                Id: dv.Id,
-                                Error: `Không được thanh toán đồng thời Oxy (mã thuốc 40.17) với dịch vụ thở máy (${dv.Ma_Dich_Vu}) trong cùng khoảng thời gian từ ngày y lệnh đến ngày kết quả`
+                                Id: thuoc.id || thuoc.Id,
+                                Error: `Không được thanh toán Oxy (mã thuốc 40.17) trong khoảng thời gian từ ${thuoc.Ngay_Yl} đến ${thuoc.Ngay_Kq || thuoc.Ngay_Yl} khi đã thanh toán dịch vụ thở máy (${dv.Ma_Dich_Vu}) từ ${dv.Ngay_Th_Yl} đến ${dv.Ngay_Kq}`
                             });
                             result.errors.push({
-                                Id: thuoc.Id,
-                                Error: `Không được thanh toán đồng thời Oxy (mã thuốc 40.17) với dịch vụ thở máy (${dv.Ma_Dich_Vu}) trong cùng khoảng thời gian từ ngày y lệnh đến ngày kết quả`
+                                Id: dv.id || dv.Id,
+                                Error: `Không được thanh toán Oxy (mã thuốc 40.17) trong khoảng thời gian từ ${thuoc.Ngay_Yl} đến ${thuoc.Ngay_Kq || thuoc.Ngay_Yl} khi đã thanh toán dịch vụ thở máy (${dv.Ma_Dich_Vu}) từ ${dv.Ngay_Th_Yl} đến ${dv.Ngay_Kq}`
                             });
                         }
                     }

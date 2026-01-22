@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -16,6 +16,13 @@
   <ItemGroup>
     <Resource Include="Assets\Logo_benh_vien-removebg-preview.png" />
     <Resource Include="Assets\Male_Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Repos\Mappers\Implement\sql\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>sql\%(Filename)%(Extension)</TargetPath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

@@ -41,7 +41,7 @@ const validateRule_Id_8 = async (patientData) => {
             if (item.Ma_Dich_Vu && dsDichVuBatBuocPhaiKiemTra.includes(item.Ma_Dich_Vu) && !coDichVuDau25) {
                 result.isValid = false;
                 result.errors.push({
-                    Id: item.Id,
+                    Id: item.id || item.Id,
                     Error: `Dịch vụ ${item.Ma_Dich_Vu} nhưng không làm xét nghiệm giải phẫu mô bệnh học, điều chỉnh về mức giá của các DV nội soi không sinh thiết`
                 });
             }

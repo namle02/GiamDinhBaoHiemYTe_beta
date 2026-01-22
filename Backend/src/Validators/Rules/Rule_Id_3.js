@@ -110,7 +110,7 @@ const validateRule_Id_3 = async (patientData) => {
             result.isValid = false;
             result.errors.push(
               {
-                Id: dv.Id,
+                Id: dv.id || dv.Id,
                 Error: `Dịch vụ mã ${dv.Ma_Dich_Vu} ghi nhận vùng bị u: ${regionsBiU.join(", ")}. Không được thanh toán thêm dịch vụ can thiệp ống tiêu hóa, không thanh toán thêm dịch vụ Nội soi đại trực tràng toàn bộ ống mềm.`
               });
           }

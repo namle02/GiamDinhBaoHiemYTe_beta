@@ -43,7 +43,7 @@ const XML2Schema = new mongoose.Schema({
   Vet_Thuong_Tp:        { type: Number, default: null },
   Du_Phong:             { type: String, default: null },
   Ngay_Th_Yl:           { type: String, default: null },
-  chucdanh_id:          { type: Number, default: null }
+  cHUC_DANH_ID:         { type: Number, default: null }
 }, {
   timestamps: true,
   strict: false

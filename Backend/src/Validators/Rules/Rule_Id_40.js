@@ -129,7 +129,7 @@ const validateRule_Id_40 = async (patientData) => {
                 if (tongHamLuong > 500) {
                     result.isValid = false;
                     result.errors.push({
-                        Id: thuocTrongNgay[0].Id,
+                        Id: thuocTrongNgay[0].id || thuocTrongNgay[0].Id,
                         Error: `Ngày đầu tiên sử dụng Azithromycin (${ngay}), tổng hàm lượng ${tongHamLuong.toFixed(2)}mg vượt quá 500mg (cho phép tối đa 500mg)`
                     });
                 }
@@ -138,7 +138,7 @@ const validateRule_Id_40 = async (patientData) => {
                 if (tongHamLuong > 250) {
                     result.isValid = false;
                     result.errors.push({
-                        Id: thuocTrongNgay[0].Id,
+                        Id: thuocTrongNgay[0].id || thuocTrongNgay[0].Id,
                         Error: `Ngày ${ngay} sử dụng Azithromycin, tổng hàm lượng ${tongHamLuong.toFixed(2)}mg vượt quá 250mg (cho phép tối đa 250mg)`
                     });
                 }
@@ -177,7 +177,7 @@ const validateRule_Id_40 = async (patientData) => {
                     
                     result.isValid = false;
                     result.errors.push({
-                        Id: thuocTrongChuoi[0].Id,
+                        Id: thuocTrongChuoi[0].id || thuocTrongChuoi[0].Id,
                         Error: `Azithromycin không được sử dụng liên tiếp 5 ngày. Đã sử dụng từ ngày ${chuoiNgay[0]} đến ngày ${chuoiNgay[4]} (5 ngày liên tiếp)`
                     });
                     

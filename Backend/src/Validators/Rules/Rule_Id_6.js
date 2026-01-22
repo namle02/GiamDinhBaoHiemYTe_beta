@@ -26,7 +26,7 @@ const validateRule_Id_6 = async (patientData) => {
                
                if (!Ma_Benh.includes('H04.2') && !Ma_Benh.includes('H04.3') && !Ma_Benh.includes('H04.4')) {
                     result.isValid = false;
-                    result.errors.push({ Id: item.Id, Error: 'Mã bệnh chính và bệnh kèm theo cần có H04.2, H04.3, H04.4' });
+                    result.errors.push({ Id: item.id || item.Id, Error: 'Mã bệnh chính và bệnh kèm theo cần có H04.2, H04.3, H04.4' });
                 }
             }
 
