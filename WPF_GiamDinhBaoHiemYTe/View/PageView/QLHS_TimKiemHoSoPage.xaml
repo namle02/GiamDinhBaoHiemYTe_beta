@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converter="clr-namespace:WPF_GiamDinhBaoHiem.Converter"
+    xmlns:control="clr-namespace:WPF_GiamDinhBaoHiem.View.ControlView"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -20,6 +21,7 @@
         <converter:FieldErrorConverter x:Key="FieldErrorConverter" />
         <converter:GenderConverter x:Key="GenderConverter" />
         <converter:ErrorTextConverter x:Key="ErrorTextConverter" />
+        <converter:ProgressBarWidthConverter x:Key="ProgressBarWidthConverter" />
 
         <!--  Style cho TextBlock trong XML2-5 để có màu đỏ khi lỗi  -->
         <Style x:Key="ErrorTextBlockStyle" TargetType="TextBlock">
@@ -925,19 +927,12 @@
         </Grid>
 
         <!--  LOADING OVERLAY  -->
-        <Border Background="#99FFFFFF" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar
-                    Width="60"
-                    Height="60"
-                    IsIndeterminate="True"
-                    Style="{StaticResource MaterialDesignCircularProgressBar}" />
-                <TextBlock
-                    Margin="0,16,0,0"
-                    FontSize="16"
-                    FontWeight="Medium"
-                    Text="Đang tải và kiểm tra dữ liệu..." />
-            </StackPanel>
+        <Border Background="#E0000000" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+            <control:AILoadingControl
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                StatusText="Đang xử lý dữ liệu..."
+                SubStatusText="AI đang phân tích và kiểm tra thông tin" />
         </Border>
 
         <!--  CHi tiết lỗi  -->
@@ -3497,69 +3492,163 @@
         </Border>
 
         <!--  BATCH PROCESSING LOADING OVERLAY  -->
-        <Border Background="#80000000" Visibility="{Binding IsBatchProcessing, Converter={StaticResource BoolToVis}}">
+        <Border Background="#E0000000" Visibility="{Binding IsBatchProcessing, Converter={StaticResource BoolToVis}}">
             <Grid>
-                <materialDesign:Card
-                    Width="500"
-                    Height="300"
-                    Padding="24"
+                <Border
+                    Width="550"
+                    Padding="28"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+                    VerticalAlignment="Center"
+                    Background="#1a1a2e"
+                    BorderBrush="#00D4FF"
+                    BorderThickness="2"
+                    CornerRadius="20">
+                    <Border.Effect>
+                        <DropShadowEffect
+                            BlurRadius="40"
+                            Color="#00D4FF"
+                            Opacity="0.6"
+                            ShadowDepth="0" />
+                    </Border.Effect>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="16" />
+                            <RowDefinition Height="20" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="16" />
+                            <RowDefinition Height="20" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="16" />
+                            <RowDefinition Height="20" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="8" />
+                            <RowDefinition Height="12" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="24" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!--  Title  -->
-                        <TextBlock
-                            Grid.Row="0"
-                            HorizontalAlignment="Center"
-                            FontSize="20"
-                            FontWeight="Bold"
-                            Text="Đang xử lý dữ liệu Excel" />
+                        <!--  Title with AI theme  -->
+                        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Orientation="Horizontal">
+                            <TextBlock
+                                FontSize="22"
+                                FontWeight="Bold"
+                                Foreground="#00D4FF">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect
+                                        BlurRadius="15"
+                                        Color="#00D4FF"
+                                        Opacity="0.8"
+                                        ShadowDepth="0" />
+                                </TextBlock.Effect>
+                                <Run Text="🤖 " />
+                                <Run Text="AI đang xử lý dữ liệu Excel" />
+                            </TextBlock>
+                        </StackPanel>
 
                         <!--  Progress Info  -->
                         <StackPanel
                             Grid.Row="2"
                             HorizontalAlignment="Center"
                             Orientation="Horizontal">
-                            <TextBlock Text="Đã xử lý: " />
+                            <TextBlock Foreground="#B0B0B0" Text="Đã xử lý: " />
                             <TextBlock
                                 FontWeight="Bold"
-                                Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                Text="{Binding BatchProgress}" />
-                            <TextBlock Text=" / " />
-                            <TextBlock FontWeight="Bold" Text="{Binding BatchTotal}" />
-                            <TextBlock Text=" bệnh nhân" />
+                                Foreground="#00D4FF"
+                                Text="{Binding BatchProgress}">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect
+                                        BlurRadius="8"
+                                        Color="#00D4FF"
+                                        Opacity="0.6"
+                                        ShadowDepth="0" />
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Foreground="#B0B0B0" Text=" / " />
+                            <TextBlock
+                                FontWeight="Bold"
+                                Foreground="#FFFFFF"
+                                Text="{Binding BatchTotal}" />
+                            <TextBlock Foreground="#B0B0B0" Text=" bệnh nhân" />
                         </StackPanel>
 
-                        <!--  Progress Bar  -->
+                        <!--  Progress Bar with AI theme  -->
                         <Grid Grid.Row="4">
-                            <ProgressBar
-                                Height="8"
-                                Background="{DynamicResource MaterialDesignDivider}"
-                                Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                Maximum="{Binding BatchTotal}"
-                                Value="{Binding BatchProgress}" />
-
-                            <!--  Progress Percentage  -->
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontSize="10"
-                                Foreground="White"
-                                Text="{Binding BatchProgressPercentage, StringFormat={}{0:F1}%}" />
+                            <Border
+                                Height="20"
+                                Background="#0f3460"
+                                CornerRadius="10"
+                                BorderBrush="#00D4FF"
+                                BorderThickness="2">
+                                <Border.Effect>
+                                    <DropShadowEffect
+                                        BlurRadius="15"
+                                        Color="#00D4FF"
+                                        Opacity="0.6"
+                                        ShadowDepth="0" />
+                                </Border.Effect>
+                                <Grid>
+                                    <ProgressBar
+                                        Height="16"
+                                        Margin="2"
+                                        Background="Transparent"
+                                        Maximum="{Binding BatchTotal}"
+                                        Value="{Binding BatchProgress}">
+                                        <ProgressBar.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#00D4FF" Offset="0" />
+                                                <GradientStop Color="#06FFA5" Offset="0.5" />
+                                                <GradientStop Color="#7B2CBF" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </ProgressBar.Foreground>
+                                        <ProgressBar.Style>
+                                            <Style TargetType="ProgressBar">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ProgressBar">
+                                                            <Border
+                                                                Background="{TemplateBinding Background}"
+                                                                CornerRadius="8"
+                                                                BorderThickness="0">
+                                                                <Grid x:Name="PART_Track">
+                                                                    <Rectangle
+                                                                        x:Name="PART_Indicator"
+                                                                        Fill="{TemplateBinding Foreground}"
+                                                                        RadiusX="8"
+                                                                        RadiusY="8"
+                                                                        HorizontalAlignment="Left">
+                                                                        <Rectangle.Effect>
+                                                                            <DropShadowEffect
+                                                                                BlurRadius="12"
+                                                                                Color="#00D4FF"
+                                                                                Opacity="0.9"
+                                                                                ShadowDepth="0" />
+                                                                        </Rectangle.Effect>
+                                                                    </Rectangle>
+                                                                </Grid>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ProgressBar.Style>
+                                    </ProgressBar>
+                                    <!--  Progress Percentage  -->
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        FontWeight="Bold"
+                                        Foreground="#FFFFFF"
+                                        Text="{Binding BatchProgressPercentage, StringFormat={}{0:F1}%}">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect
+                                                BlurRadius="6"
+                                                Color="#000000"
+                                                Opacity="0.9"
+                                                ShadowDepth="1" />
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
                         </Grid>
 
                         <!--  Status Text  -->
@@ -3567,20 +3656,37 @@
                             Grid.Row="6"
                             HorizontalAlignment="Center"
                             FontSize="14"
+                            Foreground="#06FFA5"
                             Text="{Binding BatchStatus}"
                             TextAlignment="Center"
-                            TextWrapping="Wrap" />
+                            TextWrapping="Wrap">
+                            <TextBlock.Effect>
+                                <DropShadowEffect
+                                    BlurRadius="8"
+                                    Color="#06FFA5"
+                                    Opacity="0.5"
+                                    ShadowDepth="0" />
+                            </TextBlock.Effect>
+                        </TextBlock>
 
                         <!--  Current Patient  -->
                         <TextBlock
                             Grid.Row="8"
                             HorizontalAlignment="Center"
                             FontSize="12"
-                            Foreground="{DynamicResource PrimaryHueMidBrush}"
-                            Text="{Binding CurrentProcessingPatient, StringFormat='Đang xử lý: {0}'}"
+                            Foreground="#7B2CBF"
+                            Text="{Binding CurrentProcessingPatient, StringFormat='⚡ Đang xử lý: {0}'}"
                             TextAlignment="Center"
                             TextWrapping="Wrap"
-                            Visibility="{Binding CurrentProcessingPatient, Converter={StaticResource StringToVis}}" />
+                            Visibility="{Binding CurrentProcessingPatient, Converter={StaticResource StringToVis}}">
+                            <TextBlock.Effect>
+                                <DropShadowEffect
+                                    BlurRadius="6"
+                                    Color="#7B2CBF"
+                                    Opacity="0.5"
+                                    ShadowDepth="0" />
+                            </TextBlock.Effect>
+                        </TextBlock>
 
                         <!--  Statistics  -->
                         <Grid Grid.Row="10">
@@ -3593,46 +3699,92 @@
                             <!--  Success Count  -->
                             <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                                 <TextBlock
-                                    FontSize="16"
+                                    FontSize="18"
                                     FontWeight="Bold"
-                                    Foreground="Green"
-                                    Text="{Binding BatchSuccessCount}" />
-                                <TextBlock FontSize="12" Text="Thành công" />
+                                    Foreground="#06FFA5"
+                                    Text="{Binding BatchSuccessCount}">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect
+                                            BlurRadius="10"
+                                            Color="#06FFA5"
+                                            Opacity="0.6"
+                                            ShadowDepth="0" />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="#B0B0B0"
+                                    Text="✓ Thành công" />
                             </StackPanel>
 
                             <!--  Error Count  -->
                             <StackPanel Grid.Column="1" HorizontalAlignment="Center">
                                 <TextBlock
-                                    FontSize="16"
+                                    FontSize="18"
                                     FontWeight="Bold"
-                                    Foreground="Red"
-                                    Text="{Binding BatchErrorCount}" />
-                                <TextBlock FontSize="12" Text="Lỗi" />
+                                    Foreground="#FF6B9D"
+                                    Text="{Binding BatchErrorCount}">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect
+                                            BlurRadius="10"
+                                            Color="#FF6B9D"
+                                            Opacity="0.6"
+                                            ShadowDepth="0" />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="#B0B0B0"
+                                    Text="✗ Lỗi" />
                             </StackPanel>
 
                             <!--  Speed  -->
                             <StackPanel Grid.Column="2" HorizontalAlignment="Center">
                                 <TextBlock
-                                    FontSize="16"
+                                    FontSize="18"
                                     FontWeight="Bold"
-                                    Foreground="{DynamicResource PrimaryHueMidBrush}"
-                                    Text="{Binding BatchProcessingSpeed, StringFormat={}{0:F1}}" />
-                                <TextBlock FontSize="12" Text="bệnh nhân/giây" />
+                                    Foreground="#00D4FF"
+                                    Text="{Binding BatchProcessingSpeed, StringFormat={}{0:F1}}">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect
+                                            BlurRadius="10"
+                                            Color="#00D4FF"
+                                            Opacity="0.6"
+                                            ShadowDepth="0" />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="#B0B0B0"
+                                    Text="⚡ bệnh nhân/giây" />
                             </StackPanel>
                         </Grid>
 
                         <!--  Cancel Button  -->
                         <Button
                             Grid.Row="11"
-                            Width="100"
-                            Height="36"
-                            Margin="0,16,0,0"
+                            Width="120"
+                            Height="40"
+                            Margin="0,20,0,0"
                             HorizontalAlignment="Center"
                             Command="{Binding CancelBatchProcessingCommand}"
-                            Content="Hủy"
-                            IsEnabled="{Binding CanCancelBatch}" />
+                            IsEnabled="{Binding CanCancelBatch}"
+                            Style="{StaticResource MaterialDesignRaisedButton}">
+                            <Button.Content>
+                                <TextBlock
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Text="Hủy xử lý" />
+                            </Button.Content>
+                            <Button.Background>
+                                <SolidColorBrush Color="#FF6B9D" />
+                            </Button.Background>
+                            <Button.Foreground>
+                                <SolidColorBrush Color="#FFFFFF" />
+                            </Button.Foreground>
+                        </Button>
                     </Grid>
-                </materialDesign:Card>
+                </Border>
             </Grid>
         </Border>
     </Grid>

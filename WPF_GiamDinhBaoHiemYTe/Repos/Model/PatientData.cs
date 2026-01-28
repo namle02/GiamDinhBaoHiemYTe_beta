@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WPF_GiamDinhBaoHiem.Repos.Model.Patietn_XML_data;
 
 namespace WPF_GiamDinhBaoHiem.Repos.Model
 {
@@ -21,5 +22,6 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model
         public List<XML13>? Xml13 { get; set; }
         public List<XML14>? Xml14 { get; set; }
         public List<XML15>? Xml15 { get; set; }
+        public List<DsBenhNhanLoiMaMay>? DsBenhNhanLoiMaMay { get; set; }
     }
 }

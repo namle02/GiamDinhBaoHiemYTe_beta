@@ -16,6 +16,7 @@ const XML11Model = require('./XML_Model/XML11');
 const XML13Model = require('./XML_Model/XML13');
 const XML14Model = require('./XML_Model/XML14');
 const XML15Model = require('./XML_Model/XML15');
+const DsBenhNhanLoiMaMayModel = require('./XML_Model/DsBenhNhanLoiMaMay');
 
 const XML0Schema = XML0Model.schema;
 const XML1Schema = XML1Model.schema;
@@ -32,6 +33,7 @@ const XML11Schema = XML11Model.schema;
 const XML13Schema = XML13Model.schema;
 const XML14Schema = XML14Model.schema;
 const XML15Schema = XML15Model.schema;
+const DsBenhNhanLoiMaMaySchema = DsBenhNhanLoiMaMayModel.schema;
 
 const PatientDataSchema = new mongoose.Schema({
     PatientID: { type: String, default: null },
@@ -49,7 +51,8 @@ const PatientDataSchema = new mongoose.Schema({
     Xml11:     [XML11Schema],
     Xml13:     [XML13Schema],
     Xml14:     [XML14Schema],
-    Xml15:     [XML15Schema]
+    Xml15:     [XML15Schema],
+    DsBenhNhanLoiMaMay: [DsBenhNhanLoiMaMaySchema]
   }, {
     timestamps: true
   });

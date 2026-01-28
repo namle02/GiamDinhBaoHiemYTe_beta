@@ -17,12 +17,12 @@ FROM TiepNhan tn
 LEFT JOIN BenhAn ba ON tn.TiepNhan_Id = ba.TiepNhan_Id
 LEFT JOIN DM_BenhNhan bn ON bn.BenhNhan_Id = tn.BenhNhan_Id
 LEFT JOIN Lst_Dictionary lba ON lba.Dictionary_Id = ba.LoaiBenhAn_Id
+RIGHT JOIN XacNhanChiPhi xn ON xn.TiepNhan_Id = tn.TiepNhan_Id
 WHERE
 (
     -- Tình huống 1: Nhập MA_BN (Sovv) và Ngày vào (Ngaytn)
     (
-        @Sovv IS NOT NULL 
-        AND @Ngaytn IS NOT NULL
+        @Sovv IS NOT NULL
         AND bn.Sovaovien = @Sovv
         AND tn.NgayTiepNhan = SUBSTRING(@Ngaytn,1,4) + '-' + SUBSTRING(@Ngaytn,5,2) + '-' + SUBSTRING(@Ngaytn,7,2)
     )

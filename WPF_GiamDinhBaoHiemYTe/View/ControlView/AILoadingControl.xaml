@@ -1,0 +1,321 @@
+<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.ControlView.AILoadingControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Width="400"
+    Height="300"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <!-- Gradient Brush for Background -->
+        <LinearGradientBrush x:Key="AIGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#1a1a2e" Offset="0" />
+            <GradientStop Color="#16213e" Offset="0.5" />
+            <GradientStop Color="#0f3460" Offset="1" />
+        </LinearGradientBrush>
+
+        <!-- Glow Effect -->
+        <DropShadowEffect
+            x:Key="GlowEffect"
+            BlurRadius="20"
+            Color="#00D4FF"
+            ShadowDepth="0" />
+
+        <!-- Rotating Animation -->
+        <Storyboard x:Key="RotateAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="MainCircle"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                From="0"
+                To="360"
+                Duration="0:0:2" />
+        </Storyboard>
+
+        <!-- Pulse Animation for Outer Circles -->
+        <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="OuterCircle1"
+                Storyboard.TargetProperty="Opacity"
+                From="0.3"
+                To="1"
+                Duration="0:0:1.5"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="OuterCircle2"
+                Storyboard.TargetProperty="Opacity"
+                From="0.3"
+                To="1"
+                Duration="0:0:1.5"
+                BeginTime="0:0:0.5"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="OuterCircle3"
+                Storyboard.TargetProperty="Opacity"
+                From="0.3"
+                To="1"
+                Duration="0:0:1.5"
+                BeginTime="0:0:1"
+                AutoReverse="True" />
+        </Storyboard>
+
+        <!-- Particle Animation -->
+        <Storyboard x:Key="ParticleAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="Particle1"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                From="-50"
+                To="50"
+                Duration="0:0:2"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="Particle1"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                From="-50"
+                To="50"
+                Duration="0:0:2"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="Particle2"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                From="50"
+                To="-50"
+                Duration="0:0:2.5"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="Particle2"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                From="50"
+                To="-50"
+                Duration="0:0:2.5"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="Particle3"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                From="0"
+                To="70"
+                Duration="0:0:1.8"
+                AutoReverse="True" />
+            <DoubleAnimation
+                Storyboard.TargetName="Particle3"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                From="70"
+                To="0"
+                Duration="0:0:1.8"
+                AutoReverse="True" />
+        </Storyboard>
+
+        <!-- Text Fade Animation -->
+        <Storyboard x:Key="TextFadeAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation
+                Storyboard.TargetName="StatusTextBlock"
+                Storyboard.TargetProperty="Opacity"
+                From="0.5"
+                To="1"
+                Duration="0:0:1"
+                AutoReverse="True" />
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Border
+        Background="{StaticResource AIGradientBrush}"
+        CornerRadius="20"
+        BorderThickness="2"
+        BorderBrush="#00D4FF">
+        <Border.Effect>
+            <DropShadowEffect
+                BlurRadius="30"
+                Color="#00D4FF"
+                Opacity="0.5"
+                ShadowDepth="0" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Animated AI Processing Visual -->
+            <Canvas
+                Grid.Row="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="200"
+                Height="200">
+                
+                <!-- Outer Glowing Circles -->
+                <Ellipse
+                    x:Name="OuterCircle1"
+                    Width="180"
+                    Height="180"
+                    Canvas.Left="10"
+                    Canvas.Top="10"
+                    Opacity="0.5"
+                    Stroke="#00D4FF"
+                    StrokeThickness="2">
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="15"
+                            Color="#00D4FF"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <Ellipse
+                    x:Name="OuterCircle2"
+                    Width="160"
+                    Height="160"
+                    Canvas.Left="20"
+                    Canvas.Top="20"
+                    Opacity="0.5"
+                    Stroke="#7B2CBF"
+                    StrokeThickness="2">
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="12"
+                            Color="#7B2CBF"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <Ellipse
+                    x:Name="OuterCircle3"
+                    Width="140"
+                    Height="140"
+                    Canvas.Left="30"
+                    Canvas.Top="30"
+                    Opacity="0.5"
+                    Stroke="#06FFA5"
+                    StrokeThickness="2">
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="10"
+                            Color="#06FFA5"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <!-- Main Rotating Circle -->
+                <Ellipse
+                    x:Name="MainCircle"
+                    Width="100"
+                    Height="100"
+                    Canvas.Left="50"
+                    Canvas.Top="50"
+                    Stroke="#00D4FF"
+                    StrokeThickness="3"
+                    StrokeDashArray="5,5">
+                    <Ellipse.RenderTransform>
+                        <RotateTransform CenterX="50" CenterY="50" />
+                    </Ellipse.RenderTransform>
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="20"
+                            Color="#00D4FF"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <!-- Center Core -->
+                <Ellipse
+                    Width="60"
+                    Height="60"
+                    Canvas.Left="70"
+                    Canvas.Top="70"
+                    Fill="#00D4FF"
+                    Opacity="0.8">
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="25"
+                            Color="#00D4FF"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <!-- Animated Particles -->
+                <Ellipse
+                    x:Name="Particle1"
+                    Width="8"
+                    Height="8"
+                    Canvas.Left="96"
+                    Canvas.Top="96"
+                    Fill="#00D4FF">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform />
+                    </Ellipse.RenderTransform>
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="8"
+                            Color="#00D4FF"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <Ellipse
+                    x:Name="Particle2"
+                    Width="6"
+                    Height="6"
+                    Canvas.Left="97"
+                    Canvas.Top="97"
+                    Fill="#7B2CBF">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform />
+                    </Ellipse.RenderTransform>
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="6"
+                            Color="#7B2CBF"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+
+                <Ellipse
+                    x:Name="Particle3"
+                    Width="6"
+                    Height="6"
+                    Canvas.Left="97"
+                    Canvas.Top="97"
+                    Fill="#06FFA5">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform />
+                    </Ellipse.RenderTransform>
+                    <Ellipse.Effect>
+                        <DropShadowEffect
+                            BlurRadius="6"
+                            Color="#06FFA5"
+                            ShadowDepth="0" />
+                    </Ellipse.Effect>
+                </Ellipse>
+            </Canvas>
+
+            <!-- Status Text -->
+            <TextBlock
+                x:Name="StatusTextBlock"
+                Grid.Row="1"
+                Margin="0,20,0,0"
+                HorizontalAlignment="Center"
+                FontSize="18"
+                FontWeight="SemiBold"
+                Foreground="#00D4FF"
+                Text="{Binding StatusText, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <TextBlock.Effect>
+                    <DropShadowEffect
+                        BlurRadius="10"
+                        Color="#00D4FF"
+                        Opacity="0.6"
+                        ShadowDepth="0" />
+                </TextBlock.Effect>
+            </TextBlock>
+
+            <!-- Sub Status Text -->
+            <TextBlock
+                Grid.Row="2"
+                Margin="0,8,0,24"
+                HorizontalAlignment="Center"
+                FontSize="12"
+                Foreground="#B0B0B0"
+                Text="{Binding SubStatusText, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        </Grid>
+    </Border>
+</UserControl>

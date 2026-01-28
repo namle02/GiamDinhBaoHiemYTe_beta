@@ -218,7 +218,7 @@ class PatientServices {
         };
 
         // Transform các XML arrays
-        const xmlFields = ['Xml0', 'Xml1', 'Xml2', 'Xml3', 'Xml4', 'Xml5', 'Xml6', 'Xml7', 'Xml8', 'Xml9', 'Xml10', 'Xml11', 'Xml13', 'Xml14', 'Xml15'];
+        const xmlFields = ['Xml0', 'Xml1', 'Xml2', 'Xml3', 'Xml4', 'Xml5', 'Xml6', 'Xml7', 'Xml8', 'Xml9', 'Xml10', 'Xml11', 'Xml13', 'Xml14', 'Xml15', 'DsBenhNhanLoiMaMay'];
         
         for (const field of xmlFields) {
             if (data[field] && Array.isArray(data[field])) {

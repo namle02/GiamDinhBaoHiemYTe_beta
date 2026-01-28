@@ -7,6 +7,7 @@ const DoctorRoutes = require('./Routes/DoctorRoutes');
 const ValidateRoutes = require('./Routes/ValidateRoutes');
 const TestRoutes = require('./Routes/TestRoutes');
 const LogRoutes = require('./Routes/LogRoutes');
+const BenhNhanLoiMaMayRoutes = require('./Routes/BenhNhanLoiMaMayRoutes');
 const RuleService = require('./Services/RuleService');
 const LogService = require('./Services/LogService');
 const Logger = require('./Utils/Logger');
@@ -34,6 +35,7 @@ app.use('/api/doctor', DoctorRoutes);
 app.use('/api/validate', ValidateRoutes);
 app.use('/api/test', TestRoutes);
 app.use('/api/logs', LogRoutes);
+app.use('/api/benh-nhan-loi-ma-may', BenhNhanLoiMaMayRoutes);
 
 // Root route
 app.get('/', (req, res) => {

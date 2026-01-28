@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
@@ -408,6 +409,204 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         }
 
         /// <summary>
+        /// Kiểm tra format ngày của hệ thống (mm/dd/yy hay dd/mm/yy)
+        /// </summary>
+        private bool IsSystemDateFormatMonthFirst()
+        {
+            var dateFormat = CultureInfo.CurrentCulture.DateTimeFormat;
+            var shortDatePattern = dateFormat.ShortDatePattern;
+            
+            // Kiểm tra xem format có bắt đầu bằng M (month) hay d (day)
+            // Loại bỏ các ký tự không phải chữ cái
+            var cleanPattern = shortDatePattern.Replace("/", "").Replace("-", "").Replace(".", "");
+            
+            // Nếu pattern bắt đầu bằng 'M' hoặc 'm' thì là month first (mm/dd)
+            // Nếu bắt đầu bằng 'd' thì là day first (dd/mm)
+            if (cleanPattern.Length > 0)
+            {
+                char firstChar = cleanPattern[0];
+                return firstChar == 'M' || firstChar == 'm';
+            }
+            
+            // Mặc định kiểm tra bằng cách parse một ngày test
+            // Nếu parse "01/02/2024" thành 1 tháng 2 (February) thì là mm/dd
+            // Nếu parse thành 2 tháng 1 (January) thì là dd/mm
+            if (DateTime.TryParse("01/02/2024", out DateTime testDate))
+            {
+                return testDate.Month == 1; // Nếu month = 1 thì là mm/dd format
+            }
+            
+            // Fallback: mặc định là mm/dd (US format)
+            return true;
+        }
+
+        /// <summary>
+        /// Parse date string với hỗ trợ nhiều format, ưu tiên format của hệ thống
+        /// </summary>
+        private bool TryParseDateFlexible(string dateString, out DateTime date)
+        {
+            date = default;
+            if (string.IsNullOrWhiteSpace(dateString))
+                return false;
+
+            dateString = dateString.Trim();
+
+            // Bước 1: Thử parse với format hiện tại của hệ thống (culture-aware)
+            if (DateTime.TryParse(dateString, CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
+            {
+                return true;
+            }
+
+            // Bước 2: Nếu có chứa dấu /, phân tích và parse theo format của hệ thống
+            if (dateString.Contains("/"))
+            {
+                var parts = dateString.Split(new[] { '/', ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
+                {
+                    bool isMonthFirst = IsSystemDateFormatMonthFirst();
+                    int month, day, year;
+
+                    if (isMonthFirst)
+                    {
+                        // Format: mm/dd/yyyy
+                        if (int.TryParse(parts[0], out month) && 
+                            int.TryParse(parts[1], out day) && 
+                            int.TryParse(parts[2], out year))
+                        {
+                            // Xử lý năm 2 chữ số
+                            if (year < 100)
+                            {
+                                year += year < 50 ? 2000 : 1900;
+                            }
+
+                            if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100)
+                            {
+                                try
+                                {
+                                    date = new DateTime(year, month, day);
+                                    // Nếu có thời gian
+                                    if (parts.Length >= 4 && int.TryParse(parts[3], out int hour))
+                                    {
+                                        int minute = parts.Length >= 5 && int.TryParse(parts[4], out int min) ? min : 0;
+                                        date = new DateTime(year, month, day, hour, minute, 0);
+                                    }
+                                    return true;
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Format: dd/mm/yyyy
+                        if (int.TryParse(parts[0], out day) && 
+                            int.TryParse(parts[1], out month) && 
+                            int.TryParse(parts[2], out year))
+                        {
+                            // Xử lý năm 2 chữ số
+                            if (year < 100)
+                            {
+                                year += year < 50 ? 2000 : 1900;
+                            }
+
+                            if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100)
+                            {
+                                try
+                                {
+                                    date = new DateTime(year, month, day);
+                                    // Nếu có thời gian
+                                    if (parts.Length >= 4 && int.TryParse(parts[3], out int hour))
+                                    {
+                                        int minute = parts.Length >= 5 && int.TryParse(parts[4], out int min) ? min : 0;
+                                        date = new DateTime(year, month, day, hour, minute, 0);
+                                    }
+                                    return true;
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+
+                    // Nếu parse theo format hệ thống không được, thử format ngược lại
+                    if (isMonthFirst)
+                    {
+                        // Thử dd/mm/yyyy
+                        if (int.TryParse(parts[0], out day) && 
+                            int.TryParse(parts[1], out month) && 
+                            int.TryParse(parts[2], out year))
+                        {
+                            if (year < 100) year += year < 50 ? 2000 : 1900;
+                            if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100)
+                            {
+                                try
+                                {
+                                    date = new DateTime(year, month, day);
+                                    if (parts.Length >= 4 && int.TryParse(parts[3], out int hour))
+                                    {
+                                        int minute = parts.Length >= 5 && int.TryParse(parts[4], out int min) ? min : 0;
+                                        date = new DateTime(year, month, day, hour, minute, 0);
+                                    }
+                                    return true;
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Thử mm/dd/yyyy
+                        if (int.TryParse(parts[0], out month) && 
+                            int.TryParse(parts[1], out day) && 
+                            int.TryParse(parts[2], out year))
+                        {
+                            if (year < 100) year += year < 50 ? 2000 : 1900;
+                            if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100)
+                            {
+                                try
+                                {
+                                    date = new DateTime(year, month, day);
+                                    if (parts.Length >= 4 && int.TryParse(parts[3], out int hour))
+                                    {
+                                        int minute = parts.Length >= 5 && int.TryParse(parts[4], out int min) ? min : 0;
+                                        date = new DateTime(year, month, day, hour, minute, 0);
+                                    }
+                                    return true;
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Bước 3: Thử parse với các format chuẩn khác (yyyy-MM-dd, etc.)
+            string[] formats = {
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd HH:mm",
+                "yyyy-MM-dd",
+                "yyyy/MM/dd HH:mm:ss",
+                "yyyy/MM/dd HH:mm",
+                "yyyy/MM/dd",
+                "dd-MM-yyyy HH:mm:ss",
+                "dd-MM-yyyy HH:mm",
+                "dd-MM-yyyy",
+                "MM-dd-yyyy HH:mm:ss",
+                "MM-dd-yyyy HH:mm",
+                "MM-dd-yyyy"
+            };
+
+            foreach (var format in formats)
+            {
+                if (DateTime.TryParseExact(dateString, format, null, DateTimeStyles.None, out date))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Format ngày từ Excel sang format yyyyMMddHHmm cho query
         /// </summary>
         private string FormatDateForQuery(string? dateString, bool isEndDate = false)
@@ -435,8 +634,8 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 return dateString.PadRight(12, padChar);
             }
 
-            // Thử parse các format khác (dd/MM/yyyy HH:mm, dd-MM-yyyy, etc.)
-            if (DateTime.TryParse(dateString, out DateTime date))
+            // Thử parse với hàm flexible
+            if (TryParseDateFlexible(dateString, out DateTime date))
             {
                 bool hasExplicitTime = dateString.Contains(":") || dateString.Contains("T");
 

@@ -113,13 +113,23 @@ const validateRule_Id_30 = async (patientData) => {
             return ngayStr.length >= 8 ? ngayStr.substring(0, 8) : ngayStr;
         }
 
-        // Hàm chuyển đổi yyyyMMdd sang Date object
+        // Hàm chuyển đổi yyyyMMdd (hoặc yyyyMMddHHmm, yyyyMMddHHmmss) sang Date object
+        // Hỗ trợ: 8 ký tự (yyyyMMdd), 12 ký tự (yyyyMMddHHmm), 14 ký tự (yyyyMMddHHmmss)
+        // Chỉ lấy phần ngày để so sánh (bỏ qua giờ/phút)
         function parseDate(ngayStr) {
-            if (!ngayStr || ngayStr.length < 8) return null;
-            const year = parseInt(ngayStr.substring(0, 4), 10);
-            const month = parseInt(ngayStr.substring(4, 6), 10) - 1; // Month is 0-indexed
-            const day = parseInt(ngayStr.substring(6, 8), 10);
-            return new Date(year, month, day);
+            if (!ngayStr) return null;
+            const str = String(ngayStr).trim();
+            if (str.length < 8) return null;
+            
+            // Lấy 8 ký tự đầu (yyyyMMdd) bất kể input có bao nhiêu ký tự
+            const year = parseInt(str.substring(0, 4), 10);
+            const month = parseInt(str.substring(4, 6), 10) - 1; // Month is 0-indexed
+            const day = parseInt(str.substring(6, 8), 10);
+            
+            const parsedDate = new Date(year, month, day);
+            // Kiểm tra Date hợp lệ
+            if (Number.isNaN(parsedDate.getTime())) return null;
+            return parsedDate;
         }
 
         // Hàm tính khoảng cách giữa 2 ngày (số ngày)

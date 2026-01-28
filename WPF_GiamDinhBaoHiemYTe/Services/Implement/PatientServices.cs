@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
@@ -64,6 +64,23 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             catch
             {
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách bệnh nhân lỗi mã máy
+        /// </summary>
+        /// <returns>Danh sách bệnh nhân lỗi mã máy</returns>
+        public async Task<List<BenhNhanLoiMaMayResult>> GetDsBenhNhanLoiMaMay()
+        {
+            try
+            {
+                return await _dataMapper.GetDsBenhNhanLoiMaMay();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi lấy danh sách bệnh nhân lỗi mã máy: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                return new List<BenhNhanLoiMaMayResult>();
             }
         }
 

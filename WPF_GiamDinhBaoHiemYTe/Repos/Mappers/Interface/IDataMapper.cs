@@ -31,5 +31,11 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Interface
         /// <returns>Danh sách MA_LK</returns>
         Task<List<MaLkSearchResult>> GetMaLkByInput(string? maBn = null, string? ngayVaoFrom = null, string? inputCode = null);
 
+        /// <summary>
+        /// Lấy danh sách bệnh nhân lỗi mã máy (cùng thiết bị và thời gian thực hiện)
+        /// </summary>
+        /// <returns>Danh sách bệnh nhân lỗi mã máy</returns>
+        Task<List<BenhNhanLoiMaMayResult>> GetDsBenhNhanLoiMaMay();
+
     }
 }
