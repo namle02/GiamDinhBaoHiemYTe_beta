@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Diagnostics;
@@ -27,6 +29,27 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             return Path.Combine(dir, "installed_version.txt");
         }
 
+        /// <summary>
+        /// Thư mục chứa exe đang chạy (để đọc version.txt trong zip release).
+        /// </summary>
+        private static string GetAppDirectory()
+        {
+            try
+            {
+                var exePath = Process.GetCurrentProcess().MainModule?.FileName;
+                if (string.IsNullOrEmpty(exePath))
+                    exePath = Assembly.GetExecutingAssembly().Location;
+                if (string.IsNullOrEmpty(exePath))
+                    return AppDomain.CurrentDomain.BaseDirectory ?? "";
+                var dir = Path.GetDirectoryName(exePath);
+                return dir ?? AppDomain.CurrentDomain.BaseDirectory ?? "";
+            }
+            catch
+            {
+                return AppDomain.CurrentDomain.BaseDirectory ?? "";
+            }
+        }
+
         public UpdateService()
         {
             _httpClient = new HttpClient();
@@ -37,69 +60,71 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         {
             try
             {
-                // Ưu tiên đọc phiên bản đã lưu (sau khi update, app restart sẽ biết đúng phiên bản mới)
-                var versionFile = GetInstalledVersionFilePath();
-                if (File.Exists(versionFile))
+                var candidates = new List<string>();
+
+                // 1) Phiên bản đã lưu (AppData, sau khi cập nhật trong app)
+                var installedFile = GetInstalledVersionFilePath();
+                if (File.Exists(installedFile))
                 {
-                    var savedVersion = File.ReadAllText(versionFile)?.Trim();
+                    var savedVersion = File.ReadAllText(installedFile)?.Trim();
                     if (!string.IsNullOrEmpty(savedVersion) && IsValidVersionString(savedVersion))
-                        return savedVersion;
+                        candidates.Add(savedVersion);
                 }
 
-                // Đọc trực tiếp từ file exe
+                // 2) version.txt trong thư mục app (có trong zip release)
+                var appDir = GetAppDirectory();
+                if (!string.IsNullOrEmpty(appDir))
+                {
+                    var versionTxtPath = Path.Combine(appDir, "version.txt");
+                    if (File.Exists(versionTxtPath))
+                    {
+                        var versionFromFile = File.ReadAllText(versionTxtPath)?.Trim();
+                        if (!string.IsNullOrEmpty(versionFromFile) && IsValidVersionString(versionFromFile))
+                            candidates.Add(versionFromFile);
+                    }
+                }
+
+                // 3) FileVersion từ exe đang chạy
                 var exePath = Assembly.GetExecutingAssembly().Location;
                 if (string.IsNullOrEmpty(exePath))
-                {
                     exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                }
-                
                 if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
                 {
-                    // Đọc từ FileVersionInfo để lấy version chính xác từ file
                     var fileVersionInfo = FileVersionInfo.GetVersionInfo(exePath);
                     if (!string.IsNullOrEmpty(fileVersionInfo.FileVersion))
                     {
-                        // Parse version string (ví dụ: "1.0.9.0" -> "1.0.9")
-                        var version = new Version(fileVersionInfo.FileVersion);
-                        if (version.Revision > 0)
-                        {
-                            return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
-                        }
-                        else if (version.Build > 0)
-                        {
-                            return $"{version.Major}.{version.Minor}.{version.Build}";
-                        }
-                        else
-                        {
-                            return $"{version.Major}.{version.Minor}";
-                        }
+                        var v = NormalizeVersionString(fileVersionInfo.FileVersion);
+                        if (!string.IsNullOrEmpty(v))
+                            candidates.Add(v);
                     }
                 }
-                
-                // Fallback: đọc từ Assembly (có thể là version cũ nếu assembly chưa reload)
+
+                // 4) Assembly version
                 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
                 if (assemblyVersion != null)
                 {
+                    var v = $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}";
                     if (assemblyVersion.Revision > 0)
-                    {
-                        return $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}.{assemblyVersion.Revision}";
-                    }
-                    else if (assemblyVersion.Build > 0)
-                    {
-                        return $"{assemblyVersion.Major}.{assemblyVersion.Minor}.{assemblyVersion.Build}";
-                    }
-                    else
-                    {
-                        return $"{assemblyVersion.Major}.{assemblyVersion.Minor}";
-                    }
+                        v += $".{assemblyVersion.Revision}";
+                    if (IsValidVersionString(v))
+                        candidates.Add(v);
                 }
-                
+
+                // Trả về phiên bản mới nhất trong các nguồn (tránh hiển thị 1.1.8 khi đang chạy bản 1.1.9)
+                if (candidates.Count > 0)
+                {
+                    var latest = candidates
+                        .OrderByDescending(c => { try { return new Version(c); } catch { return new Version(0, 0); } })
+                        .FirstOrDefault();
+                    if (!string.IsNullOrEmpty(latest))
+                        return latest;
+                }
+
                 return "1.0.0";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Log error để debug
-                System.Diagnostics.Debug.WriteLine($"Error getting version: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("Error getting version");
                 return "1.0.0";
             }
         }
@@ -124,10 +149,9 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
 
                 return (hasUpdate, latestVersion, downloadUrl, releaseNotes);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Log error để debug
-                System.Diagnostics.Debug.WriteLine($"Error checking for updates: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("Error checking for updates");
                 return (false, "", "", "");
             }
         }
@@ -153,9 +177,9 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                             File.WriteAllText(versionFile, targetVersion);
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Could not save installed version file: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine("Could not save installed version file");
                     }
                 }
 
@@ -196,9 +220,9 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error downloading/installing update: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine("Error downloading/installing update");
                 return false;
             }
         }
@@ -213,6 +237,25 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             catch
             {
                 return false;
+            }
+        }
+
+        /// <summary>Chuẩn hóa chuỗi version (vd: "1.1.9.0" -> "1.1.9").</summary>
+        private static string NormalizeVersionString(string version)
+        {
+            if (string.IsNullOrWhiteSpace(version)) return "";
+            try
+            {
+                var v = new Version(version);
+                if (v.Revision > 0)
+                    return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+                if (v.Build > 0)
+                    return $"{v.Major}.{v.Minor}.{v.Build}";
+                return $"{v.Major}.{v.Minor}";
+            }
+            catch
+            {
+                return "";
             }
         }
 

@@ -35,6 +35,11 @@ jobs:
       - name: Publish
         run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o ./publish
 
+      # 4b. Ghi version.txt vào thư mục publish (để app đọc đúng phiên bản khi chạy từ zip)
+      - name: Write version file
+        run: $v = '${{ github.ref_name }}' -replace '^v',''; Set-Content -Path ./publish/version.txt -Value $v
+        shell: pwsh
+
       # 5. Zip the output
       - name: Create Release Archive
         run: Compress-Archive -Path ./publish/* -DestinationPath ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
