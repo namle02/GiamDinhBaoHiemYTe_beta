@@ -68,7 +68,7 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
                 StatusMessage = $"Đang tải xuống... {percent}%";
             });
 
-            var success = await _updateService.DownloadAndInstallAsync(DownloadUrl, progress);
+            var success = await _updateService.DownloadAndInstallAsync(DownloadUrl, LatestVersion ?? "", progress);
 
             if (!success)
             {

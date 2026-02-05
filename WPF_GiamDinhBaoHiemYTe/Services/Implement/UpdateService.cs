@@ -17,6 +17,16 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         private readonly HttpClient _httpClient;
         private const string GITHUB_API_URL = "https://api.github.com/repos/namle02/GiamDinhBaoHiemYTe_beta/releases/latest";
 
+        /// <summary>
+        /// File lưu phiên bản đã cài (AppData). Ưu tiên đọc từ đây để app biết đúng phiên bản sau khi update.
+        /// </summary>
+        private static string GetInstalledVersionFilePath()
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var dir = Path.Combine(appData, "GiamDinhBaoHiemYTe");
+            return Path.Combine(dir, "installed_version.txt");
+        }
+
         public UpdateService()
         {
             _httpClient = new HttpClient();
@@ -27,7 +37,16 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
         {
             try
             {
-                // Đọc trực tiếp từ file exe để đảm bảo lấy version mới nhất sau khi update
+                // Ưu tiên đọc phiên bản đã lưu (sau khi update, app restart sẽ biết đúng phiên bản mới)
+                var versionFile = GetInstalledVersionFilePath();
+                if (File.Exists(versionFile))
+                {
+                    var savedVersion = File.ReadAllText(versionFile)?.Trim();
+                    if (!string.IsNullOrEmpty(savedVersion) && IsValidVersionString(savedVersion))
+                        return savedVersion;
+                }
+
+                // Đọc trực tiếp từ file exe
                 var exePath = Assembly.GetExecutingAssembly().Location;
                 if (string.IsNullOrEmpty(exePath))
                 {
@@ -113,13 +132,32 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             }
         }
 
-        public async Task<bool> DownloadAndInstallAsync(string downloadUrl, IProgress<int> progress)
+        public async Task<bool> DownloadAndInstallAsync(string downloadUrl, string targetVersion, IProgress<int> progress)
         {
             try
             {
                 var tempPath = Path.GetTempPath();
                 var zipPath = Path.Combine(tempPath, "update.zip");
                 var extractPath = Path.Combine(tempPath, "update_extracted");
+
+                // Lưu phiên bản đích trước khi update để sau khi app restart sẽ biết mình đang ở phiên bản mới
+                if (!string.IsNullOrEmpty(targetVersion) && IsValidVersionString(targetVersion))
+                {
+                    try
+                    {
+                        var versionFile = GetInstalledVersionFilePath();
+                        var dir = Path.GetDirectoryName(versionFile);
+                        if (!string.IsNullOrEmpty(dir))
+                        {
+                            Directory.CreateDirectory(dir);
+                            File.WriteAllText(versionFile, targetVersion);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not save installed version file: {ex.Message}");
+                    }
+                }
 
                 // Download
                 using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
@@ -150,10 +188,10 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 // Extract
                 if (Directory.Exists(extractPath))
                     Directory.Delete(extractPath, true);
-                
+
                 ZipFile.ExtractToDirectory(zipPath, extractPath);
 
-                // Replace files using batch
+                // Replace files using batch (version file đã lưu ở trên, app sau khi restart sẽ đọc được)
                 await ReplaceApplicationFiles(extractPath);
 
                 return true;
@@ -161,6 +199,19 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error downloading/installing update: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static bool IsValidVersionString(string version)
+        {
+            try
+            {
+                _ = new Version(version);
+                return true;
+            }
+            catch
+            {
                 return false;
             }
         }
