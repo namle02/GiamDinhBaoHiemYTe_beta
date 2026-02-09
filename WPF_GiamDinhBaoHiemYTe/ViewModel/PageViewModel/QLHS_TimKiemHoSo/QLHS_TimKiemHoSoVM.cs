@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using WPF_GiamDinhBaoHiem.Repos.Model;
 using WPF_GiamDinhBaoHiem.Services.Interface;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
@@ -41,6 +42,43 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         // ==================== CORE PROPERTIES ====================
         [ObservableProperty]
         private bool isLoading;
+
+        /// <summary> Bộ đếm giờ khi loading (format m:ss). </summary>
+        [ObservableProperty]
+        private string loadingElapsedDisplay = "0:00";
+
+        private DispatcherTimer? _loadingTimer;
+        private int _loadingElapsedSeconds;
+
+        partial void OnIsLoadingChanged(bool value)
+        {
+            if (value)
+                StartLoadingTimer();
+            else
+                StopLoadingTimer();
+        }
+
+        private void StartLoadingTimer()
+        {
+            _loadingElapsedSeconds = 0;
+            LoadingElapsedDisplay = "0:00";
+            _loadingTimer = new DispatcherTimer(DispatcherPriority.Background, System.Windows.Application.Current.Dispatcher)
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _loadingTimer.Tick += (_, _) =>
+            {
+                _loadingElapsedSeconds++;
+                LoadingElapsedDisplay = $"{_loadingElapsedSeconds / 60}:{_loadingElapsedSeconds % 60:D2}";
+            };
+            _loadingTimer.Start();
+        }
+
+        private void StopLoadingTimer()
+        {
+            _loadingTimer?.Stop();
+            _loadingTimer = null;
+        }
 
         [ObservableProperty]
         private string patientID = string.Empty;

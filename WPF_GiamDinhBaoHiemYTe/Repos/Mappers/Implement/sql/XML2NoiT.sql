@@ -1,9 +1,11 @@
+
 DECLARE @Sobenhan NVARCHAR(20) = N'{IDBenhNhan}'
+
+
 
 DECLARE @benhan_id NVARCHAR(20)
 SELECT	@BenhAn_Id = ba.BenhAn_Id
 FROM	dbo.BenhAn ba (nolock) 
-INNER jOIN XacNhanChiPhi (nolock)   xn on xn.xacnhanchiphi_id=ba.xacnhanchiphi_id
 WHERE	ba.SoBenhAn = @SoBenhAn 
 
 
@@ -97,15 +99,15 @@ DECLARE @SoChuyenVien nvarchar (50) = null
 SELECT		
 			@SoChuyenVien = right (BenhAnTongQuat.SoBenhAn,9)--tùy ch?nh theo d? án
 			--GIAY_CHUYEN_TUYEN = left (BenhAnTongQuat.SoBenhAn,6),--tùy ch?nh theo d? án
-	FROM (select * from BenhAn where BenhAn.BenhAn_Id = @BenhAn_Id and XacNhanChiPhi_Id is not null) BenhAn
+	FROM (select * from BenhAn where BenhAn.BenhAn_Id = @BenhAn_Id) BenhAn
 	JOIN BenhAnTongQuat (nolock)   ON BenhAnTongQuat.BenhAn_Id = BenhAn.BenhAn_Id
 	JOIN BenhAnTongQuat_GCV (nolock)   ON BenhAnTongQuat.BenhAnTongQuat_Id = BenhAnTongQuat_GCV.BenhAnTongQuat_Id
 
 
 
 
-SELECT [Id] = row_number () OVER (ORDER BY (SELECT 1))
-		,[MA_LK] = xml2.Ma_Lk
+SELECT [ID] = row_number () OVER (ORDER BY (SELECT 1))
+	  ,[MA_LK] = xml2.Ma_Lk
       ,[STT] = row_number () OVER (ORDER BY (SELECT 1))
       ,[MA_THUOC] = xml2.Ma_Thuoc
       ,[MA_PP_CHEBIEN] = xml2.ma_pp_chebien
@@ -328,38 +330,91 @@ SELECT [Id] = row_number () OVER (ORDER BY (SELECT 1))
 						        , CHUC_DANH_ID = COALESCE(bstt.ChucDanh_Id,bstt.ChucDanh_Id,bspt.ChucDanh_Id,bscls.ChucDanh_Id,bskb.ChucDanh_Id,bsvtyt.ChucDanh_Id)
 
 							FROM	(
-										Select	
-											xncpct.XacNhanChiPhiChiTiet_Id,
-											xncpct.XacNhanChiPhi_Id,
-											xncpct.Loai_IDRef,
-											xncpct.IDRef,
-											xncpct.NoiDung_Id,
-											xncpct.NoiDung,
-											xncpct.SoLuong,
-											xncpct.DonGiaDoanhThu,
-											DonGiaHoTro = CASE WHEN CHARINDEX( '.01', CAST(xncpct.DonGiaHoTro as varchar(20))) > 0 
-																	THEN CAST(REPLACE(CAST(xncpct.DonGiaHoTro as varchar(20)), '.01', '.00') as Decimal(18, 3))
-															ELSE CAST(xncpct.DonGiaHoTro as Decimal(18, 3)) END,
-											xncpct.DonGiaHoTroChiTra,
-											xncpct.DonGiaThanhToan,
-											xncpct.SoLuong_New,
-											xncpct.DonGiaHoTroChiTra_New,
-											--xncpct.Loai,
-											xncpct.NgayCapNhat,
-											xncpct.NguoiCapNhat_Id,
-											xncpct.PhongBan_Id,
-											xncpct.NgoaiTru_ToaThuoc_ID,
-											xncpct.NoiTru_ToaThuoc_ID,
-											--xncpct.TenDonViTinh,
-											xncpct.XN_DonGiaVon,
-											xncpct.XN_DonGiaMua,
-											xncpct.DonGiaHoTroChiTra_4210,
-											xncpct.Muc_Huong,
-											xn.Loai
-										From	XacNhanChiPhi xn
-										 JOIN XacNhanChiPhiChiTiet xncpct On xncpct.XacNhanChiPhi_Id = xn.XacNhanChiPhi_Id and xncpct.DonGiaHoTroChiTra>0
-										Where	BenhAn_Id = @BenhAn_Id
-											and Ngayxacnhan is not null 
+									SELECT 
+										Loai_IDRef = 'A',
+										IDRef = ycct.YeuCauChiTiet_Id,
+										NoiDung_Id = ycct.DichVu_Id,
+										NoiDung = dv.TenDichVu, --ko quan trong
+										SoLuong = ycct.SoLuong,
+										DonGiaDoanhThu = ycct.DonGiaDoanhThu,
+										DonGiaHoTro = CASE WHEN CHARINDEX( '.01', CAST(ycct.DonGiaHoTro as varchar(20))) > 0 
+															THEN CAST(REPLACE(CAST(ycct.DonGiaHoTro as varchar(20)), '.01', '.00') as Decimal(18, 3))
+													ELSE CAST(ycct.DonGiaHoTro as Decimal(18, 3)) END,
+										DonGiaHoTroChiTra = ycct.DonGiaHoTroChiTra,
+										DonGiaThanhToan = ycct.DonGiaThanhToan,
+										PhongBan_Id = isnull(		
+											CASE
+												WHEN dv.NhomDichVu_Id = 27 THEN yc.NoiThucHien_Id
+												ELSE yc.NoiYeuCau_id
+											END,ba.KhoaRa_Id),
+										NoiTru_ToaThuoc_ID = NULL,
+										NgoaiTru_ToaThuoc_ID = null,
+										TenDonViTinh = dv.DonViTinh,
+										BenhAn_Id = @benhan_id,
+										TiepNhan_Id = @tiepnhan_id,
+										Muc_Huong = ycct.MucHuong
+
+									FROM CLSYeuCauChiTiet ycct (Nolock)
+									LEFT JOIN CLSYeuCau yc (Nolock) ON ycct.CLSYeuCau_Id = yc.CLSYeuCau_Id
+									LEFT JOIN DM_DichVu dv (Nolock) ON dv.DichVu_Id = ycct.DichVu_Id
+									LEFT JOIN BenhAn ba (Nolock) ON ba.BenhAn_Id = yc.BenhAn_Id or yc.TiepNhan_Id = ba.TiepNhan_Id
+									Where @benhan_id = yc.BenhAn_Id or @tiepnhan_id = yc.TiepNhan_Id
+
+									UNION ALL
+
+									SELECT
+										Loai_IDRef = 'I',
+										IDRef = isnull(clsvt.ID,xbn.ChungTuXuatBN_Id),
+										NoiDung_Id = isnull(clsvt.Duoc_Id,xbn.Duoc_Id),
+										NoiDung = td.TenDuoc, --ko quan trong
+										SoLuong = 
+											CASE 
+												WHEN xbn.ToaThuocTra_Id is not null then 0 - xbn.SoLuong
+												else xbn.SoLuong
+											END,
+										DonGiaDoanhThu =xbn.DonGiaDoanhThu,
+										DonGiaHoTro = CASE WHEN CHARINDEX( '.01', CAST(xbn.DonGiaHoTro as varchar(20))) > 0 
+															THEN CAST(REPLACE(CAST(xbn.DonGiaHoTro as varchar(20)), '.01', '.00') as Decimal(18, 3))
+													ELSE CAST(xbn.DonGiaHoTro as Decimal(18, 3)) END,
+										DonGiaHoTroChiTra =xbn.DonGiaHoTroChiTra,
+										DonGiaThanhToan =xbn.DonGiaThanhToan,
+										PhongBan_Id = isnull(isnull(pb.PhongBan_Id, isnull(pb2.PhongBan_Id, isnull(pb3.PhongBan_Id,pb1.PhongBan_Id))),pb4.phongban_id),
+										NoiTru_ToaThuoc_ID = CASE WHEN @benhan_id is not null THEN xbn.ToaThuoc_Id ELSE NULL END,
+										NgoaiTru_ToaThuoc_ID = CASE WHEN @benhan_id is null THEN xbn.ToaThuoc_Id ELSE NULL END,
+										TenDonViTinh = d.DonViTinh,
+										BenhAn_Id = @benhan_id,
+										TiepNhan_Id = @tiepnhan_id,
+										Muc_Huong = xbn.MucHuong
+									FROM ChungTuXuatBenhNhan xbn (Nolock)
+									left join DM_Duoc d (Nolock) on d.Duoc_Id = xbn.Duoc_Id
+									left join DM_TenDuoc td (Nolock) on td.TenDuoc_Id = d.TenDuoc_Id
+									/* Toa thuoc noi tru*/
+									left join NoiTru_ToaThuoc nttt (Nolock) on nttt.ToaThuoc_Id  = xbn.ToaThuoc_Id 			-- IDREF bang chung tu xuat benh nhan la Toathuoc Id, toathuoctra_Id bang toa thuoc
+									left join NoiTru_KhamBenh kb (Nolock)  on kb.KhamBenh_Id = nttt.KhamBenh_Id
+									left join Noitru_LuuTru lt (Nolock)  on lt.LuuTru_Id = kb.LuuTru_Id
+									left join DM_PhongBan pb (Nolock)  on pb.PhongBan_Id = lt.PhongBan_Id
+
+									/*Tra thuoc noi tru*/
+									left JOin NoiTru_TraThuocChiTiet B (Nolock) on B.NoiTru_TraThuocChiTiet_Id = xbn.ToaThuocTra_Id and xbn.duoc_ID = b.duoc_ID
+									left join NoiTru_TraThuoc C (Nolock) on C.NoiTru_TraThuoc_Id = B.NoiTru_TraThuoc_Id 
+									left join NoiTru_LuuTru E (Nolock) on E.LuuTru_Id = C.LuuTru_Id
+									left join DM_PhongBan pb2 (Nolock) on pb2.PhongBan_Id = E.PhongBan_Id
+
+									/*bệnh án phẫu thuật VTYT*/
+									left join  BenhAnPhauThuat_VTYT vtyt (Nolock)  on vtyt.BenhAnPhauThuat_VTYT_Id = xbn.BenhAnPhauThuat_VTYT_Id
+									left join ChungTu t (Nolock) on vtyt.ChungTuTongHop_Id=t.ChungTu_Id
+									left join DM_KhoDuoc kd (Nolock) on t.KhoXuat_Id=kd.KhoDuoc_Id
+									left join  DM_PhongBan pb3 (Nolock) on pb3.PhongBan_Id  = kd.PhongBan_Id
+
+									/*cận lâm sàng ghi nhận VTYT - hóa chất*/
+									left join KhamBenh_VTYT vt (Nolock) on xbn.KhamBenh_VTYT_Id=vt.KhamBenh_VTYT_Id
+									left join KhamBenh kb1 (Nolock) on vt.KhamBenh_Id=kb1.KhamBenh_Id
+									left join DM_PhongBan pb1 (Nolock) on pb1.PhongBan_Id = kb1.PhongBan_Id
+									/*ClsHC-VT*/
+									left join CLSGhiNhanHoaChat_VTYT (Nolock) clsvt on xbn.CLSHoaChat_VTYT_Id=clsvt.id and xbn.Duoc_Id=clsvt.duoc_id
+									left join dm_khoduoc  k (Nolock) on  clsvt.KhoSuDung_Id=k.KhoDuoc_Id
+									left join DM_PhongBan pb4 (Nolock) on pb4.PhongBan_Id = k.PhongBan_Id
+									Where( @benhan_id = xbn.BenhAn_Id or @tiepnhan_id = xbn.TiepNhan_Id) and xbn.mienphi = 0
 									) xncpct
 								LEFT JOIN	dbo.VienPhiNoiTru_Loai_IDRef LI ON LI.Loai_IDRef = xncpct.Loai_IDRef and xncpct.DonGiaHoTroChiTra>0
 								LEFT JOIN	(
@@ -390,7 +445,6 @@ SELECT [Id] = row_number () OVER (ORDER BY (SELECT 1))
 								left join dbo.Lst_Dictionary ndt  (Nolock) on ndt.Dictionary_Id=dt.NhomDoiTuong_Id	and ndt.Dictionary_Code='BHYT'
 						
 								LEFT JOIN	DM_Duoc d (nolock) ON d.Duoc_Id = xncpct.NoiDung_Id AND li.PhanNhom in ('DU','DI','VH','VT')
-								--LEFT JOIN	DM_Duoc_HoatChat hc (nolock) on hc.HoatChat_Id = d.HoatChat_Id
 								LEFT JOIN	dbo.DM_LoaiDuoc ld (nolock) ON ld.LoaiDuoc_Id = d.LoaiDuoc_Id
 								LEFT JOIN	dbo.DM_DonViTinh dvt (nolock) ON dvt.DonViTinh_Id = d.DonViTinh_Id
 								LEFT JOIN	dbo.DM_PhongBan pb (nolock) ON pb.PhongBan_Id = xncpct.phongban_id
@@ -429,8 +483,7 @@ SELECT [Id] = row_number () OVER (ORDER BY (SELECT 1))
 								left join NhanVien_User_Mapping usmap on us.User_Id = usmap.User_Id
 								left join vw_NhanVien bspt on usmap.NhanVien_Id = bspt.NhanVien_Id
 								left join DM_ICD I on ba.ICD_BenhChinh=I.ICD_Id
-							WHERE  cast(xncpct.Loai as varchar(20)) = 'NoiTru' 
-								AND xncpct.DonGiaHoTroChiTra > 0
+							WHERE  xncpct.DonGiaHoTroChiTra > 0
 								
 								AND ((LI.PhanNhom in ('DU','DI','VH','VT') AND  ld.LoaiVatTu_Id IN ('T', 'H')) OR  map.TenField in( '08' , '16')
 										or ld.MaLoaiDuoc in ('OXY', 'OXY1','LD0143','VTYT003','Mau')
@@ -454,3 +507,4 @@ SELECT [Id] = row_number () OVER (ORDER BY (SELECT 1))
 	where xml2.So_Luong_T > 0
 	) xml2
 	
+	order by ngay_YL

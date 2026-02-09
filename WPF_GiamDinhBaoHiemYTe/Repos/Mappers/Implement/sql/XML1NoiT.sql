@@ -3,7 +3,6 @@ DECLARE @Sobenhan NVARCHAR(20) = N'{IDBenhNhan}'
 DECLARE @benhan_id NVARCHAR(20)
 SELECT	@BenhAn_Id = ba.BenhAn_Id
 FROM	dbo.BenhAn ba (nolock) 
-INNER jOIN XacNhanChiPhi (nolock)   xn on xn.xacnhanchiphi_id=ba.xacnhanchiphi_id
 WHERE	ba.SoBenhAn = @SoBenhAn 
 
 
@@ -205,7 +204,7 @@ SELECT
 								   WHEN lydoxuatvien.Dictionary_Code in ( 'XV','TV','TV24','CCRV','DV','N' ) THEN 4
 							  ELSE 1 END
 			,[GHI_CHU] = bact.LoiDanThayThuoc
-			, [NGAY_TTOAN] = replace(convert(varchar , chiphi.NgayXacNhan, 112)+convert(varchar(5), chiphi.ThoiGianXacNhan, 108), ':','')
+			, [NGAY_TTOAN] = null
 			, [T_THUOC] = @Tong_Tien_Thuoc 
 			, [T_VTYT] = @T_VTYT
 			, [T_TONGCHI_BV] = @Tong_Chi
@@ -215,19 +214,13 @@ SELECT
 			, [T_BHTT] = @T_BHTT
 			, [T_NGUONKHAC] = 0
 			,[T_BHTT_GDV] = 0
-			, [NAM_QT] = YEAR(chiphi.NgayXacNhan)
-			, [THANG_QT] = MONTH(chiphi.NgayXacNhan)
-			,[MA_LOAI_KCB] = 
-								CASE 
-									WHEN chiphi.NgayXacNhan < '20240802' THEN '03'
-									WHEN chiphi.NgayXacNhan < '20250508' THEN 
-										CASE WHEN loaiBA.Dictionary_Name_En = N'Nội ngày' THEN '04' ELSE '03' END
-									ELSE 
+			, [NAM_QT] = null
+			, [THANG_QT] = null
+			,[MA_LOAI_KCB] =  
 										CASE WHEN DATEDIFF(MINUTE, ba.ThoiGianVaoVien, ba.ThoiGianRaVien) < 240 THEN '09'
 											 WHEN loaiBA.Dictionary_Name_En = N'Nội ngày' THEN '04' 
 											 ELSE '03' 
 										END
-								END
 			, [MA_KHOA] = pb.MaTheoQuiDinh
 			, [MA_CSKCB] = @MaCSKCB
 			,[MA_KHUVUC] = CHIPHI.NoiSinhSong
@@ -249,14 +242,9 @@ SELECT
 
 		from 
 		(
-			select	ID = xn.XacNhanChiPhi_Id
-					, XN.SoXacNhan
-					, XN.Loai
-					, XN.NgayXacNhan
-					, XN.TiepNhan_Id
+			select	XN.TiepNhan_Id
 					, XN.BenhNhan_Id
 					, XN.Benhan_Id
-					--, TN.SoBHYT
 					, SoBHYTBD =  TN.SoBHYT
 					, TUNGAY = tn.BHYTTuNgay
 					, DENNGAY = tn.BHYTDenNgay
@@ -302,19 +290,35 @@ SELECT
 					, XN.NgayVao
 					, XN.NgayRa
 					, XN.NgayKham
-					, MaBenh	=	@ICD_CHINH + ';' + @ICD_PHU 
-					, BenhKhac	=	BenhKhac  
-				
+					, MaBenh	=	@ICD_CHINH + ';' + @ICD_PHU 				
 					, xn.TenPhongKham
 					, TuyenKB.Dictionary_Code
 					, ngt.TenBenhVien_En AS MaBenhVienGT
 					, dt.TyLe_2
-					, xn.ThoiGianXacNhan
+					, ThoiGianXacNhan = null
 					, NoiSinhSong = ISNULL(NSS.Dictionary_Code, '')
 				
 					, tn.sochuyenvien
 					, tn.LyDoVaoVien
-			from	XacNhanChiPhi xn (nolock)
+			from	(
+						select top 1
+							TiepNhan_Id = ba.TiepNhan_Id,
+							BenhNhan_Id = ba.BenhNhan_Id,
+							BenhAn_Id = ba.BenhAn_Id,
+							NgayVao = ba.NgayVaoVien,
+							NgayRa = null,
+							NgayKham = null,
+							TenPhongKham = pb.TenPhongBan,
+							ChanDoan = lt.ChanDoanRaKhoa
+						from BenhAn ba 
+						left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
+						join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
+						join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
+						left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
+						where lt.ChanDoanRaKhoa is not null and ba.BenhAn_Id = @benhan_id
+						order by lt.LuuTru_Id desc
+			
+					)xn
 					
 					left join TiepNhan TN (nolock) on TN.TiepNhan_Id = XN.TiepNhan_Id
 					LEFT JOIN DM_DoiTuong dt (nolock) on  dt.DoiTuong_Id = tn.DoiTuong_Id

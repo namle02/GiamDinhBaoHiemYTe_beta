@@ -3,6 +3,8 @@ using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Reflection;
 using System.IO;
@@ -155,13 +157,13 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     return null;
                 }
 
-                
+                // Xác định loại input: Ma_TN (có "TN" ở đầu), Ma_BA, hoặc Ma_BN
                 string? sovv = null;      // Ma_BN (Sovv)
-                string? ngaytn = null;   // Ngày vào (cho Ma_BN)
+                string? ngayVao = null;   // Ngày vào (cho Ma_BN)
                 string? sotn = null;     // Ma_TN (SoTiepNhan) - có "TN" ở đầu
                 string? soba = null;     // Ma_BA (SoBenhAn) - không có "TN" ở đầu
 
-              
+                // Kiểm tra nếu input bắt đầu bằng "TN" (case-insensitive)
                 if (IDBenhNhan.Trim().StartsWith("TN", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tình huống 2: Mã có "TN" ở đầu (SoTiepNhan)
@@ -180,7 +182,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     var result = await connection.QueryFirstOrDefaultAsync<PhanLoaiBenhAn>(query, new
                     {
                         Sovv = sovv,
-                        Ngaytn = ngaytn,
+                        NgayVao = ngayVao,
                         Sotn = sotn,
                         Soba = soba
                     });
@@ -304,27 +306,14 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 XML_Query_List.Add(XMLDataType.XML14, LoadSqlFromFile("XML14.sql", IDBenhNhan));
                 XML_Query_List.Add(XMLDataType.XML15, LoadSqlFromFile("XML15.sql", IDBenhNhan));
 
-                // Bước 4: Thực thi các queries
-                foreach (var query in XML_Query_List)
-                {
-                    try
+                // Bước 4: Thực thi các queries song song (cùng lúc)
+                var xmlTasks = XML_Query_List
+                    .Where(q => !string.IsNullOrWhiteSpace(q.Value))
+                    .Select(q =>
                     {
-                        if (string.IsNullOrWhiteSpace(query.Value))
-                        {
-                            continue;
-                        }
-
-                        using (SqlConnection connection = new SqlConnection(connectionStringForAll))
-                        {
-                            await connection.OpenAsync();
-                            await GetXMLData(query.Key, query.Value, patient, connection);
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore errors for individual queries
-                    }
-                }
+                        return RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+                    });
+                await Task.WhenAll(xmlTasks);
 
                 // Bước 5: Load DsBenhNhanLoiMaMay sau khi đã có XML1
                 try
@@ -412,26 +401,11 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 {XMLDataType.XML15, LoadSqlFromFile("XML15.sql", IDBenhNhan) },
             };
 
-            foreach (var query in XML_Query_List)
-            {
-                try
-                {
-                    if (string.IsNullOrWhiteSpace(query.Value))
-                    {
-                        continue;
-                    }
-
-                    using (SqlConnection connection = new SqlConnection(connectionStringForAll))
-                    {
-                        await connection.OpenAsync();
-                        await GetXMLData(query.Key, query.Value, patient, connection);
-                    }
-                }
-                catch
-                {
-                    // Ignore errors for individual queries
-                }
-            }
+            // Thực thi các queries song song (cùng lúc)
+            var xmlTasksFallback = XML_Query_List
+                .Where(q => !string.IsNullOrWhiteSpace(q.Value))
+                .Select(q => RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll));
+            await Task.WhenAll(xmlTasksFallback);
 
             // Load DsBenhNhanLoiMaMay sau khi đã có XML1
             try
@@ -445,12 +419,12 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
 
                 if (!string.IsNullOrWhiteSpace(ngayVao))
                 {
-                    
+                    // Load SQL query từ file
                     string query = LoadSqlFromFile("DsBenhNhanLoiMaMay.sql");
                     
                     if (!string.IsNullOrWhiteSpace(query))
                     {
-                        
+                        // Thay thế {ngay_Vao} bằng giá trị thực tế
                         query = query.Replace("{ngay_Vao}", ngayVao);
 
                         using (SqlConnection connection = new SqlConnection(connectionStringForAll))
@@ -470,6 +444,25 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
             return patient;
         }
 
+        /// <summary>
+        /// Chạy một query XML trong connection riêng (dùng cho chạy song song).
+        /// </summary>
+        private async Task RunXmlQueryAsync(XMLDataType type, string query, PatientData patient, string connectionString)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    await GetXMLData(type, query, patient, connection);
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi từng query (giữ hành vi cũ)
+            }
+        }
+
         private async Task GetXMLData(XMLDataType type, string query, PatientData patient, SqlConnection connection)
         {
             try
@@ -477,13 +470,13 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 switch (type)
                 {
                     case XMLDataType.XML0:
-                        patient.Xml0 = (await connection.QueryAsync<XML0>(query)).ToList();
+                        patient.Xml0 = (await connection.QueryAsync<XML0>(query, commandType: CommandType.Text, commandTimeout: 300)).ToList();
                         break;
                     case XMLDataType.XML1:
-                        patient.Xml1 = (await connection.QueryAsync<XML1>(query)).ToList();
+                        patient.Xml1 = (await connection.QueryAsync<XML1>(query, commandType: CommandType.Text, commandTimeout: 300)).ToList();
                         break;
                     case XMLDataType.XML2:
-                        patient.Xml2 = (await connection.QueryAsync<XML2>(query)).ToList();
+                        patient.Xml2 = (await connection.QueryAsync<XML2>(query, commandType: CommandType.Text, commandTimeout: 300)).ToList();
                         break;
                     case XMLDataType.XML3:
                         // Query as dynamic to handle type conversion issues
@@ -597,10 +590,10 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                         }
                         break;
                     case XMLDataType.XML4:
-                        patient.Xml4 = (await connection.QueryAsync<XML4>(query)).ToList();
+                        patient.Xml4 = (await connection.QueryAsync<XML4>(query, commandType: CommandType.Text, commandTimeout: 300)).ToList();
                         break;
                     case XMLDataType.XML5:
-                        patient.Xml5 = (await connection.QueryAsync<XML5>(query)).ToList();
+                        patient.Xml5 = (await connection.QueryAsync<XML5>(query, commandType: CommandType.Text, commandTimeout: 300)).ToList();
                         break;
                     case XMLDataType.XML6:
                         patient.Xml6 = (await connection.QueryAsync<XML6>(query)).ToList();

@@ -928,11 +928,17 @@
 
         <!--  LOADING OVERLAY  -->
         <Border Background="#E0000000" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
-            <control:AILoadingControl
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                StatusText="Đang xử lý dữ liệu..."
-                SubStatusText="AI đang phân tích và kiểm tra thông tin" />
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <control:AILoadingControl
+                    StatusText="Đang xử lý dữ liệu..."
+                    SubStatusText="AI đang phân tích và kiểm tra thông tin" />
+                <TextBlock
+                    Margin="0,8,0,0"
+                    HorizontalAlignment="Center"
+                    FontSize="14"
+                    Foreground="#00D4FF"
+                    Text="{Binding LoadingElapsedDisplay, StringFormat='Đã chờ: {0}'}" />
+            </StackPanel>
         </Border>
 
         <!--  CHi tiết lỗi  -->
