@@ -40,9 +40,9 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     .ToDictionary(row => row[0], row => row[1]);
                 
                 // Kiểm tra và set BaseAddress cho HttpClient
-                if (Config.ContainsKey("Server_API_Local") && !string.IsNullOrWhiteSpace(Config["Server_API_Local"]))
+                if (Config.ContainsKey("Server_API") && !string.IsNullOrWhiteSpace(Config["Server_API"]))
                 {
-                    string serverApi = Config["Server_API_Local"].Trim();
+                    string serverApi = Config["Server_API"].Trim();
                     // Đảm bảo URL có format đúng (có http:// hoặc https://)
                     if (!serverApi.EndsWith("/"))
                     {

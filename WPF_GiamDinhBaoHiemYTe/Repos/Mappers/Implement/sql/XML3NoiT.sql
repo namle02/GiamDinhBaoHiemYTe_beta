@@ -1,8 +1,5 @@
 DECLARE @Sobenhan NVARCHAR(20) = N'{IDBenhNhan}'
 
-
-
-
 DECLARE @benhan_id NVARCHAR(20)
 SELECT	@BenhAn_Id = ba.BenhAn_Id
 FROM	dbo.BenhAn ba (nolock) 
@@ -1073,7 +1070,7 @@ SELECT
 				GROUP BY CLSYeuCauChiTiet_Id) lab on clsyc.YeuCauChiTiet_Id = lab.CLSYeuCauChiTiet_Id
 	left join Lst_Dictionary  ( nolock)  ppvc on ppvc.Dictionary_Id = BAPTTH.PhuongPhapVoCam_Id
 	left join Lst_Dictionary  ( nolock)  mamay on mamay.Dictionary_Id = kq.ThietBi_Id
-	left join Lst_Dictionary  ( nolock)  mamaypttt on mamaypttt.Dictionary_Id = bapt.ThietBi_ID
+	left join Lst_Dictionary  ( nolock)  mamaypttt on mamaypttt.Dictionary_Id = isnull(BAPTTH.ThietBi_ID, bapt.ThietBi_ID)
 	left join DM_ICD9_CM icd9  ( nolock)  on icd9.ICD9_CM_Id = dv.ICD9_CM_Id
 	left join NoiTru_LuuTruChiTiet ltct  ( nolock)  on ltct.LuuTruChiTiet_Id = yc.LuuTruChiTiet_Id
 	left join DM_GiuongBenh gb  ( nolock)  on gb.GiuongBenh_Id = ltct.GiuongBenh_Id
@@ -1211,3 +1208,8 @@ group by xncpct.NoiTru_ToaThuoc_ID, CAST(kq.MoTa_Text AS NVARCHAR(MAX)), li.Phan
 		Left join benhanphauthuat bapt on bapt.BenhAnPhauThuat_Id = isNULL(XML34.ba1,XML34.ba2)	
 		where XML34.So_Luong > 0
 ) xml3
+
+
+
+
+
