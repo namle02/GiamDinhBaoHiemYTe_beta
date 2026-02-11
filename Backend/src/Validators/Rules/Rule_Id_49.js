@@ -18,20 +18,9 @@ const validateRule_Id_49 = async (patientData) => {
     };
 
     try {
-        // ============================================
-        // DEBUG: Thông tin tổng quan
-        // ============================================
-        console.log('\n' + '='.repeat(80));
-        console.log('🔍 DEBUG RULE_ID_49: Thời gian thực hiện CĐHA chưa đủ theo QTKT');
-        console.log('='.repeat(80));
-        console.log(`📋 PatientID: ${patientData.PatientID || 'N/A'}`);
-        
-        // Lấy danh sách dịch vụ từ Xml3
         const dsDichVu = Array.isArray(patientData.Xml3) ? patientData.Xml3 : [];
-        console.log(`📦 Tổng số dịch vụ (Xml3): ${dsDichVu.length}`);
 
         if (dsDichVu.length === 0) {
-            console.log('⚠️  Không có dịch vụ nào để kiểm tra');
             return result;
         }
 

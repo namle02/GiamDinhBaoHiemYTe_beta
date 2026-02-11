@@ -127,7 +127,6 @@ const validateRule_Id_4 = async (patientData) => {
                     || response.text
                     || "";
 
-                console.log(responseText);
                 // Parse JSON từ response
                 const jsonMatch = responseText.match(/\{[^}]+\}/);
                 if (jsonMatch) {

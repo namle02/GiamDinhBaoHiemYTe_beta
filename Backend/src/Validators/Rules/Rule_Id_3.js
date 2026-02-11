@@ -82,7 +82,6 @@ const validateRule_Id_3 = async (patientData) => {
             if (matchedArr) {
               try {
                 const candidates = JSON.parse(matchedArr[0]);
-                console.log(candidates);
                 if (Array.isArray(candidates)) regions = candidates.map(s => s.toLowerCase().trim());
               } catch { /* JSON parse error - fallback below */ }
             }

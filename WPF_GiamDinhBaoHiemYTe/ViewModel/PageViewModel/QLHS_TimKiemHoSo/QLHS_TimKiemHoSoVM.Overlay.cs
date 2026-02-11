@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -49,6 +50,56 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
         public bool HasOverlayXml3Error => OverlayErrorXmlTabs.Contains("XML3");
         public bool HasOverlayXml4Error => OverlayErrorXmlTabs.Contains("XML4");
         public bool HasOverlayXml5Error => OverlayErrorXmlTabs.Contains("XML5");
+
+        /// <summary>Danh sách rule bị lỗi - chọn rule để lọc bảng XML bên dưới chỉ còn dòng lỗi của rule đó.</summary>
+        [ObservableProperty]
+        private ObservableCollection<OverlayErrorRuleItem> overlayErrorRules = new();
+
+        /// <summary>Rule đang chọn: khi có giá trị, các tab XML chỉ hiển thị dòng lỗi thuộc rule này.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(FilteredOverlayXml2Data))]
+        [NotifyPropertyChangedFor(nameof(FilteredOverlayXml3Data))]
+        [NotifyPropertyChangedFor(nameof(FilteredOverlayXml4Data))]
+        [NotifyPropertyChangedFor(nameof(FilteredOverlayXml5Data))]
+        private OverlayErrorRuleItem? selectedOverlayRule;
+
+        /// <summary>Dữ liệu XML2 đã lọc theo rule đang chọn (null = hiển thị tất cả).</summary>
+        public List<XML2>? FilteredOverlayXml2Data => FilterXml2BySelectedRule();
+        /// <summary>Dữ liệu XML3 đã lọc theo rule đang chọn.</summary>
+        public List<XML3>? FilteredOverlayXml3Data => FilterXml3BySelectedRule();
+        /// <summary>Dữ liệu XML4 đã lọc theo rule đang chọn.</summary>
+        public List<XML4>? FilteredOverlayXml4Data => FilterXml4BySelectedRule();
+        /// <summary>Dữ liệu XML5 đã lọc theo rule đang chọn.</summary>
+        public List<XML5>? FilteredOverlayXml5Data => FilterXml5BySelectedRule();
+
+        private List<XML2>? FilterXml2BySelectedRule()
+        {
+            if (OverlayXml2Data == null) return null;
+            if (SelectedOverlayRule == null || SelectedOverlayRule.ErrorIds.Count == 0)
+                return OverlayXml2Data;
+            return OverlayXml2Data.Where(x => x.Id != 0 && SelectedOverlayRule.ErrorIds.Contains(x.Id)).ToList();
+        }
+        private List<XML3>? FilterXml3BySelectedRule()
+        {
+            if (OverlayXml3Data == null) return null;
+            if (SelectedOverlayRule == null || SelectedOverlayRule.ErrorIds.Count == 0)
+                return OverlayXml3Data;
+            return OverlayXml3Data.Where(x => x.Id != 0 && SelectedOverlayRule.ErrorIds.Contains(x.Id)).ToList();
+        }
+        private List<XML4>? FilterXml4BySelectedRule()
+        {
+            if (OverlayXml4Data == null) return null;
+            if (SelectedOverlayRule == null || SelectedOverlayRule.ErrorIds.Count == 0)
+                return OverlayXml4Data;
+            return OverlayXml4Data.Where(x => x.Id != 0 && SelectedOverlayRule.ErrorIds.Contains(x.Id)).ToList();
+        }
+        private List<XML5>? FilterXml5BySelectedRule()
+        {
+            if (OverlayXml5Data == null) return null;
+            if (SelectedOverlayRule == null || SelectedOverlayRule.ErrorIds.Count == 0)
+                return OverlayXml5Data;
+            return OverlayXml5Data.Where(x => x.Id != 0 && SelectedOverlayRule.ErrorIds.Contains(x.Id)).ToList();
+        }
 
         // ==================== OVERLAY COMMANDS ====================
         [RelayCommand]
@@ -103,6 +154,17 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
             foreach (var tab in errorResult.ErrorXmlTabs)
             {
                 OverlayErrorXmlTabs.Add(tab);
+            }
+
+            // Danh sách rule lỗi để chọn và lọc bảng bên dưới
+            OverlayErrorRules.Clear();
+            SelectedOverlayRule = null;
+            if (SelectedValidationResult?.ValidationRules != null)
+            {
+                foreach (var rule in SelectedValidationResult.ValidationRules.Where(r => !r.IsValid))
+                {
+                    OverlayErrorRules.Add(OverlayErrorRuleItem.FromValidationRule(rule));
+                }
             }
 
             _validationErrorService.MarkErrorsInXmlData(patientData, OverlayErrorIds, OverlayErrorXmlTabs);
@@ -164,6 +226,10 @@ namespace WPF_GiamDinhBaoHiem.ViewModel.PageViewModel
             OnPropertyChanged(nameof(HasOverlayXml3Error));
             OnPropertyChanged(nameof(HasOverlayXml4Error));
             OnPropertyChanged(nameof(HasOverlayXml5Error));
+            OnPropertyChanged(nameof(FilteredOverlayXml2Data));
+            OnPropertyChanged(nameof(FilteredOverlayXml3Data));
+            OnPropertyChanged(nameof(FilteredOverlayXml4Data));
+            OnPropertyChanged(nameof(FilteredOverlayXml5Data));
         }
 
         [RelayCommand]
