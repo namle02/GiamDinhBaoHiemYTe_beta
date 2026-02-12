@@ -1,5 +1,5 @@
 /**
- * Rule 44: Chặn thanh toán BHYT đối với các dịch vụ thở máy khi (số lượng * 24) <= (NGAY_KQ - NGAY_TH_YL)
+ * Rule 44: Chặn thanh toán BHYT đối với các dịch vụ thở máy khi (số lượng * 24) < (NGAY_KQ - NGAY_TH_YL)
  * @param {Object} patientData - Toàn bộ dữ liệu bệnh nhân
  * @returns {Object} - Kết quả validation
  */
@@ -119,12 +119,13 @@ const validateRule_Id_44 = async (patientData) => {
             // Theo nghiệp vụ: So_Luong là số ngày -> đổi sang giờ
             const soLuongHours = soLuong * 24;
 
-            // Nếu (số lượng * 24) > số giờ chênh lệch thì ĐÚNG; ngược lại thì SAI và báo lỗi
-            if (soLuongHours <= diffHours) {
+            // Nếu (số lượng * 24) >= số giờ chênh lệch thì ĐÚNG; ngược lại thì SAI và báo lỗi
+            if (soLuongHours >= diffHours) {
+            } else {
                 result.isValid = false;
                 result.errors.push({
                     Id: item.id || item.Id,
-                    Error: `Chặn thanh toán BHYT: Số lượng quy đổi (${soLuongHours} giờ = ${soLuong}*24) <= số giờ chênh lệch (${diffHours} giờ) giữa ngày kết quả và ngày thực hiện y lệnh`
+                    Error: `Chặn thanh toán BHYT: Số lượng quy đổi (${soLuongHours} giờ = ${soLuong}*24) không đạt điều kiện >= số giờ chênh lệch (${diffHours} giờ) giữa ngày kết quả và ngày thực hiện y lệnh`
                 });
             }
         });
