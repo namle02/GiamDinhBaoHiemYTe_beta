@@ -301,22 +301,23 @@ SELECT
 					, tn.sochuyenvien
 					, tn.LyDoVaoVien
 			from	(
-						select top 1
-							TiepNhan_Id = ba.TiepNhan_Id,
-							BenhNhan_Id = ba.BenhNhan_Id,
-							BenhAn_Id = ba.BenhAn_Id,
-							NgayVao = ba.NgayVaoVien,
-							NgayRa = null,
-							NgayKham = null,
-							TenPhongKham = pb.TenPhongBan,
-							ChanDoan = lt.ChanDoanRaKhoa
-						from BenhAn ba 
-						left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
-						join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
-						join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
-						left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
-						where lt.ChanDoanRaKhoa is not null and ba.BenhAn_Id = @benhan_id
-						order by lt.LuuTru_Id desc
+					select top 1
+						TiepNhan_Id = ba.TiepNhan_Id,
+						BenhNhan_Id = ba.BenhNhan_Id,
+						BenhAn_Id = ba.BenhAn_Id,
+						NgayVao = ba.NgayVaoVien,
+						NgayRa = null,
+						NgayKham = null,
+						TenPhongKham = pb.TenPhongBan,
+						ChanDoan = isnull(lt.ChanDoanRaKhoa,ba.ChanDoanVaoKhoa),
+						BenhKhac = icd.MaICD
+					from BenhAn ba 
+					left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
+					join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
+					join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
+					left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
+					where ba.BenhAn_Id = @benhan_id
+					order by lt.LuuTru_Id desc
 			
 					)xn
 					
@@ -329,7 +330,8 @@ SELECT
 
 					LEFT JOIN Lst_Dictionary NSS (nolock) ON TN.NoiSinhSong_ID = NSS.Dictionary_Id And NSS.Dictionary_Type_Code = 'NoiSinhSong'
 					
-			Where xn.BenhAn_id = @BenhAn_Id
+			Where xn.BenhAn_id = @benhan_id
+
 
 			
 		) CHIPHI

@@ -135,14 +135,14 @@ SELECT
 					NgayRa = null,
 					NgayKham = null,
 					TenPhongKham = pb.TenPhongBan,
-					ChanDoan = lt.ChanDoanRaKhoa,
+					ChanDoan = isnull(lt.ChanDoanRaKhoa,ba.ChanDoanVaoKhoa),
 					BenhKhac = icd.MaICD
 				from BenhAn ba 
 				left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
 				join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
 				join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
 				left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
-				where lt.ChanDoanRaKhoa is not null and ba.BenhAn_Id = @benhan_id
+				where ba.BenhAn_Id = @benhan_id
 				order by lt.LuuTru_Id desc
 			) xn
 	
@@ -166,23 +166,23 @@ union all
 			, Nguoi_TH =  bscls.SoChungChiHanhNghe + (dbo.Get_MaBacSi_XML3_By_BenhAnPhauThuat_Id(pt.BenhAnPhauThuat_Id))
 			, GiaiDoan = xn.ChanDoan
 	From	(
-				select top 1
-					TiepNhan_Id = ba.TiepNhan_Id,
-					BenhNhan_Id = ba.BenhNhan_Id,
-					BenhAn_Id = ba.BenhAn_Id,
-					NgayVao = ba.NgayVaoVien,
-					NgayRa = null,
-					NgayKham = null,
-					TenPhongKham = pb.TenPhongBan,
-					ChanDoan = lt.ChanDoanRaKhoa,
-					BenhKhac = icd.MaICD
-				from BenhAn ba 
-				left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
-				join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
-				join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
-				left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
-				where lt.ChanDoanRaKhoa is not null and ba.BenhAn_Id = @benhan_id
-				order by lt.LuuTru_Id desc
+	select top 1
+		TiepNhan_Id = ba.TiepNhan_Id,
+		BenhNhan_Id = ba.BenhNhan_Id,
+		BenhAn_Id = ba.BenhAn_Id,
+		NgayVao = ba.NgayVaoVien,
+		NgayRa = null,
+		NgayKham = null,
+		TenPhongKham = pb.TenPhongBan,
+		ChanDoan = isnull(lt.ChanDoanRaKhoa,ba.ChanDoanVaoKhoa),
+		BenhKhac = icd.MaICD
+	from BenhAn ba 
+	left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
+	join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
+	join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
+	left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
+	where ba.BenhAn_Id = @benhan_id
+	order by lt.LuuTru_Id desc
 			) xn
 	left join (
 	
@@ -331,23 +331,23 @@ SELECT	distinct
 	, Nguoi_TH =  dbo.Get_MaBacSi_HoiChan(hc.HoiChan_Id)
 	, GiaiDoan = xn.ChanDoan
 	From	(
-				select top 1
-					TiepNhan_Id = ba.TiepNhan_Id,
-					BenhNhan_Id = ba.BenhNhan_Id,
-					BenhAn_Id = ba.BenhAn_Id,
-					NgayVao = ba.NgayVaoVien,
-					NgayRa = null,
-					NgayKham = null,
-					TenPhongKham = pb.TenPhongBan,
-					ChanDoan = lt.ChanDoanRaKhoa,
-					BenhKhac = icd.MaICD
-				from BenhAn ba 
-				left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
-				join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
-				join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
-				left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
-				where lt.ChanDoanRaKhoa is not null and ba.BenhAn_Id = @benhan_id
-				order by lt.LuuTru_Id desc
+	select top 1
+		TiepNhan_Id = ba.TiepNhan_Id,
+		BenhNhan_Id = ba.BenhNhan_Id,
+		BenhAn_Id = ba.BenhAn_Id,
+		NgayVao = ba.NgayVaoVien,
+		NgayRa = null,
+		NgayKham = null,
+		TenPhongKham = pb.TenPhongBan,
+		ChanDoan = isnull(lt.ChanDoanRaKhoa,ba.ChanDoanVaoKhoa),
+		BenhKhac = icd.MaICD
+	from BenhAn ba 
+	left join TiepNhan tn (nolock) on tn.TiepNhan_Id = ba.TiepNhan_Id
+	join NoiTru_LuuTru lt (nolock) on ba.BenhAn_Id = lt.BenhAn_Id
+	join DM_PhongBan pb (nolock) on lt.PhongBan_Id = pb.PhongBan_Id
+	left join DM_ICD icd (nolock) on icd.ICD_Id = ba.ICD_BenhPhu
+	where ba.BenhAn_Id = @benhan_id
+	order by lt.LuuTru_Id desc
 			) xn
 	join dbo.BenhAn ba (Nolock) ON ba.BenhAn_Id = @BenhAn_Id
 	 join HoiChan hc (nolock) on hc.BenhAn_Id = ba.BenhAn_Id
