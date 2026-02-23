@@ -371,7 +371,7 @@
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
                                     FontSize="18"
-                                    Text="Tài khoản" />
+                                    Text="Tài Khoản người dùng " />
                             </Grid>
                         </Button.Content>
                     </Button>
