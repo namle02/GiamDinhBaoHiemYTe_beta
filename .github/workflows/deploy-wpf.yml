@@ -31,18 +31,27 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
-      # 4. Publish project (self-contained, single file)
-      - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o ./publish
+      # 4a. Publish win-x64 (self-contained) - cho Windows 10/11 64-bit, không cần cài .NET
+      - name: Publish win-x64
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -o ./publish-x64
 
-      # 4b. Ghi version.txt vào thư mục publish (để app đọc đúng phiên bản khi chạy từ zip)
+      # 4b. Publish win-x86 (framework-dependent) - cho Windows 8 / 32-bit, cần .NET 8 Desktop Runtime x86
+      - name: Publish win-x86
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained false -r win-x86 -o ./publish-x86
+
+      # 4c. Ghi version.txt vào cả hai thư mục
       - name: Write version file
-        run: $v = '${{ github.ref_name }}' -replace '^v',''; Set-Content -Path ./publish/version.txt -Value $v
+        run: |
+          $v = '${{ github.ref_name }}' -replace '^v',''
+          Set-Content -Path ./publish-x64/version.txt -Value $v
+          Set-Content -Path ./publish-x86/version.txt -Value $v
         shell: pwsh
 
-      # 5. Zip the output
-      - name: Create Release Archive
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
+      # 5. Tạo 2 file zip (app auto-update sẽ tải đúng bản theo 32/64-bit)
+      - name: Create Release Archives
+        run: |
+          Compress-Archive -Path ./publish-x64/* -DestinationPath ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x64.zip
+          Compress-Archive -Path ./publish-x86/* -DestinationPath ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x86.zip
         shell: pwsh
 
       # 6. Create GitHub Release
@@ -57,28 +66,35 @@ jobs:
           body: |
             ## 🎉 Phiên bản ${{ github.ref_name }}
             
-            ### 📦 Download
-            - **File chính:** ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
-            
-            ### 📋 Yêu cầu hệ thống
-            - Windows 10/11 (64-bit)
-            - Không cần cài .NET (self-contained)
+            ### 📦 Download (chọn đúng bản theo máy)
+            - **Windows 10/11 (64-bit):** ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x64.zip — không cần cài .NET
+            - **Windows 8 / 32-bit:** ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x86.zip — cần [.NET 8 Desktop Runtime (x86)](https://dotnet.microsoft.com/download/dotnet/8.0)
             
             ### 🚀 Cách sử dụng
-            1. Download file zip
+            1. Tải file zip tương ứng
             2. Giải nén
-            3. Chạy file WPF_GiamDinhBaoHiem.exe
+            3. Chạy WPF_GiamDinhBaoHiem.exe
           draft: false
           prerelease: false
 
-      # 7. Upload Release Asset
-      - name: Upload Release Asset
+      # 7. Upload cả hai bản
+      - name: Upload win-x64 Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
-          asset_name: ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}.zip
+          asset_path: ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x64.zip
+          asset_name: ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x64.zip
+          asset_content_type: application/zip
+
+      - name: Upload win-x86 Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x86.zip
+          asset_name: ${{ env.OUTPUT_NAME }}-${{ github.ref_name }}-win-x86.zip
           asset_content_type: application/zip
 

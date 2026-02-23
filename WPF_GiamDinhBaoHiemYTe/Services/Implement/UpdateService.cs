@@ -143,7 +143,8 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
                 var currentVersion = GetCurrentVersion();
                 var hasUpdate = IsNewerVersion(currentVersion, latestVersion);
 
-                var zipAsset = release.assets?.FirstOrDefault(a => a.name.EndsWith(".zip"));
+                // Chọn đúng zip theo 32/64-bit: Win 8 (x86) tải win-x86, Win 10/11 (x64) tải win-x64
+                var zipAsset = GetDownloadAssetForCurrentProcess(release.assets);
                 var downloadUrl = zipAsset?.browser_download_url ?? "";
                 var releaseNotes = release.body ?? "";
 
@@ -269,6 +270,26 @@ namespace WPF_GiamDinhBaoHiem.Services.Implement
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Chọn asset zip đúng theo 32/64-bit: máy x86 (Win 8) tải win-x86, máy x64 tải win-x64.
+        /// Nếu release cũ chỉ có 1 file .zip thì dùng luôn (tương thích ngược).
+        /// </summary>
+        private static GitHubAsset GetDownloadAssetForCurrentProcess(List<GitHubAsset> assets)
+        {
+            if (assets == null || assets.Count == 0) return null;
+            var zipAssets = assets.Where(a => a?.name != null && a.name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (zipAssets.Count == 0) return null;
+            // Release mới: 2 file *-win-x64.zip và *-win-x86.zip
+            var prefer64 = Environment.Is64BitProcess;
+            var preferred = zipAssets.FirstOrDefault(a => a.name.Contains("win-x64", StringComparison.OrdinalIgnoreCase));
+            var fallback = zipAssets.FirstOrDefault(a => a.name.Contains("win-x86", StringComparison.OrdinalIgnoreCase));
+            if (prefer64 && preferred != null) return preferred;
+            if (!prefer64 && fallback != null) return fallback;
+            if (preferred != null) return preferred;
+            if (fallback != null) return fallback;
+            return zipAssets.FirstOrDefault();
         }
 
         private bool RequiresAdmin(string appPath)
