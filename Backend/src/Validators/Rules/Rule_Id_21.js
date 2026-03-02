@@ -1,12 +1,15 @@
 /**
  * Rule 21: Thanh toán số ngày giường điều trị nội trú không đúng quy định tại điểm a và điểm b khoản 1 Điều 6 Thông tư số 22/2023/TT-BYT.
- * - Lấy tất cả dịch vụ Ma_Nhom = 15, cộng So_Luong để ra tổng số ngày giường thực tế.
- * - Số ngày giường mong muốn lấy theo (Ngày ra - Ngày vào):
- *   + < 4 giờ: 0
- *   + từ 4 giờ đến 24 giờ: 1
- *   + > 24 giờ: ceil(số giờ/24)
- * - Nếu Ket_Qua_Dtri = 4 hoặc 5 thì số ngày giường mong muốn = (Ngày ra - Ngày vào) + 1.
- * - Trong 1 ngày (theo Ngay_yl), tổng So_Luong dịch vụ nhóm 15 không được > 1.
+ *
+ * Logic:
+ * 1. Ket_Qua_Dtri = 4 (Nặng hơn) hoặc 5 (Tử vong) → tổng số ngày giường = (ngày ra - ngày vào) + 1.
+ * 2. Các trường hợp còn lại → tổng số ngày giường = (ngày ra - ngày vào).
+ * 3. 4 tiếng < (ngày ra - ngày vào) < 24 tiếng → tổng số ngày giường = 1.
+ * 4. (ngày ra - ngày vào) < 4 tiếng → tổng số ngày giường = 0.
+ * 5. Trong 1 ngày (theo Ngay_yl) số ngày giường được chỉ định cho ngày đó <= 1.
+ *
+ * (Ngày ra - ngày vào) khi >= 24h: chênh lệch ngày, không đếm từng ngày — 24/02→25/02=1, 24/02→26/02=2, …, 24/02→02/03=6.
+ *
  * @param {Object} patientData - Toàn bộ dữ liệu bệnh nhân
  * @returns {Object} - Kết quả validation
  */
@@ -36,7 +39,7 @@ function toNumber(value) {
     return Number.isFinite(n) ? n : 0;
 }
 
-/** Chỉ lấy phần ngày (00:00:00) để tính chênh lệch theo ngày */
+/** Lấy phần ngày (00:00:00) để tính chênh lệch theo ngày, bỏ giờ */
 function toDateOnly(d) {
     if (!d || !(d instanceof Date)) return null;
     return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
@@ -69,13 +72,15 @@ const validateRule_Id_21 = async (patientData) => {
             return result;
         }
 
+        // Ngày ra: nếu Xml1.Ngay_Ra null thì lấy Ngày ra hiệu lực từ getEffectiveNgayRa (hiện tại = thời điểm xử lý)
         const ngayRaStr = getEffectiveNgayRa(xml1);
         const ngayVaoStr = xml1.Ngay_Vao ?? xml1.Ngay_vao ?? '';
 
         const ngayRa = parseDate(ngayRaStr);
         const ngayVao = parseDate(ngayVaoStr);
 
-        let expectedSoNgayGiuong = 0;
+        // Số ngày giường mong muốn theo (Ngày ra - Ngày vào)
+        let soNgayGiuongMongMuon = 0;
         if (ngayRa && ngayVao) {
             const diffMs = Math.max(0, ngayRa.getTime() - ngayVao.getTime());
             const diffHours = diffMs / (1000 * 60 * 60);
@@ -83,18 +88,22 @@ const validateRule_Id_21 = async (patientData) => {
 
             if (diffHours < 4) {
                 soNgayTheoThoiGian = 0;
-            } else if (diffHours <= 24) {
+            } else if (diffHours >= 4 && diffHours < 24) {
                 soNgayTheoThoiGian = 1;
             } else {
-                soNgayTheoThoiGian = Math.ceil(diffHours / 24);
+                // >= 24h: (ngày ra - ngày vào) = chênh lệch ngày (không đếm từng ngày): 24/02→25/02=1, 24/02→02/03=6
+                const dateVao = toDateOnly(ngayVao);
+                const dateRa = toDateOnly(ngayRa);
+                const diffDayMs = dateRa.getTime() - dateVao.getTime();
+                soNgayTheoThoiGian = Math.round(diffDayMs / (1000 * 60 * 60 * 24));
             }
 
             const ketQuaDtri = xml1.Ket_Qua_Dtri ?? xml1.ket_qua_Dtri;
             const is4or5 = Number(ketQuaDtri) === 4 || Number(ketQuaDtri) === 5;
-            expectedSoNgayGiuong = is4or5 ? soNgayTheoThoiGian + 1 : soNgayTheoThoiGian;
+            soNgayGiuongMongMuon = is4or5 ? soNgayTheoThoiGian + 1 : soNgayTheoThoiGian;
         }
 
-        // --- Tổng số ngày giường thực tế: cộng So_Luong của toàn bộ dịch vụ nhóm 15 ---
+        // soNgayGiuong (thực tế) = tổng So_Luong của tất cả dịch vụ nhóm 15
         const listWithSoLuong = dichVuNhom15.map(dv => {
             const soLuong = toNumber(dv.So_Luong ?? dv.so_luong);
             const start = parseDate(dv.Ngay_yl ?? dv.Ngay_Yl ?? '');
@@ -108,20 +117,20 @@ const validateRule_Id_21 = async (patientData) => {
             return { item: dv, soLuong, dateKey };
         });
 
-        const totalSoNgayGiuong = listWithSoLuong.reduce((s, x) => s + x.soLuong, 0);
+        const soNgayGiuong = listWithSoLuong.reduce((s, x) => s + x.soLuong, 0);
 
-        // --- Kiểm tra 1: tổng số ngày giường thực tế phải bằng số ngày giường mong muốn ---
-        if (expectedSoNgayGiuong !== totalSoNgayGiuong) {
+        // Kiểm tra 1: soNgayGiuong (tổng So_Luong nhóm 15) phải bằng số ngày giường mong muốn
+        if (soNgayGiuongMongMuon !== soNgayGiuong) {
             result.isValid = false;
             const ketQuaDtri = xml1.Ket_Qua_Dtri ?? xml1.ket_qua_Dtri;
             const is4or5 = Number(ketQuaDtri) === 4 || Number(ketQuaDtri) === 5;
-            const msg = `Tổng số ngày giường theo So_Luong dịch vụ nhóm 15 (${totalSoNgayGiuong}) không bằng số ngày giường mong muốn theo ngày ra - ngày vào${is4or5 ? ' + 1 (do Ket_Qua_Dtri = 4/5)' : ''} = ${expectedSoNgayGiuong}`;
+            const msg = `Tổng số ngày giường theo So_Luong dịch vụ nhóm 15 (${soNgayGiuong}) không bằng số ngày giường mong muốn theo ngày ra - ngày vào${is4or5 ? ' + 1 (do Ket_Qua_Dtri = 4/5)' : ''} = ${soNgayGiuongMongMuon}`;
             dichVuNhom15.forEach(item => {
                 result.errors.push(formatError(item.id || item.Id, msg));
             });
         }
 
-        // --- Kiểm tra 2: trong 1 ngày tổng So_Luong không được > 1 ---
+        // Kiểm tra 2: trong 1 ngày (theo Ngay_yl) tổng So_Luong nhóm 15 không được > 1
         const byDay = {};
         for (const { dateKey, soLuong } of listWithSoLuong) {
             if (!dateKey) continue;
