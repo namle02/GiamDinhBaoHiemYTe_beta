@@ -182,7 +182,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     var result = await connection.QueryFirstOrDefaultAsync<PhanLoaiBenhAn>(query, new
                     {
                         Sovv = sovv,
-                        NgayVao = ngayVao,
+                        Ngayvao = ngayVao,  // @Ngayvao (SQL)
                         Sotn = sotn,
                         Soba = soba
                     });
@@ -676,27 +676,25 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 using (SqlConnection connection = new SqlConnection(connectionStringForAll))
                 {
                     await connection.OpenAsync();
-                    // Query trả về PhanLoaiBenhAn, sau đó map sang MaLkSearchResult
+                    // Query trả về PhanLoaiBenhAn, sau đó map sang MaLkSearchResult (thamsố @Ngayvao theo SQL)
                     var phanLoaiResults = await connection.QueryAsync<PhanLoaiBenhAn>(query, new
                     {
-                        Sovv = maBn,           // MA_BN
-                        Ngaytn = ngaytnFormatted,  // Ngày vào (format: yyyyMMdd - 8 ký tự)
-                        Sotn = (string?)null,  // Tình huống 2: Mã có "TN" ở đầu
-                        Soba = (string?)null   // Tình huống 3: Mã không có "TN" ở đầu
+                        Sovv = maBn,
+                        Ngayvao = ngaytnFormatted,  // @Ngayvao (yyyyMMdd)
+                        Sotn = (string?)null,
+                        Soba = (string?)null
                     });
 
-                    // Map từ PhanLoaiBenhAn sang MaLkSearchResult
+                    // Map từ PhanLoaiBenhAn sang MaLkSearchResult (dùng Ngay_ra_vien từ SQL)
                     var results = new List<MaLkSearchResult>();
                     foreach (var item in phanLoaiResults)
                     {
-                        // Xác định Ma_Lk: ưu tiên Ma_TN, nếu không có thì dùng Ma_BA
                         string? maLk = !string.IsNullOrWhiteSpace(item.Ma_TN) ? item.Ma_TN : item.Ma_BA;
-                        
-                        // Format ngày vào
+                        var dateVal = item.Ngay_ra_vien ?? item.Ngay_vao_vien;
                         string? ngayVaoFormatted = null;
-                        if (item.Ngay_vao_vien.HasValue)
+                        if (dateVal.HasValue)
                         {
-                            var date = item.Ngay_vao_vien.Value;
+                            var date = dateVal.Value;
                             ngayVaoFormatted = date.ToString("yyyyMMdd") + date.ToString("HHmm");
                         }
 
@@ -752,51 +750,61 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     return new List<MaLkSearchResult>();
                 }
 
-                // Xác định tình huống và set parameters
-                string? sovv = null;      // Tình huống 1: MA_BN
-                string? ngaytn = null;   // Tình huống 1: Ngày vào
-                string? sotn = null;     // Tình huống 2: Mã có "TN" ở đầu
-                string? soba = null;     // Tình huống 3: Mã không có "TN" ở đầu
+                // Xác định tình huống và set parameters (tên tham số theo SQL: @Ngayvao, @Sovv, @Sotn, @Soba)
+                string? sovv = null;
+                string? ngayvao = null;
+                string? sotn = null;
+                string? soba = null;
 
-                // Tình huống 1: Có MA_BN và Ngày vào
                 if (!string.IsNullOrWhiteSpace(maBn) && !string.IsNullOrWhiteSpace(ngayVaoFrom))
                 {
                     sovv = maBn;
-                    ngaytn = ngayVaoFrom;
+                    ngayvao = ngayVaoFrom.Length >= 8 ? ngayVaoFrom.Substring(0, 8) : ngayVaoFrom;
                 }
-                // Tình huống 2 hoặc 3: Có inputCode
                 else if (!string.IsNullOrWhiteSpace(inputCode))
                 {
-                    // Kiểm tra nếu inputCode bắt đầu bằng "TN" (case-insensitive)
                     if (inputCode.Trim().StartsWith("TN", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Tình huống 2: Mã có "TN" ở đầu (SoTiepNhan)
                         sotn = inputCode.Trim();
-                    }
                     else
-                    {
-                        // Tình huống 3: Mã không có "TN" ở đầu (SoBenhAn)
                         soba = inputCode.Trim();
-                    }
                 }
                 else
                 {
-                    MessageBox.Show("Vui lòng cung cấp đầy đủ thông tin: (MA_BN + Ngày vào) hoặc Mã input", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Vui lòng cung cấp đầy đủ thông tin: (MA_BN + Ngày vào) hoặc Mã input (Sotn/Soba)", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                     return new List<MaLkSearchResult>();
                 }
 
                 using (SqlConnection connection = new SqlConnection(connectionStringForAll))
                 {
                     await connection.OpenAsync();
-                    var results = await connection.QueryAsync<MaLkSearchResult>(query, new
+                    var phanLoaiResults = await connection.QueryAsync<PhanLoaiBenhAn>(query, new
                     {
-                        Sovv = sovv,     // Tình huống 1: MA_BN
-                        Ngaytn = ngaytn, // Tình huống 1: Ngày vào
-                        Sotn = sotn,     // Tình huống 2: Mã có "TN" ở đầu
-                        Soba = soba      // Tình huống 3: Mã không có "TN" ở đầu
+                        Sovv = sovv,
+                        Ngayvao = ngayvao,
+                        Sotn = sotn,
+                        Soba = soba
                     });
 
-                    return results.ToList();
+                    var results = new List<MaLkSearchResult>();
+                    foreach (var item in phanLoaiResults)
+                    {
+                        string? maLk = !string.IsNullOrWhiteSpace(item.Ma_TN) ? item.Ma_TN : item.Ma_BA;
+                        var dateVal = item.Ngay_ra_vien ?? item.Ngay_vao_vien;
+                        string? ngayVaoFormatted = null;
+                        if (dateVal.HasValue)
+                        {
+                            var d = dateVal.Value;
+                            ngayVaoFormatted = d.ToString("yyyyMMdd") + d.ToString("HHmm");
+                        }
+                        results.Add(new MaLkSearchResult
+                        {
+                            Ma_Bn = maBn,
+                            Ma_Lk = maLk,
+                            Ngay_Vao = ngayVaoFormatted,
+                            LoaiBenhAn_Id = item.LoaiBenhAn
+                        });
+                    }
+                    return results;
                 }
             }
             catch (Exception ex)

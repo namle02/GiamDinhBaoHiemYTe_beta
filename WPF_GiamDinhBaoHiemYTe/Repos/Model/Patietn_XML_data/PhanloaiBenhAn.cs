@@ -11,6 +11,9 @@ namespace WPF_GiamDinhBaoHiem.Repos.Model.Patietn_XML_data
 
         [ObservableProperty] private DateTime? ngay_vao_vien;
 
+        /// <summary> Ngày ra viện (cột trả về từ SQL theo logic user - Ngoại trú/Nội trú). </summary>
+        [ObservableProperty] private DateTime? ngay_ra_vien;
+
         [ObservableProperty] private int loaiBenhAn;
     }
 }
