@@ -22,6 +22,7 @@
         <converter:GenderConverter x:Key="GenderConverter" />
         <converter:ErrorTextConverter x:Key="ErrorTextConverter" />
         <converter:ProgressBarWidthConverter x:Key="ProgressBarWidthConverter" />
+        <converter:RawDateStringConverter x:Key="RawDateStringConverter" />
 
         <!--  Style cho TextBlock trong XML2-5 để có màu đỏ khi lỗi  -->
         <Style x:Key="ErrorTextBlockStyle" TargetType="TextBlock">
@@ -1133,7 +1134,7 @@
                                                         <TextBlock
                                                             FontSize="14"
                                                             Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
-                                                            Text="{Binding OverlayXml1Data.Ngay_Sinh}" />
+                                                            Text="{Binding OverlayXml1Data.Ngay_Sinh, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -1346,7 +1347,7 @@
                                                         <TextBlock
                                                             FontSize="14"
                                                             Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
-                                                            Text="{Binding OverlayXml1Data.Ngay_Mien_Cct}" />
+                                                            Text="{Binding OverlayXml1Data.Ngay_Mien_Cct, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -1442,7 +1443,7 @@
                                                         <TextBlock
                                                             FontSize="14"
                                                             Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
-                                                            Text="{Binding OverlayXml1Data.Ngay_Vao}" />
+                                                            Text="{Binding OverlayXml1Data.Ngay_Vao, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -1455,7 +1456,7 @@
                                                         <TextBlock
                                                             FontSize="14"
                                                             Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
-                                                            Text="{Binding OverlayXml1Data.Ngay_Vao_Noi_Tru}" />
+                                                            Text="{Binding OverlayXml1Data.Ngay_Vao_Noi_Tru, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="1"
@@ -1468,7 +1469,7 @@
                                                         <TextBlock
                                                             FontSize="14"
                                                             Foreground="{Binding OverlayXml1Data.IsError, Converter={StaticResource ErrorToColorConverter}}"
-                                                            Text="{Binding OverlayXml1Data.Ngay_Ra}" />
+                                                            Text="{Binding OverlayXml1Data.Ngay_Ra, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
 
                                                     <StackPanel
@@ -1717,7 +1718,7 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày thanh toán" />
-                                                        <TextBlock FontSize="14" Text="{Binding OverlayXml1Data.Ngay_Ttoan}" />
+                                                        <TextBlock FontSize="14" Text="{Binding OverlayXml1Data.Ngay_Ttoan, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
                                                 </Grid>
                                             </StackPanel>
@@ -1826,7 +1827,7 @@
                                                             FontWeight="Bold"
                                                             Foreground="#666"
                                                             Text="Ngày tái khám" />
-                                                        <TextBlock FontSize="14" Text="{Binding OverlayXml1Data.Ngay_Tai_Kham}" />
+                                                        <TextBlock FontSize="14" Text="{Binding OverlayXml1Data.Ngay_Tai_Kham, Converter={StaticResource RawDateStringConverter}}" />
                                                     </StackPanel>
                                                     <StackPanel
                                                         Grid.Row="2"
@@ -2562,7 +2563,7 @@
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Style="{StaticResource ErrorTextBlockStyle}"
-                                                                        Text="{Binding Ngay_Yl}" />
+                                                                        Text="{Binding Ngay_Yl, Converter={StaticResource RawDateStringConverter}}" />
                                                                     <TextBlock
                                                                         Grid.Column="33"
                                                                         HorizontalAlignment="Center"
@@ -2592,7 +2593,7 @@
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Style="{StaticResource ErrorTextBlockStyle}"
-                                                                        Text="{Binding Ngay_Th_Yl}" />
+                                                                        Text="{Binding Ngay_Th_Yl, Converter={StaticResource RawDateStringConverter}}" />
                                                                 </Grid>
                                                             </Border>
                                                         </DataTemplate>
@@ -3001,19 +3002,19 @@
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Style="{StaticResource ErrorTextBlockStyle}"
-                                                                        Text="{Binding Ngay_Yl}" />
+                                                                        Text="{Binding Ngay_Yl, Converter={StaticResource RawDateStringConverter}}" />
                                                                     <TextBlock
                                                                         Grid.Column="21"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Style="{StaticResource ErrorTextBlockStyle}"
-                                                                        Text="{Binding Ngay_Th_Yl}" />
+                                                                        Text="{Binding Ngay_Th_Yl, Converter={StaticResource RawDateStringConverter}}" />
                                                                     <TextBlock
                                                                         Grid.Column="22"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Style="{StaticResource ErrorTextBlockStyle}"
-                                                                        Text="{Binding Ngay_Kq}" />
+                                                                        Text="{Binding Ngay_Kq, Converter={StaticResource RawDateStringConverter}}" />
                                                                 </Grid>
                                                             </Border>
                                                         </DataTemplate>
@@ -3259,7 +3260,7 @@
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Style="{StaticResource ErrorTextBlockStyle}"
-                                                                        Text="{Binding Ngay_Kq}" />
+                                                                        Text="{Binding Ngay_Kq, Converter={StaticResource RawDateStringConverter}}" />
                                                                     <TextBlock
                                                                         Grid.Column="9"
                                                                         HorizontalAlignment="Center"

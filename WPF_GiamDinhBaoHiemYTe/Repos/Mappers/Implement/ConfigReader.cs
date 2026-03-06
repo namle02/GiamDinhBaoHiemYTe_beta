@@ -43,7 +43,7 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 if (Config.ContainsKey("Server_API_Local") && !string.IsNullOrWhiteSpace(Config["Server_API_Local"]))
                 {
                     string serverApi = Config["Server_API_Local"].Trim();
-                    // Đảm bảo URL có format đúng (có http:// hoặc https://)
+                    
                     if (!serverApi.EndsWith("/"))
                     {
                         serverApi += "/";

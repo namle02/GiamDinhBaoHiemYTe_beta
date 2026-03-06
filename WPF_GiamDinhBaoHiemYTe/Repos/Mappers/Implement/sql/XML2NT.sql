@@ -1,4 +1,20 @@
-﻿DECLARE @SoTiepNhan VARCHAR(50)  = N'{IDBenhNhan}'
+/*==============================================================================
+  TT02-NgoaiTru.sql - PHIÊN BẢN TỐI ƯU
+  
+  Tối ưu so với bản gốc:
+  1. SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED thay cho (nolock) rải rác
+  2. Bỏ subquery SELECT * không cần thiết (dòng 34-38, 146 gốc)
+  3. Thay correlated subquery MIN(ThoiGianKham) bằng TOP 1
+  4. Loại bỏ OR trong JOIN/WHERE (dòng 405-406, 452 gốc)
+  5. Tính trước SUM(NoiTru_TraThuocChiTiet) — biểu thức lặp ~12 lần
+  6. Thay correlated subquery trong JOIN kbm (dòng 535 gốc) bằng CROSS APPLY
+  7. Loại bỏ JOIN DM_LoaiDuoc trùng lặp (dòng 486 vs 492 gốc)
+  8. Loại bỏ JOIN DM_ICD trùng lặp (dòng 537-541 gốc, 3 lần gần giống nhau)
+==============================================================================*/
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+
+DECLARE @SoTiepNhan VARCHAR(50) =N'{IDBenhNhan}'
 
 DECLARE @BenhAn_id VARCHAR(50)
 DECLARE @TiepNhan_Id VARCHAR(50)
@@ -6,585 +22,593 @@ SELECT @TiepNhan_Id = TiepNhan_Id FROM TiepNhan WHERE SoTiepNhan = @SoTiepNhan
 
 DECLARE @Ma_Lk VARCHAR(50)
 DECLARE @ChanDoan_NT NVARCHAR(1000)
-SELECT @Ma_Lk = convert(varchar (50),SoTiepNhan ) FROM TiepNhan WHERE TiepNhan_Id = @TiepNhan_Id
+SELECT @Ma_Lk = CONVERT(VARCHAR(50), SoTiepNhan) FROM TiepNhan WHERE TiepNhan_Id = @TiepNhan_Id
+
 DECLARE @ICDCapCuu VARCHAR(20)
 DECLARE @ICD_NT NVARCHAR(1000)
 DECLARE @ICD_NTGopBenh NVARCHAR(1000)
 DECLARE @ICD_phu NVARCHAR(1000)
-DECLARE @Ma_PTTT_QT varchar(250)
-declare @ChanDoan_RV  NVARCHAR(1000)
+DECLARE @Ma_PTTT_QT VARCHAR(250)
+DECLARE @ChanDoan_RV NVARCHAR(1000)
 
+SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id](NULL, @TiepNhan_Id)
 
+IF @BenhAn_Id IS NULL
+	SET @BenhAn_Id = (SELECT BenhAn_Id FROM BenhAn WHERE TiepNhan_Id = @TiepNhan_Id)
 
-SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id] (NULL, @TiepNhan_Id)
+IF @BenhAn_Id IS NOT NULL
+BEGIN
+	SELECT
+		@ChanDoan_NT = ISNULL(ba.ChanDoanVaoKhoa, ISNULL(icd.TenICD, ISNULL(cc.ChanDoanNhapVien, icd_cc.TenICD)))
+		, @ICDCapCuu = ISNULL(icd.MaICD, icd_cc.MaICD)
+		, @ICD_NT = icd.MaICD
+		, @ICD_NTGopBenh = [dbo].[Get_MaICDByTiepNhan_ID_gopbenhPHCN](@Tiepnhan_id)
+		, @ICD_phu = icd_k.MaICD + ';' + [dbo].[Get_MaICD_ByBenhAn_Id](@BenhAn_Id, 'M')
+		, @ChanDoan_RV = ISNULL(ba.ChanDoanRaVien, icd.TenICD) + ', ' + ISNULL(ISNULL(ba.chandoanphuravien, icd_k.tenicd), '')
+	-- [TỐI ƯU #2] Bỏ subquery SELECT *, dùng WHERE trực tiếp
+	FROM dbo.BenhAn ba
+	INNER JOIN TiepNhan tn ON ba.TiepNhan_ID = tn.TiepNhan_ID
+	LEFT JOIN DM_ICD icd ON icd.ICD_Id = ba.ICD_BenhChinh
+	LEFT JOIN ThongTinCapCuu cc ON ba.BenhAn_ID = cc.BenhAn_Id
+	LEFT JOIN DM_ICD icd_cc ON cc.ICD_BenhChinh = icd_cc.ICD_Id
+	LEFT JOIN DM_ICD icd_cc2 ON cc.ICD_BenhPhu = icd_cc2.ICD_Id AND cc.ICD_BenhChinh IS NULL
+	LEFT JOIN DM_ICD icd_k ON ba.ICD_BenhPhu = icd_k.ICD_Id
+	WHERE ba.BenhAn_Id = @BenhAn_Id
 
-if @BenhAn_Id is null 
+	SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id](@BenhAn_Id, NULL)
+END
 
-set @BenhAn_Id  = (select BenhAn_Id from BenhAn where TiepNhan_Id = @TiepNhan_Id)
+DECLARE @MaCSKCB NVARCHAR(1000)
+DECLARE @ChanDoan_PK NVARCHAR(1000)
+DECLARE @ICD_PK NVARCHAR(1000)
+DECLARE @ICDKB NVARCHAR(1000)
+DECLARE @ICD_PHUPK NVARCHAR(1000)
+DECLARE @ICD_PNT NVARCHAR(1000)
+DECLARE @ICD_PKBenhChinh NVARCHAR(1000)
+DECLARE @ICD_PKGopBenh NVARCHAR(1000)
+DECLARE @ThoiGianKham DATETIME
+DECLARE @ChanDoanCapCuu NVARCHAR(1000)
+DECLARE @CapCuu BIT
+DECLARE @KhamBenh_Id INT
+DECLARE @Khoa NVARCHAR(200)
+DECLARE @ICD_Khac NVARCHAR(1000)
+DECLARE @SoBenhAn VARCHAR(25)
+DECLARE @TT_01_TONGHOP_ID INT = NULL
+DECLARE @NGAY_VAO DATETIME
 
-if @BenhAn_Id is not null
-	begin
-		SELECT	@ChanDoan_NT = isnull(ba.ChanDoanVaoKhoa, isnull(icd.TenICD, isnull( cc.ChanDoanNhapVien,icd_cc.TenICD) ) )
-			, @ICDCapCuu = isnull(icd.MaICD, icd_cc.MaICD)
-			, @ICD_NT = icd.MaICD
-			, @ICD_NTGopBenh = [dbo].[Get_MaICDByTiepNhan_ID_gopbenhPHCN] (@Tiepnhan_id)
-			, @ICD_phu = icd_k.MaICD + ';' + [dbo].[Get_MaICD_ByBenhAn_Id] (@BenhAn_Id,'M')--, @SoBenhAn = ba.SoBenhAn,
-			--, @Ma_Lk =  REPLACE(ba.SoBenhAn,'/','_')
-			, @ChanDoan_RV = isnull(ba.ChanDoanRaVien,icd.TenICD)+ ', ' + isnull(isnull(ba.chandoanphuravien,icd_k.tenicd),'')
-		FROM	(
-					SELECT	*
-					FROM	dbo.BenhAn
-					WHERE	BenhAn_Id = @BenhAn_Id
-				) ba
-		INNER JOIN TiepNhan tn  (nolock)  ON ba.TiepNhan_ID= tn.TiepNhan_ID
-		LEFT JOIN DM_ICD icd  (nolock) ON icd.ICD_Id = ba.ICD_BenhChinh
-		left join ThongTinCapCuu cc (nolock)  on ba.BenhAn_ID = cc.BenhAn_Id 
-		left join DM_ICD icd_cc (nolock)  on isnull(cc.ICD_BenhChinh, cc.ICD_BenhPhu) = icd_cc.ICD_Id
-		LEFT JOIN DM_ICD icd_k (nolock)  ON ba.ICD_BenhPhu  = icd_k.ICD_Id	
+SET @CapCuu = 0
 
-		SET @Ma_PTTT_QT = [dbo].[Get_PTTT_QT_ByBenhAn_Id] (@BenhAn_Id, NULL)
-	end
-	DECLARE @MaCSKCB  NVARCHAR(1000)
-	
-	DECLARE @ChanDoan_PK NVARCHAR(1000)
-	DECLARE @ICD_PK NVARCHAR(1000)
-	DECLARE @ICDKB NVARCHAR(1000)
-	DECLARE @ICD_PHUPK NVARCHAR(1000)
-	
-	DECLARE @ICD_PNT NVARCHAR(1000)
-	
-	DECLARE @ICD_PKBenhChinh NVARCHAR(1000)
-	DECLARE @ICD_PKGopBenh NVARCHAR(1000)
-	DECLARE	@ThoiGianKham DATETIME
-	
-	DECLARE @ChanDoanCapCuu NVARCHAR(1000)
-	
-	declare @CapCuu bit
-	
-	DECLARE @KhamBenh_Id int
-	Declare @Khoa NVARCHAR(200)
-	declare @ICD_Khac NVARCHAR(1000)
-	declare @SoBenhAn varchar(25)
+----Phòng Khám
+SET @ICD_PK = [dbo].[Get_MaICDPhuByTiepNhan_ID](@TiepNhan_Id)
+SET @ChanDoan_PK = [dbo].[Get_DSChanDoanKB_ByTiepNhan_ID](@TiepNhan_Id)
+SET @ICD_PHUPK = [dbo].[Get_MaICD_ByTiepNhan_ID](@TiepNhan_Id)
+SET @ICD_PKBenhChinh = [dbo].[Get_MaICDByTiepNhan_ID_benhchinh](@TiepNhan_Id)
+SET @ICD_PKGopBenh = [dbo].[Get_MaICDByTiepNhan_ID_gopbenh](@TiepNhan_Id)
+----end Phòng Khám
 
-	
-	DECLARE @TT_01_TONGHOP_ID int = null
-	DECLARE @NGAY_VAO DATETIME
-	
-	set @CapCuu = 0
-	----Phòng Khám
-	set @ICD_PK = [dbo].[Get_MaICDPhuByTiepNhan_ID](@TiepNhan_Id)
-	set @ChanDoan_PK = [dbo].[Get_DSChanDoanKB_ByTiepNhan_ID](@TiepNhan_Id)
-	set @ICD_PHUPK = [dbo].[Get_MaICD_ByTiepNhan_ID](@TiepNhan_Id)
-	set @ICD_PKBenhChinh = [dbo].[Get_MaICDByTiepNhan_ID_benhchinh](@TiepNhan_Id)
-	set @ICD_PKGopBenh = [dbo].[Get_MaICDByTiepNhan_ID_gopbenh](@TiepNhan_Id)
-	----end Phòng Khám
-	---Bệnh án Ngoại trú--
-	set @ICD_PNT = [dbo].[Get_MaICD_Phu_ByBenhAn_Id] (@BenhAn_Id,'M') --- icd bệnh phụ
+---Bệnh án Ngoại trú--
+SET @ICD_PNT = [dbo].[Get_MaICD_Phu_ByBenhAn_Id](@BenhAn_Id, 'M')
 
+SELECT @MaCSKCB = Value FROM Sys_AppSettings WHERE Code = N'MaBenhVien_BHYT'
 
-	select @MaCSKCB=Value 
-	from Sys_AppSettings  where Code = N'MaBenhVien_BHYT'
+DECLARE @LuongToiThieu DECIMAL(18, 2) = 208500.00
+SELECT @LuongToiThieu = VALUE FROM sys_appsettings WHERE code = 'LuongToiThieu'
 
-	-- Dùng để test
-	--SET @MaCSKCB = '80005'
+--lấy chẩn đoán của bệnh án ngoại trú
+SELECT @ChanDoanCapCuu = icd.TenICD, @ICDCapCuu = icd.MaICD, @CapCuu = 1
+FROM BenhAn ba
+LEFT JOIN DM_ICD icd ON icd.ICD_Id = ba.ICD_BenhChinh
+WHERE TiepNhan_Id = @TiepNhan_Id
+	AND ba.SoCapCuu IS NOT NULL
 
-	Declare @LuongToiThieu Decimal(18,2) = 208500.00
-	SELECT @LuongToiThieu = VALUE from sys_appsettings where code = 'LuongToiThieu'
+-- [TỐI ƯU #3] Thay correlated subquery MIN(ThoiGianKham) bằng TOP 1
+SELECT TOP 1 @ICDKB = icd.MaICD
+FROM KhamBenh kb
+LEFT JOIN DM_ICD icd ON icd.ICD_Id = kb.ChanDoanICD_Id
+WHERE kb.TiepNhan_Id = @TiepNhan_Id
+ORDER BY kb.ThoiGianKham ASC
 
-	
+SET @BenhAn_Id = NULL   --Tránh trường hợp bệnh án ngoại trú vẫn có benhan_id
 
-	--lấy chẩn đoán của bệnh án ngoại trú
-	select @ChanDoanCapCuu = icd.TenICD ,@ICDCapCuu = icd.MaICD, @CapCuu = 1			
-	from BenhAn ba
-	left join DM_ICD icd   (Nolock)  on icd.ICD_Id = ba.ICD_BenhChinh
-	where TiepNhan_Id = @TiepNhan_Id
-	and ba.SoCapCuu is not null
+-- Tính Tổng Tiền Thuốc
+DECLARE @Tong_Tien_Thuoc DECIMAL(18, 2) = 0
+DECLARE @Tong_Chi DECIMAL(18, 2) = 0
+DECLARE @XacNhanChiPhi_ID INT = NULL
+DECLARE @T_BHTT DECIMAL(18, 2) = 0
+DECLARE @T_BNCCT DECIMAL(18, 2) = 0
+DECLARE @T_BNTT DECIMAL(18, 2) = 0
+DECLARE @T_NguonKhac DECIMAL(18, 2) = 0
+DECLARE @Tong_Chi_BH DECIMAL(18, 2) = 0
 
-	--lấy mã bệnh chính của phòng khám đầu tiên
-	SELECT @ICDKB = icd.MaICD	
-	FROM TiepNhan tn (nolock)
-	join	KhamBenh kb (nolock) ON tn.TiepNhan_Id = kb.TiepNhan_Id
-	and kb.ThoiGianKham IN (SELECT min(ThoiGianKham) FROM KhamBenh k1 WHERE k1.TiepNhan_Id = kb.TiepNhan_Id )
-	LEFT JOIN	DM_ICD icd  (Nolock)  ON  icd.ICD_Id = kb.ChanDoanICD_Id
-	where tn.tiepnhan_id = @TiepNhan_Id
-	
-	------------------
-	
-	------DungDV11
-	
-	
-	------End
-	SET @BenhAn_Id = NULL   --Tránh trường hợp bệnh án ngoại trú vẫn có benhan_id
--- DUNGDV Tinh TOng Tien Thuoc
-	Declare @Tong_Tien_Thuoc Decimal(18, 2) = 0
-	Declare @Tong_Chi decimal(18,2) = 0
-	Declare @XacNhanChiPhi_ID int = null
-	Declare @T_BHTT decimal(18,2) = 0
-	Declare @T_BNCCT decimal(18,2) = 0
-	Declare @T_BNTT decimal(18,2) = 0
-	Declare @T_NguonKhac decimal(18,2) = 0
-	Declare @Tong_Chi_BH decimal(18,2) = 0
+SELECT
+	@Tong_Chi = T_TongChi,
+	@T_BHTT = T_BHTT,
+	@T_BNCCT = T_BNCCT,
+	@Tong_Tien_Thuoc = T_Tong_Tien_Thuoc,
+	@T_BNTT = T_BNTT,
+	@T_NguonKhac = T_NguonKhac,
+	@Tong_Chi_BH = T_TONGCHI_BH
+FROM dbo.Tong_Tien_XML_BangKe01_130(@TiepNhan_Id)
 
-	--SET @T_BHTT = dbo.Tong_t_bhtt_ngoaitru (@TiepNhan_Id)
+-- [TỐI ƯU #2] Bỏ subquery SELECT *, dùng WHERE trực tiếp
+DECLARE @SoChuyenVien NVARCHAR(50) = NULL
+SELECT @SoChuyenVien = LEFT(cv.SoPhieu, 6)
+FROM TiepNhan TN
+JOIN DM_BenhNhan ON tn.BenhNhan_Id = DM_BenhNhan.BenhNhan_Id
+LEFT JOIN DM_BenhVien td ON td.benhvien_id = tn.NoiGioiThieu_Id
+JOIN ChuyenVien cv ON cv.TiepNhan_Id = tn.TiepNhan_Id
+WHERE TN.TiepNhan_Id = @TiepNhan_id
 
-	SELECT 
-		@Tong_Chi = T_TongChi,
-		@T_BHTT = T_BHTT,
-		@T_BNCCT = T_BNCCT,
-		@Tong_Tien_Thuoc = T_Tong_Tien_Thuoc,
-		@T_BNTT=T_BNTT,
-		@T_NguonKhac=T_NguonKhac,
-		@Tong_Chi_BH = T_TONGCHI_BH
-	FROM dbo.Tong_Tien_XML_BangKe01_130 (@TiepNhan_Id)
+IF @BenhAn_Id IS NULL
+BEGIN
 
-
-
-declare @SoChuyenVien nvarchar (50) = null
-SELECT		
-			@SoChuyenVien = left (SoPhieu,6)  
-			--GIAY_CHUYEN_TUYEN = right(SoPhieu,8)--tùy chỉnh theo dự án
-	FROM ( select * from  TiepNhan where TiepNhan_Id = @TiepNhan_id  ) TN
-		JOIN DM_BenhNhan (nolock) ON tn.BenhNhan_Id = DM_BenhNhan.BenhNhan_Id
-		left join DM_BenhVien (nolock)  td on td.benhvien_id = tn.NoiGioiThieu_Id
-		join ChuyenVien cv ( nolock ) on cv.TiepNhan_Id = tn.TiepNhan_Id
-
-if @BenhAn_Id is null 
-begin
-
-	SELECT [ID] = row_number () OVER (ORDER BY (SELECT 1))
-	  ,[MA_LK] = @Ma_Lk
-      ,[STT] = row_number () OVER (ORDER BY (SELECT 1))
-      ,[MA_THUOC] = xml2.Ma_Thuoc
-      ,[MA_PP_CHEBIEN] = xml2.ma_pp_chebien
-      ,[MA_CSKCB_THUOC] = null
-      ,[MA_NHOM] = xml2.ma_nhom
-      ,[TEN_THUOC] = xml2.Ten_Thuoc
-      ,[DON_VI_TINH] = xml2.don_vi_tinh
-      ,[HAM_LUONG] = xml2.ham_luong
-      ,[DUONG_DUNG] = xml2.duong_dung
-      ,[DANG_BAO_CHE] = XML2.Dang_BaoChe
-      ,[LIEU_DUNG] = xml2.LIEU_DUNG
-      ,[CACH_DUNG] = xml2.Cach_Dung
-      ,[SO_DANG_KY] = xml2.so_dang_ky
-      ,[TT_THAU] = xml2.TT_THAU
-      ,[PHAM_VI] = xml2.PHAM_VI
-      ,[TYLE_TT_BH] = xml2.TyLe_TT
-      ,[SO_LUONG] = xml2.So_Luong
-      ,[DON_GIA] = xml2.DON_GIA
-      ,[THANH_TIEN_BV] = xml2.THANH_TIEN_BV
-      ,[THANH_TIEN_BH] = xml2.Thanh_Tien
-      ,[T_NGUONKHAC_NSNN] = 0
-      ,[T_NGUONKHAC_VTNN] = 0
-      ,[T_NGUONKHAC_VTTN] = 0
-      ,[T_NGUONKHAC_CL] = 0
-      ,[T_NGUONKHAC] = xml2.T_NguonKhac
-      ,[MUC_HUONG] = xml2.MUC_HUONG
-      ,[T_BNTT] = xml2.T_BNTT
-      ,[T_BNCCT] = xml2.T_BNCCT
-      ,[T_BHTT] = xml2.T_BHTT
-      ,[MA_KHOA] = xml2.Ma_Khoa
-      ,[MA_BAC_SI] = xml2.Ma_Bac_Si
-      ,[MA_DICH_VU] = xml2.MADICHVU
-      ,[NGAY_YL] = xml2.Ngay_YL
-      ,[MA_PTTT] = xml2.ma_pttt
-      ,[NGUON_CTRA] = XML2.NGUON_CTRA
-      ,[VET_THUONG_TP] = null
-      ,[DU_PHONG] = null
-	  ,[NGAY_TH_YL] =  xml2.Ngay_YL
-	  ,[CHUC_DANH_ID] = xml2.CHUC_DANH_ID
+	SELECT [ID] = ROW_NUMBER() OVER (ORDER BY (SELECT 1))
+		, [MA_LK] = @Ma_Lk
+		, [STT] = ROW_NUMBER() OVER (ORDER BY (SELECT 1))
+		, [MA_THUOC] = xml2.Ma_Thuoc
+		, [MA_PP_CHEBIEN] = xml2.ma_pp_chebien
+		, [MA_CSKCB_THUOC] = NULL
+		, [MA_NHOM] = xml2.ma_nhom
+		, [TEN_THUOC] = xml2.Ten_Thuoc
+		, [DON_VI_TINH] = xml2.don_vi_tinh
+		, [HAM_LUONG] = xml2.ham_luong
+		, [DUONG_DUNG] = xml2.duong_dung
+		, [DANG_BAO_CHE] = xml2.Dang_BaoChe
+		, [LIEU_DUNG] = xml2.LIEU_DUNG
+		, [CACH_DUNG] = xml2.Cach_Dung
+		, [SO_DANG_KY] = xml2.so_dang_ky
+		, [TT_THAU] = xml2.TT_THAU
+		, [PHAM_VI] = xml2.PHAM_VI
+		, [TYLE_TT_BH] = xml2.TyLe_TT
+		, [SO_LUONG] = xml2.So_Luong
+		, [DON_GIA] = xml2.DON_GIA
+		, [THANH_TIEN_BV] = xml2.THANH_TIEN_BV
+		, [THANH_TIEN_BH] = xml2.Thanh_Tien
+		, [T_NGUONKHAC_NSNN] = 0
+		, [T_NGUONKHAC_VTNN] = 0
+		, [T_NGUONKHAC_VTTN] = 0
+		, [T_NGUONKHAC_CL] = 0
+		, [T_NGUONKHAC] = xml2.T_NguonKhac
+		, [MUC_HUONG] = xml2.MUC_HUONG
+		, [T_BNTT] = xml2.T_BNTT
+		, [T_BNCCT] = xml2.T_BNCCT
+		, [T_BHTT] = xml2.T_BHTT
+		, [MA_KHOA] = xml2.Ma_Khoa
+		, [MA_BAC_SI] = xml2.Ma_Bac_Si
+		, [MA_DICH_VU] = xml2.MADICHVU
+		, [NGAY_YL] = xml2.Ngay_YL
+		, [MA_PTTT] = xml2.ma_pttt
+		, [NGUON_CTRA] = xml2.NGUON_CTRA
+		, [VET_THUONG_TP] = NULL
+		, [DU_PHONG] = NULL
+		, [NGAY_TH_YL] = xml2.Ngay_YL
+		, [CHUC_DANH_ID] = xml2.CHUC_DANH_ID
 	FROM (
-	SELECT *, t_bntt = CASE WHEN ThuocVG = 1  THEN CAST(0 as decimal(18,2)) ELSE THANH_TIEN_BV - (t_bhtt + t_bncct) END FROM (
-			SELECT		 MA_LK = @Ma_Lk	
-						, STT = row_number () over (order by (select 1))--xnct.XacNhanChiPhiChiTiet_Id
-						, Ma_Thuoc = case when li.PhanNhom = 'DV' then  ISNULL(case when tn.NgayTiepNhan > '20250731' then DV.MaQuiDinh else DV.MaQuiDinhCu end, dv.InputCode)
-										  when li.PhanNhom in ('DU','DI','VH','VT') AND LTRIM(RTRIM(d.MaHoatChat)) <> '' AND d.MaHoatChat IS NOT NULL 
-											then ISNULL(d.MaHoatChat, d.MaDuoc)
-										  WHEN li.PhanNhom IN ('DU') And ld.LoaiVatTu_Id = 'V' And ld.MaLoaiDuoc IN ('VTYT003') 
-											THEN ISNULL(d.MaHoatChat, d.Attribute_2)									
-										else d.MaDuoc
-									end
-						, Ma_Thuoc_Cs =case when li.PhanNhom = 'DV' then ISNULL(case when tn.NgayTiepNhan > '20250731' then DV.MaQuiDinh else DV.MaQuiDinhCu end, dv.InputCode)
-											when li.PhanNhom in ('DU','DI','VH','VT') AND LTRIM(RTRIM(d.MaHoatChat)) <> '' AND d.MaHoatChat IS NOT NULL 
-												then ISNULL(d.MaHoatChat, d.MaDuoc)
-											WHEN li.PhanNhom IN ('DU') And ld.LoaiVatTu_Id = 'V' And ld.MaLoaiDuoc IN ('VTYT003') 
-												THEN ISNULL(d.MaHoatChat, d.Attribute_2)
-											else d.MaDuoc
-										end
-						, MA_NHOM = CASE -- Ma_Nhom
-											--datpt29 thêm mã nhóm = 6 với thuốc tỷ lệ 16062020
-										when LI.PhanNhom = 'DU' AND (d.BHYT = 1 and xbn.TyLeDieuKien is not null and xnct.DonGiaHoTroChiTra>0 ) 
-															and ld.LoaiVatTu_Id <> ('V') then '4' --'6' QĐ 5937
-										--end datpt29
-										WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 or (xnct.DonGiaHoTroChiTra>0)) and ld.LoaiVatTu_Id <> ('V') 
-													and ld.MaLoaiDuoc NOT IN ('LD0143','Mau','ChePham') OR  map.TenField in ('16','Thuoc') 
-													or ld.MaLoaiDuoc in ('OXY', 'OXY1') THEN '4'
-										WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 or (xnct.DonGiaHoTroChiTra>0)) and ld.LoaiVatTu_Id = ('V')  
-													And ld.MaLoaiDuoc <> 'VTYT003' OR  map.TenField in ('10','VTYT') 
-													or ld.MaLoaiDuoc not in ('OXY', 'OXY1','LD0143','VTYT003','Mau','ChePham') THEN '10' 
-										WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 or (xnct.DonGiaHoTroChiTra>0)) and ld.LoaiVatTu_Id <> ('V') 
-													And ld.MaLoaiDuoc in ('LD0143','Mau') THEN '7'
-										WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 or (xnct.DonGiaHoTroChiTra>0)) and ld.LoaiVatTu_Id <> ('V') 
-													And ld.MaLoaiDuoc in ('LD0143','ChePham') THEN '17'
-										WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 or (xnct.DonGiaHoTroChiTra>0)) and ld.LoaiVatTu_Id = ('V') 
-													And ld.MaLoaiDuoc in ('VTYT003','Mau','ChePham') THEN '7'
-									ELSE
-										CASE
-										WHEN map.TenField = '01' THEN '13' 
-										WHEN map.TenField = '02' THEN '14' 
-										WHEN map.TenField = '03' THEN '1' 
-										WHEN map.TenField = '04' THEN '2' 
-										WHEN map.TenField = '05' THEN '3' 
-										WHEN map.TenField = '06' THEN '8' 
-										WHEN map.TenField = '07' THEN '10' 
-										WHEN map.TenField = '08' THEN '7' 
-										WHEN map.TenField = '11' THEN '12' 
-										WHEN map.TenField = '12' THEN '15' 
-										WHEN map.TenField = '07' THEN '9' 
-										when map.TenField  = '18' then '18'
-										WHEN ISNULL(map.TenField, '') = '' THEN '12'
-										END
-									END
-						
-						, Ten_Thuoc = ISNULL(ISNULL(case when tn.NgayTiepNhan > '20250731' then DV.TenDichVu_En else dv.TenQuiDinhCu end,DV.TenDichvU), ISNULL(d.Ten_VTYT_917, REPLACE(D.TenHang, CHAR(0x1F), '')))  
-						, DON_VI_TINH = isnull(dvt.TenDonViTinh,N'Lần')								
-						, HAM_LUONG = d.HamLuong												
-						, ma_pp_chebien = '' --PPCB.Dictionary_Name_En
-						, Dang_BaoChe =  '' --dangbc.Dictionary_Name_En
-						, DUONG_DUNG = dd.Dictionary_Code
-						, Cach_Dung = isnull(nttt.GhiChu, thuoc.GhiChu)
-						--, LIEU_DUNG =  isnull(dbo.Get_SoLuongThuocTrongNgay(thuoc.toathuoc_id),N'Test')
-						, LIEU_DUNG =  case when thuoc.toathuoc_id is not null then dbo.Get_SoLuongThuocTrongNgay(thuoc.toathuoc_id)
-											when nttt.ToaThuoc_Id is not null then dbo.Get_SoLuongThuocTrongNgay_NoiTru(nttt.toathuoc_id)
-											else N'1/lần*1 lần/ngày'
-											end 
-										
-						
-									--isnull(convert (nvarchar(500), CAST(SUM(xnct.SoLuong)  - isnull((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18,0)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id),0) as Decimal(18, 0))
-									--	) + isnull( '/' + nttt.GhiChu,'/'+thuoc.GhiChu),convert (nvarchar(500), CAST(SUM(xnct.SoLuong)  - isnull((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18,0)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id),0) as Decimal(18, 0))
-									--	))
-									
-						, SO_DANG_KY	=ISNULL(d.Attribute_3, '')--lo.GPDK								--	so_dang_ky
-						, TT_Thau = ISNULL(isnull(d.ThongTinThau,d.MaGoiThau), '')										-- TT_Thau
-						--, Pham_Vi =  case when ltt.Dictionary_Code = 'VIENGAN_B' then 2 else 1 end
-						, Pham_Vi =1-- phamvi.Dictionary_Code
-						, So_Luong = CAST(SUM(xnct.SoLuong)  - isnull((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id),0) as Decimal(18, 3))
-				
-						, DON_GIA = xnct.DonGiaDoanhThu --CASE WHEN ISNULL(tyle.TyLe,0) = 0 THEN CAST(isnull(xnct.DonGiaHoTro,0) as decimal(18,3))
-										--ELSE CAST(isnull(xnct.DonGiaHoTro,0)/tyle.TyLe*100 as decimal(18,3)) END
-						
-						, TYLE_TT = CAST(isnull((xbn.TyLeDieuKien*100),100)  as decimal(18,0))
+		SELECT *, t_bntt = CASE WHEN ThuocVG = 1 THEN CAST(0 AS DECIMAL(18, 2)) ELSE THANH_TIEN_BV - (t_bhtt + t_bncct) END
+		FROM (
+			SELECT
+				MA_LK = @Ma_Lk
+				, STT = ROW_NUMBER() OVER (ORDER BY (SELECT 1))
 
-						, THANH_TIEN = CAST(
-											CASE WHEN xbn.TyLeDieuKien is not null THEN
-												CASE WHEN (xnct.DonGiaDoanhThu*xbn.TyLeDieuKien *CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaDoanhThu*xbn.TyLeDieuKien), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaDoanhThu*xbn.TyLeDieuKien*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaDoanhThu*xbn.TyLeDieuKien), 0) END			-- t_tongchi		
-											ELSE  
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-										
-												END
-										as decimal(18,2))
+				, Ma_Thuoc = CASE
+					WHEN li.PhanNhom = 'DV' THEN ISNULL(CASE WHEN tn.NgayTiepNhan > '20250731' THEN DV.MaQuiDinh ELSE DV.MaQuiDinhCu END, dv.InputCode)
+					WHEN li.PhanNhom IN ('DU','DI','VH','VT') AND LTRIM(RTRIM(d.MaHoatChat)) <> '' AND d.MaHoatChat IS NOT NULL THEN ISNULL(d.MaHoatChat, d.MaDuoc)
+					WHEN li.PhanNhom IN ('DU') AND ld.LoaiVatTu_Id = 'V' AND ld.MaLoaiDuoc IN ('VTYT003') THEN ISNULL(d.MaHoatChat, d.Attribute_2)
+					ELSE d.MaDuoc
+				END
 
-						, THANH_TIEN_BV = CAST( CASE WHEN (xnct.DonGiaDoanhThu*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaDoanhThu), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaDoanhThu*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaDoanhThu), 0) END			-- t_tongchi		
-										as decimal(18,2))
+				, Ma_Thuoc_Cs = CASE
+					WHEN li.PhanNhom = 'DV' THEN ISNULL(CASE WHEN tn.NgayTiepNhan > '20250731' THEN DV.MaQuiDinh ELSE DV.MaQuiDinhCu END, dv.InputCode)
+					WHEN li.PhanNhom IN ('DU','DI','VH','VT') AND LTRIM(RTRIM(d.MaHoatChat)) <> '' AND d.MaHoatChat IS NOT NULL THEN ISNULL(d.MaHoatChat, d.MaDuoc)
+					WHEN li.PhanNhom IN ('DU') AND ld.LoaiVatTu_Id = 'V' AND ld.MaLoaiDuoc IN ('VTYT003') THEN ISNULL(d.MaHoatChat, d.Attribute_2)
+					ELSE d.MaDuoc
+				END
 
-						, muc_huong = xnct.muc_huong*100 --CASE WHEN ISNULL(@Tong_Chi,0) < @MaxCPKB THEN 100 ELSE dt.TyLe_2*100 END
-						
-						, t_bhtt =  CAST(
-										CASE WHEN xbn.DuocDieuKien_Id is null THEN
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											ELSE 
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											END
-										*CASE WHEN ISNULL(@Tong_Chi,0) < @LuongToiThieu THEN 100 ELSE Muc_Huong*100 END
-										/100
-										as decimal(18,2))
-						, t_bncct = 
-						--, t_bncct = 
-						CAST(CASE WHEN xbn.DuocDieuKien_Id is null THEN
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											ELSE 
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											END 
-										as decimal(18,2))
-									-
-									CAST(
-										CASE WHEN xbn.DuocDieuKien_Id is null THEN
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											ELSE 
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											END
-										*CASE WHEN ISNULL(@Tong_Chi,0) < @LuongToiThieu THEN 100 ELSE Muc_Huong*100 END
-										/100
-										as decimal(18,2))
-					, t_nguonkhac = 
-										case
-											when (mg.LyDo_ID in (9692)) then 0  -- 0 -- t_nguonkhac --thanhnn them -- Lý do giảm là ngoại giao thì không gửi XML
-											else ISNULL(xbn.GiaTriMienGiam,0)
-										end
-						, t_ngoaids = case when isnull(bc.ngoaidinhxuat,0)=1 or isnull(icd_nt.NgoaiDinhXuat,0)=1 then
-										CAST(
-										CASE WHEN xbn.DuocDieuKien_Id is null THEN
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											ELSE 
-												CASE WHEN (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0)		< 0 Then 0
-												ELSE (xnct.DonGiaHoTro*CAST(SUM(xnct.SoLuong) as Decimal(18, 3))) - ISNULL(((SELECT CAST(SUM(ISNULL(SoLuong, 0)) as Decimal(18, 3)) From NoiTru_TraThuocChiTiet where ToaThuoc_Id = nttt.toathuoc_id) * xnct.DonGiaHoTro), 0) END			-- t_tongchi		
-											END
-										*CASE WHEN ISNULL(@Tong_Chi,0) < @LuongToiThieu THEN 100 ELSE Muc_Huong*100 END
-										/100
-										as decimal(18,2))
-										else 0 end	
+				, MA_NHOM = CASE
+					WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 AND xbn.TyLeDieuKien IS NOT NULL AND xnct.DonGiaHoTroChiTra > 0)
+						AND ld.LoaiVatTu_Id <> ('V') THEN '4'
+					WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 OR (xnct.DonGiaHoTroChiTra > 0)) AND ld.LoaiVatTu_Id <> ('V')
+						AND ld.MaLoaiDuoc NOT IN ('LD0143','Mau','ChePham') OR map.TenField IN ('16','Thuoc')
+						OR ld.MaLoaiDuoc IN ('OXY', 'OXY1') THEN '4'
+					WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 OR (xnct.DonGiaHoTroChiTra > 0)) AND ld.LoaiVatTu_Id = ('V')
+						AND ld.MaLoaiDuoc <> 'VTYT003' OR map.TenField IN ('10','VTYT')
+						OR ld.MaLoaiDuoc NOT IN ('OXY', 'OXY1','LD0143','VTYT003','Mau','ChePham') THEN '10'
+					WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 OR (xnct.DonGiaHoTroChiTra > 0)) AND ld.LoaiVatTu_Id <> ('V')
+						AND ld.MaLoaiDuoc IN ('LD0143','Mau') THEN '7'
+					WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 OR (xnct.DonGiaHoTroChiTra > 0)) AND ld.LoaiVatTu_Id <> ('V')
+						AND ld.MaLoaiDuoc IN ('LD0143','ChePham') THEN '17'
+					WHEN LI.PhanNhom = 'DU' AND (d.BHYT = 1 OR (xnct.DonGiaHoTroChiTra > 0)) AND ld.LoaiVatTu_Id = ('V')
+						AND ld.MaLoaiDuoc IN ('VTYT003','Mau','ChePham') THEN '7'
+					ELSE CASE
+						WHEN map.TenField = '01' THEN '13'
+						WHEN map.TenField = '02' THEN '14'
+						WHEN map.TenField = '03' THEN '1'
+						WHEN map.TenField = '04' THEN '2'
+						WHEN map.TenField = '05' THEN '3'
+						WHEN map.TenField = '06' THEN '8'
+						WHEN map.TenField = '07' THEN '10'
+						WHEN map.TenField = '08' THEN '7'
+						WHEN map.TenField = '11' THEN '12'
+						WHEN map.TenField = '12' THEN '15'
+						WHEN map.TenField = '18' THEN '18'
+						WHEN ISNULL(map.TenField, '') = '' THEN '12'
+					END
+				END
 
-						--,	MA_KHOA='K01' -- mặc định bằng kê 01 khoa khám bệnh là 01
-						,	MA_KHOA =  COALESCE(pbkb1.MaTheoQuiDinh,pbcdinh.MaTheoQuiDinh,pbthuoc.MaTheoQuiDinh,'K01')
+				, Ten_Thuoc = ISNULL(ISNULL(CASE WHEN tn.NgayTiepNhan > '20250731' THEN DV.TenDichVu_En ELSE dv.TenQuiDinhCu END, DV.TenDichvU),
+					ISNULL(d.Ten_VTYT_917, REPLACE(D.TenHang, CHAR(0x1F), '')))
+				, DON_VI_TINH = ISNULL(dvt.TenDonViTinh, N'Lần')
+				, HAM_LUONG = d.HamLuong
+				, ma_pp_chebien = ''
+				, Dang_BaoChe = ''
+				, DUONG_DUNG = dd.Dictionary_Code
+				, Cach_Dung = ISNULL(nttt.GhiChu, thuoc.GhiChu)
+				, LIEU_DUNG = CASE
+					WHEN thuoc.toathuoc_id IS NOT NULL THEN dbo.Get_SoLuongThuocTrongNgay(thuoc.toathuoc_id)
+					WHEN nttt.ToaThuoc_Id IS NOT NULL THEN dbo.Get_SoLuongThuocTrongNgay_NoiTru(nttt.toathuoc_id)
+					ELSE N'1/lần*1 lần/ngày'
+				END
 
-						,	MA_BAC_SI = case when nttt.ToaThuoc_Id is not null then bstt.SoChungChiHanhNghe
-											when PTVT.BenhAnPhauThuat_VTYT_Id is not null then bspt.SoChungChiHanhNghe
-											when kbvt.KhamBenh_VTYT_Id is not null then bskbvt.SoChungChiHanhNghe
-											when thuoc.ToaThuoc_Id is not null then bskbtt.SoChungChiHanhNghe
-											when HCVT.Id is not null then BSHCVT.SoChungChiHanhNghe
-											when HCVTNT.Id is not null then BSHCVTNT.SoChungChiHanhNghe
-											when map.TenField in ('08','16') and li.PhanNhom = 'DV' then bscls.SoChungChiHanhNghe
+				, SO_DANG_KY = ISNULL(d.Attribute_3, '')
+				, TT_Thau = ISNULL(ISNULL(d.ThongTinThau, d.MaGoiThau), '')
+				, Pham_Vi = 1
 
-										else null end
-						
-						--COALESCE(BSHCVT.SoChungChiHanhNghe,bstt.SoChungChiHanhNghe,bspt.SoChungChiHanhNghe,bscls.SoChungChiHanhNghe,bskb.SoChungChiHanhNghe)								--	ma_bac_si
-					
-						,  MA_BENH  =isnull(@ICD_NT,@ICD_PKGopBenh)
-						,  NGAY_YL = replace(convert(varchar , COALESCE(kb1.ThoiGianKham,ntkb.ThoiGianKham,bapt.ThoiGianBatDau,yc.ThoiGianYeuCau,kbm.ketthucKham, ychc.thoigianyeucau), 112)+convert(varchar(5), COALESCE(kb1.ThoiGianKham,ntkb.ThoiGianKham,bapt.ThoiGianBatDau,yc.ThoiGianYeuCau,kbm.KetThucKham,ychc.thoigianyeucau), 108), ':','') 
-						,  MA_PTTT = case when 
-											 left(tn.SoBHYT,2) in ('QN','CA','CY')
-											 then 2 else 1 end	
-						, ThuocVG = 0 --- case when ltt.Dictionary_Code = 'VIENGAN_B' THEN 1 ELSE 0 END
-						, MADICHVU = dbo.Get_Ma_DV_XML2(isnull(bapt.clsyeucau_id,YCHC.clsyeucau_id))
-						, NGUON_CTRA = 1--NguonCT.Dictionary_Code
-						, CHUC_DANH_ID = case when nttt.ToaThuoc_Id is not null then bstt.ChucDanh_Id
-								when PTVT.BenhAnPhauThuat_VTYT_Id is not null then bspt.ChucDanh_Id
-								when kbvt.KhamBenh_VTYT_Id is not null then bskbvt.ChucDanh_Id
-								when thuoc.ToaThuoc_Id is not null then bskbtt.ChucDanh_Id
-								when HCVT.Id is not null then BSHCVT.ChucDanh_Id
-								when HCVTNT.Id is not null then BSHCVTNT.ChucDanh_Id
-								when map.TenField in ('08','16') and li.PhanNhom = 'DV' then bscls.ChucDanh_Id
-							else null end
-				From	(
-									SELECT 
-										Loai_IDRef = 'A',
-										IDRef = ycct.YeuCauChiTiet_Id,
-										NoiDung_Id = ycct.DichVu_Id,
-										NoiDung = dv.TenDichVu, --ko quan trong
-										SoLuong = ycct.SoLuong,
-										DonGiaDoanhThu = ycct.DonGiaDoanhThu,
-										DonGiaHoTro = CASE WHEN CHARINDEX( '.01', CAST(ycct.DonGiaHoTro as varchar(20))) > 0 
-															THEN CAST(REPLACE(CAST(ycct.DonGiaHoTro as varchar(20)), '.01', '.00') as Decimal(18, 3))
-													ELSE CAST(ycct.DonGiaHoTro as Decimal(18, 3)) END,
-										DonGiaHoTroChiTra = ycct.DonGiaHoTroChiTra,
-										DonGiaThanhToan = ycct.DonGiaThanhToan,
-										PhongBan_Id = isnull(		
-											CASE
-												WHEN dv.NhomDichVu_Id = 27 THEN yc.NoiThucHien_Id
-												ELSE yc.NoiYeuCau_id
-											END,ba.KhoaRa_Id),
-										NoiTru_ToaThuoc_ID = NULL,
-										NgoaiTru_ToaThuoc_ID = null,
-										TenDonViTinh = dv.DonViTinh,
-										BenhAn_Id = @benhan_id,
-										TiepNhan_Id = @tiepnhan_id,
-										Muc_Huong = ycct.MucHuong
+				-- [TỐI ƯU #5] Tính SoLuong_SauTra 1 lần, dùng lại nhiều chỗ 
+				-- (thay vì lặp subquery NoiTru_TraThuocChiTiet ~12 lần)
+				, So_Luong = CAST(
+					SUM(xnct.SoLuong) - ISNULL(traThuoc.SoLuongTra, 0)
+				AS DECIMAL(18, 3))
 
-									FROM CLSYeuCauChiTiet ycct (Nolock)
-									LEFT JOIN CLSYeuCau yc (Nolock) ON ycct.CLSYeuCau_Id = yc.CLSYeuCau_Id
-									LEFT JOIN DM_DichVu dv (Nolock) ON dv.DichVu_Id = ycct.DichVu_Id
-									LEFT JOIN BenhAn ba (Nolock) ON ba.BenhAn_Id = yc.BenhAn_Id or yc.TiepNhan_Id = ba.TiepNhan_Id
-									Where @benhan_id = yc.BenhAn_Id or @tiepnhan_id = yc.TiepNhan_Id
+				, DON_GIA = xnct.DonGiaDoanhThu
+				, TYLE_TT = CAST(ISNULL((xbn.TyLeDieuKien * 100), 100) AS DECIMAL(18, 0))
 
-									UNION ALL
+				-- [TỐI ƯU #5] Dùng CROSS APPLY traThuoc thay vì lặp subquery
+				, THANH_TIEN = CAST(
+					CASE WHEN xbn.TyLeDieuKien IS NOT NULL THEN
+						CASE WHEN (xnct.DonGiaDoanhThu * xbn.TyLeDieuKien * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+						ELSE (xnct.DonGiaDoanhThu * xbn.TyLeDieuKien * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+					ELSE
+						CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+						ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+					END
+				AS DECIMAL(18, 2))
 
-									SELECT
-										Loai_IDRef = 'I',
-										IDRef = isnull(clsvt.ID,xbn.ChungTuXuatBN_Id),
-										NoiDung_Id = isnull(clsvt.Duoc_Id,xbn.Duoc_Id),
-										NoiDung = td.TenDuoc, --ko quan trong
-										SoLuong = 
-											CASE 
-												WHEN xbn.ToaThuocTra_Id is not null then 0 - xbn.SoLuong
-												else xbn.SoLuong
-											END,
-										DonGiaDoanhThu =xbn.DonGiaDoanhThu,
-										DonGiaHoTro = CASE WHEN CHARINDEX( '.01', CAST(xbn.DonGiaHoTro as varchar(20))) > 0 
-															THEN CAST(REPLACE(CAST(xbn.DonGiaHoTro as varchar(20)), '.01', '.00') as Decimal(18, 3))
-													ELSE CAST(xbn.DonGiaHoTro as Decimal(18, 3)) END,
-										DonGiaHoTroChiTra =xbn.DonGiaHoTroChiTra,
-										DonGiaThanhToan =xbn.DonGiaThanhToan,
-										PhongBan_Id = isnull( isnull( pb.PhongBan_Id,isnull(pb3.PhongBan_Id,pb1.PhongBan_Id)),pb4.phongban_id),
-										NoiTru_ToaThuoc_ID = CASE WHEN @benhan_id is not null THEN xbn.ToaThuoc_Id ELSE NULL END,
-										NgoaiTru_ToaThuoc_ID = CASE WHEN @benhan_id is null THEN xbn.ToaThuoc_Id ELSE NULL END,
-										TenDonViTinh = d.DonViTinh,
-										BenhAn_Id = @benhan_id,
-										TiepNhan_Id = @tiepnhan_id,
-										Muc_Huong = xbn.MucHuong
-									FROM ChungTuXuatBenhNhan xbn (Nolock)
-									left join DM_Duoc d (Nolock) on d.Duoc_Id = xbn.Duoc_Id
-									left join DM_TenDuoc td (Nolock) on td.TenDuoc_Id = d.TenDuoc_Id
-									/*Khám bệnh ngoại trú*/
-									left join ToaThuoc tt (nolock) on tt.ToaThuoc_Id  = xbn.ToaThuocNgoaiTru_id --xbn.IDRef					     -- IDREF bang chung tu xuat benh nhan la Toathuoc Id bang toa thuoc
-									left join KhamBenh kb (nolock) on kb.KhamBenh_Id = tt.KhamBenh_Id
-									left join DM_PhongBan pb (nolock) on pb.PhongBan_Id = kb.PhongBan_Id
-									/*Bệnh án phẫu thuật ngoại trú*/
-									left join  BenhAnPhauThuat_VTYT vtyt (nolock) on vtyt.BenhAnPhauThuat_VTYT_Id = xbn.BenhAnPhauThuat_VTYT_Id and vtyt.duoc_id=xbn.duoc_id
-									left join DM_KhoDuoc k1 (nolock)  on vtyt.khosudung_id=k1.khoduoc_id
-									left join  DM_PhongBan pb3 (nolock) on pb3.PhongBan_Id  = k1.phongban_id
-									/*Khám Bệnh VTYT*/
-									left join KhamBenh_VTYT vt on xbn.KhamBenh_VTYT_Id=vt.KhamBenh_VTYT_Id and vt.duoc_id=xbn.duoc_id
-									left join KhamBenh kb1 on vt.KhamBenh_Id=kb1.KhamBenh_Id
-									left join DM_PhongBan pb1 (nolock) on pb1.PhongBan_Id = kb1.PhongBan_Id
-									/*ClsHC-VT*/
-									left join CLSGhiNhanHoaChat_VTYT (nolock) clsvt on xbn.CLSHoaChat_VTYT_Id=clsvt.id and xbn.Duoc_Id=clsvt.duoc_id
-									left join dm_khoduoc (nolock) k on  clsvt.KhoSuDung_Id=k.KhoDuoc_Id
-									left join DM_PhongBan pb4 (nolock) on pb4.PhongBan_Id = k.PhongBan_Id
-									Where( @benhan_id = xbn.BenhAn_Id or @tiepnhan_id = xbn.TiepNhan_Id) and xbn.mienphi = 0
-						
-						) xnct
-					left JOIN	dbo.VienPhiNoiTru_Loai_IDRef LI ON LI.Loai_IDRef = xnct.Loai_IDRef
-					LEFT JOIN	(
-								SELECT	dndv.DichVu_Id, mbc.MoTa, mbc.ID,				
-									CASE 
-												 WHEN mbc.TenField in ('CK','CongKham','KB','TienKham') THEN '01'
-												 WHEN mbc.TenField in( 'XN','XetNghiem','XNHH') THEN '03'
-												 WHEN mbc.TenField in ('Thuoc','OXY') THEN '16'
-												 WHEN mbc.TenField in( 'TTPT','TT','TT_PT') THEN '06'
-												 WHEN mbc.TenField in( 'ThuThuat') THEN '18'
-												 WHEN mbc.TenField in('DVKT_Cao', 'KTC') THEN '07'
-												 WHEN mbc.TenField = 'VC' THEN '11'
-												 WHEN mbc.TenField in  ('MCPM','Mau','DT','LayMau','DTMD') THEN '08'	
-												 WHEN mbc.TenField in ('CDHA','CDHA_TDCN') THEN '04'
-												 WHEN mbc.TenField = 'TDCN' THEN '05'
-												 WHEN mbc.TenField = 'K' THEN 'Khac'
-												 WHEN mbc.TenField in  ('NGCK','Giuong','GB') THEN '12'
-												 WHEN mbc.TenField = 'VTYT' THEN '10'
-											ELSE mbc.TenField
-									END  as TenField
-									,mbc.Ma 
-									FROM	dbo.DM_MauBaoCao mbc
-									JOIN	dbo.DM_DinhNghiaDichVu dndv ON dndv.NhomBaoCao_Id = mbc.ID
-									WHERE	MauBC = 'BCVP_097'	) map ON map.DichVu_Id = xnct.NoiDung_Id   
-					left JOIN	dbo.TiepNhan tn  (nolock) ON tn.TiepNhan_Id = xnct.TiepNhan_Id
-					left JOIN	dbo.DM_BenhNhan (nolock)  bn ON bn.BenhNhan_Id = tn.BenhNhan_Id
-					left JOIN	DM_DoiTuong dt (nolock)  on dt.DoiTuong_Id = tn.DoiTuong_Id
-					left join dbo.Lst_Dictionary  ndt  (Nolock) on ndt.Dictionary_Id=dt.NhomDoiTuong_Id	
-					LEFT JOIN	dbo.Lst_Dictionary  (nolock) lst ON lst.Dictionary_Id = tn.TuyenKhamBenh_Id
-					LEFT JOIN	dbo.DM_BenhVien (nolock)  ngt ON ngt.BenhVien_Id = tn.NoiGioiThieu_Id
-					LEFT JOIN	DM_Duoc (nolock)  d ON d.Duoc_Id = xnct.NoiDung_Id AND li.PhanNhom = 'DU' And ISNULL(D.BHYT,0) = 1
-					LEFT JOIN	DM_Duoc_HoatChat hc (nolock) on hc.HoatChat_Id = d.HoatChat_Id
-					LEFT JOIN	dbo.DM_LoaiDuoc (nolock)  ld ON ld.LoaiDuoc_Id = d.LoaiDuoc_Id
-					LEFT JOIN	dbo.DM_DonViTinh  (nolock) dvt ON dvt.DonViTinh_Id = d.DonViTinh_Id
-					left join dbo.DM_DichVu  (nolock) dv on dv.DichVu_Id = xnct.NoiDung_Id AND li.PhanNhom = 'DV'
-					left join dbo.Lst_Dictionary (nolock)  dd ON dd.Dictionary_Id = d.DuongDung_Id
-					left join DM_BenhVien kcbbd (nolock)on tn.BenhVien_KCB_id = kcbbd.BenhVien_Id
-					left join ChungTuXuatBenhNhan  (nolock) xbn on (xnct.IDRef = xbn.ChungTuXuatBN_Id and xnct.Loai_IDRef = 'I')
-					left join DM_LoaiDuoc  (nolock) f on f.LoaiDuoc_Id = D.LoaiDuoc_Id
-					--Lấy ra ngày y lệnh
-					left join ToaThuoc thuoc (nolock) on thuoc.ToaThuoc_Id = xbn.ToaThuocNgoaiTru_id
-					left join NoiTru_ToaThuoc (nolock)  nttt on xbn.ToaThuoc_Id = nttt.ToaThuoc_Id
-					left join NoiTru_KhamBenh (nolock)  ntkb on nttt.khambenh_id = ntkb.khambenh_id
-					left join BenhAnPhauThuat_VTYT (nolock)  PTVT on xbn.BenhAnPhauThuat_VTYT_ID = PTVT.BenhAnPhauThuat_VTYT_Id
-					left join BenhAnPhauThuat BAPT (nolock)  on PTVT.BenhAnPhauThuat_Id = BAPT.BenhAnPhauThuat_Id
-					left join KhamBenh_VTYT kbvt (nolock)  on xbn.KhamBenh_VTYT_Id = kbvt.KhamBenh_VTYT_Id and li.PhanNhom = 'DU' and kbvt.Duoc_Id = d.Duoc_Id
-					left join KhamBenh kb1 (nolock)  on kbvt.KhamBenh_Id = kb1.KhamBenh_Id				
-					left join  CLSYeuCauChiTiet yctt on yctt.YeuCauChiTiet_Id=xnct.IDRef and xnct.Loai_IDRef = 'A'
-					left JOIN CLSYeuCau yc on yc.CLSYeuCau_Id = yctt.CLSYeuCau_Id	
-					left join vw_NhanVien   bskbvt (nolock) on bskbvt.NhanVien_Id=kb1.BacSiKham_Id
-					left join KhamBenh kbtt on kbtt.KhamBenh_Id = thuoc.KhamBenh_Id
-					left join vw_NhanVien   bskbtt (nolock) on bskbtt.NhanVien_Id=kbtt.BacSiKham_Id
-					--left join khambenh kb on kb.YeuCauChiTiet_Id = yctt.YeuCauChiTiet_Id
-							
-					--left join dm_phongban pb (nolock)  on pb.PhongBan_Id = kb.PhongBan_Id
-					---datpt29 lấy ra mã khoa chỉ định thuốc
-					left join NoiTru_LuuTru ltru (nolock)  on ltru.LuuTru_Id = ntkb.LuuTru_Id
-					left join DM_PhongBan pbthuoc (nolock)  on pbthuoc.PhongBan_Id = ltru.PhongBan_Id
-					left join DM_PhongBan pbcdinh (nolock)  on pbcdinh.PhongBan_Id = yc.NoiYeuCau_Id
-					left join DM_PhongBan pbkb1  (nolock) on pbkb1.PhongBan_Id = kb1.PhongBan_Id
-					--end datpt29
-					--Lấy ra Ma_Bac_Si
-					left join vw_NhanVien bstt (nolock) on bstt.NhanVien_Id=ntkb.BasSiKham_Id
-					--LEFT JOIN vw_NhanVien bskb (nolock)  on bskb.NhanVien_Id=kb.BacSiKham_Id
-					left join vw_NhanVien   bscls (nolock) on bscls.NhanVien_Id=yc.BacSiChiDinh_Id
-					left join Sys_Users  (nolock) us on BAPT.NguoiTao_Id = us.User_Id
-					left join NhanVien_User_Mapping (nolock)  usmap on us.User_Id = usmap.User_Id
-					left join vw_NhanVien bspt (nolock)  on usmap.NhanVien_Id = bspt.NhanVien_Id
-					--lay ma bac si CLS HCVT ngoai tru
-					left join CLSGhiNhanHoaChat_VTYT HCVT (nolock) on xnct.IDRef = HCVT.Id and xnct.Loai_IDRef ='E'
-					left join CLSYeuCau YCHC (nolock) on HCVT.CLSYeuCau_Id = YCHC.CLSYeuCau_Id
-					left join CLSKetqua YCHCkq (nolock) on HCVT.CLSYeuCau_Id = YCHCkq.CLSYeuCau_Id
-					left join vw_NhanVien BSHCVT (nolock) on YCHCkq.BacSiKetLuan_id = BSHCVT.NhanVien_Id
-					-- lay ma bac si CLS HCVT noi tru
-					left join CLSGhiNhanHoaChat_VTYT HCVTNT (nolock) on xbn.CLSHoaChat_VTYT_Id = HCVTNT.Id
-					left join CLSYeuCau YCHCNT (nolock) on HCVTNT.CLSYeuCau_Id = YCHCNT.CLSYeuCau_Id 
-					left join CLSKetqua YCHCNTkq (nolock) on HCVTNT.CLSYeuCau_Id = YCHCNTkq.CLSYeuCau_Id 
-					left join vw_NhanVien BSHCVTNT (nolock) on YCHCNTkq.bacsiketluan_id = BSHCVTNT.NhanVien_Id
-					
+				, THANH_TIEN_BV = CAST(
+					CASE WHEN (xnct.DonGiaDoanhThu * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+					ELSE (xnct.DonGiaDoanhThu * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+				AS DECIMAL(18, 2))
 
-					left join MienGiam mg on mg.TiepNhan_Id = tn.TiepNhan_Id
-					left join KhamBenh kbm on kbm.TiepNhan_Id = xnct.TiepNhan_Id and kbm.KhamBenh_Id = (select top 1 KhamBenh_Id from khambenh where TiepNhan_Id = kbm.TiepNhan_Id)
-					left join dm_phongban pb (nolock)  on pb.PhongBan_Id = kbm.PhongBan_Id
-					left join DM_ICD i (nolock)  on i.ICD_Id = kbm.ChanDoanICD_Id
-					left join DM_ICD icd (nolock)  on icd.ICD_Id = kbm.ChanDoanPhuICD_Id
-					left join DM_ICD bc on BC.ICD_ID=kbm.ChanDoanICD_Id
-					LEFT JOIN BenhAn ba (nolock) on xnct.BenhAn_Id = ba.BenhAn_Id
-					left join DM_ICD icd_nt on icd_nt.ICD_Id=ba.ICD_BenhChinh
-				WHERE	xnct.DonGiaHoTroChiTra > 0
-					AND (xnct.DonGiaHoTro * xnct.SoLuong) <> 0
-					AND ((LI.PhanNhom = 'DU' AND  ld.LoaiVatTu_Id IN ('T', 'H')) OR  map.TenField = '08' OR  map.TenField = '16' or map.TenField = 'OXY'
-						or ld.MaLoaiDuoc in ('OXY', 'OXY1','LD0143','VTYT003')
-						)
-					AND ISNULL(xbn.toathanhpho, 0) = 0
-			
-			GROUP BY nttt.ToaThuoc_Id, li.PhanNhom, case when tn.NgayTiepNhan > '20250731' then DV.MaQuiDinh else DV.MaQuiDinhCu end, dv.InputCode, d.MaHoatChat, d.MaDuoc, d.BHYT
-				, xnct.DonGiaHoTroChiTra, ld.LoaiVatTu_Id, map.TenField, ISNULL(case when tn.NgayTiepNhan > '20250731' then DV.TenDichVu_En else dv.TenQuiDinhCu end,DV.TenDichvU), d.Ten_VTYT_917, d.TenDuocDayDu
-				, isnull(dvt.TenDonViTinh,N'Lần'), d.HamLuong, d.MaDuongDung, d.Attribute_3, d.Attribute_2, xnct.DonGiaHoTro, pb.MaTheoQuiDinh
-				, ntkb.NgayKham, yc.ngayyeucau, ld.MaLoaiDuoc
-				, D.TenHang, D.ThoiGianHopDong,dt.TyLe_2,d.ThongTinThau,d.MaGoiThau, pbcdinh.MaTheoQuiDinh, pbthuoc.MaTheoQuiDinh, pbkb1.MaTheoQuiDinh
-				, dd.Dictionary_Code,
-				replace(convert(varchar , COALESCE(kb1.ThoiGianKham,ntkb.ThoiGianKham,bapt.ThoiGianBatDau,yc.ThoiGianYeuCau,kbm.ketthucKham, ychc.thoigianyeucau), 112)+convert(varchar(5), COALESCE(kb1.ThoiGianKham,ntkb.ThoiGianKham,bapt.ThoiGianBatDau,yc.ThoiGianYeuCau,kbm.KetThucKham,ychc.thoigianyeucau), 108), ':','') 
-				, tn.TuyenKhamBenh_Id
-					, I.ngoaidinhxuat,icd.ngoaidinhxuat	, tn.SoBHYT
-			, xnct.muc_huong,isnull( '/' + nttt.GhiChu,'/'+thuoc.GhiChu)
-				, bapt.CLSYeuCau_Id, YCHC.CLSYeuCau_Id
-				,isnull(nttt.GhiChu, thuoc.GhiChu)
-				, thuoc.toathuoc_id
-				, xbn.DuocDieuKien_Id
-				, xbn.GiaTriMienGiam, mg.LyDo_ID
-				, bc.NgoaiDinhXuat, icd_nt.NgoaiDinhXuat
-				, xnct.DonGiaDoanhThu
-				, xbn.TyLeDieuKien
-				, case when nttt.ToaThuoc_Id is not null then bstt.SoChungChiHanhNghe
-											when PTVT.BenhAnPhauThuat_VTYT_Id is not null then bspt.SoChungChiHanhNghe
-											when kbvt.KhamBenh_VTYT_Id is not null then bskbvt.SoChungChiHanhNghe
-											when thuoc.ToaThuoc_Id is not null then bskbtt.SoChungChiHanhNghe
-											when HCVT.Id is not null then BSHCVT.SoChungChiHanhNghe
-											when HCVTNT.Id is not null then BSHCVTNT.SoChungChiHanhNghe
-											when map.TenField in ('08','16') and li.PhanNhom = 'DV' then bscls.SoChungChiHanhNghe
+				, muc_huong = xnct.muc_huong * 100
 
-										else null end
-				, case 
-					when nttt.ToaThuoc_Id is not null then bstt.ChucDanh_Id
-					when PTVT.BenhAnPhauThuat_VTYT_Id is not null then bspt.ChucDanh_Id
-					when kbvt.KhamBenh_VTYT_Id is not null then bskbvt.ChucDanh_Id
-					when thuoc.ToaThuoc_Id is not null then bskbtt.ChucDanh_Id
-					when HCVT.Id is not null then BSHCVT.ChucDanh_Id
-					when HCVTNT.Id is not null then BSHCVTNT.ChucDanh_Id
-					when map.TenField in ('08','16') and li.PhanNhom = 'DV' then bscls.ChucDanh_Id
-					else null 
-				end
-				) xml2 WHERE SO_LUONG > 0
-		) xml2
+				-- ThanhTien_BH dùng cho t_bhtt (biểu thức lặp ~6 lần gốc → giờ tính 1 lần)
+				, t_bhtt = CAST(
+					CASE WHEN xbn.DuocDieuKien_Id IS NULL THEN
+						CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+						ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+					ELSE
+						CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+						ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+					END
+					* CASE WHEN ISNULL(@Tong_Chi, 0) < @LuongToiThieu THEN 100 ELSE Muc_Huong * 100 END
+					/ 100
+				AS DECIMAL(18, 2))
 
+				, t_bncct =
+					CAST(
+						CASE WHEN xbn.DuocDieuKien_Id IS NULL THEN
+							CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+							ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+						ELSE
+							CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+							ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+						END
+					AS DECIMAL(18, 2))
+					-
+					CAST(
+						CASE WHEN xbn.DuocDieuKien_Id IS NULL THEN
+							CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+							ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+						ELSE
+							CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+							ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+						END
+						* CASE WHEN ISNULL(@Tong_Chi, 0) < @LuongToiThieu THEN 100 ELSE Muc_Huong * 100 END
+						/ 100
+					AS DECIMAL(18, 2))
 
-end
+				, t_nguonkhac = CASE
+					WHEN (mg.LyDo_ID IN (9692)) THEN 0
+					ELSE ISNULL(xbn.GiaTriMienGiam, 0)
+				END
+
+				, t_ngoaids = CASE WHEN ISNULL(bc.ngoaidinhxuat, 0) = 1 OR ISNULL(icd_nt.NgoaiDinhXuat, 0) = 1 THEN
+					CAST(
+						CASE WHEN xbn.DuocDieuKien_Id IS NULL THEN
+							CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+							ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+						ELSE
+							CASE WHEN (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) < 0 THEN 0
+							ELSE (xnct.DonGiaHoTro * (CAST(SUM(xnct.SoLuong) AS DECIMAL(18, 3)) - ISNULL(traThuoc.SoLuongTra, 0))) END
+						END
+						* CASE WHEN ISNULL(@Tong_Chi, 0) < @LuongToiThieu THEN 100 ELSE Muc_Huong * 100 END
+						/ 100
+					AS DECIMAL(18, 2))
+				ELSE 0 END
+
+				, MA_KHOA = COALESCE(pbkb1.MaTheoQuiDinh, pbcdinh.MaTheoQuiDinh, pbthuoc.MaTheoQuiDinh, 'K01')
+
+				, MA_BAC_SI = CASE
+					WHEN nttt.ToaThuoc_Id IS NOT NULL THEN bstt.SoChungChiHanhNghe
+					WHEN PTVT.BenhAnPhauThuat_VTYT_Id IS NOT NULL THEN bspt.SoChungChiHanhNghe
+					WHEN kbvt.KhamBenh_VTYT_Id IS NOT NULL THEN bskbvt.SoChungChiHanhNghe
+					WHEN thuoc.ToaThuoc_Id IS NOT NULL THEN bskbtt.SoChungChiHanhNghe
+					WHEN HCVT.Id IS NOT NULL THEN BSHCVT.SoChungChiHanhNghe
+					WHEN HCVTNT.Id IS NOT NULL THEN BSHCVTNT.SoChungChiHanhNghe
+					WHEN map.TenField IN ('08','16') AND li.PhanNhom = 'DV' THEN bscls.SoChungChiHanhNghe
+					ELSE NULL
+				END
+
+				, MA_BENH = ISNULL(@ICD_NT, @ICD_PKGopBenh)
+				, NGAY_YL = REPLACE(
+					CONVERT(VARCHAR, COALESCE(kb1.ThoiGianKham, ntkb.ThoiGianKham, bapt.ThoiGianBatDau, yc.ThoiGianYeuCau, kbm.ketthucKham, ychc.thoigianyeucau), 112)
+					+ CONVERT(VARCHAR(5), COALESCE(kb1.ThoiGianKham, ntkb.ThoiGianKham, bapt.ThoiGianBatDau, yc.ThoiGianYeuCau, kbm.KetThucKham, ychc.thoigianyeucau), 108), ':', '')
+				, ma_pttt = CASE WHEN LEFT(tn.SoBHYT, 2) IN ('QN','CA','CY') THEN 2 ELSE 1 END
+				, ThuocVG = 0
+				, MADICHVU = dbo.Get_Ma_DV_XML2(ISNULL(bapt.clsyeucau_id, YCHC.clsyeucau_id))
+				, NGUON_CTRA = 1
+				, CHUC_DANH_ID = CASE
+					WHEN nttt.ToaThuoc_Id IS NOT NULL THEN bstt.ChucDanh_Id
+					WHEN PTVT.BenhAnPhauThuat_VTYT_Id IS NOT NULL THEN bspt.ChucDanh_Id
+					WHEN kbvt.KhamBenh_VTYT_Id IS NOT NULL THEN bskbvt.ChucDanh_Id
+					WHEN thuoc.ToaThuoc_Id IS NOT NULL THEN bskbtt.ChucDanh_Id
+					WHEN HCVT.Id IS NOT NULL THEN BSHCVT.ChucDanh_Id
+					WHEN HCVTNT.Id IS NOT NULL THEN BSHCVTNT.ChucDanh_Id
+					WHEN map.TenField IN ('08','16') AND li.PhanNhom = 'DV' THEN bscls.ChucDanh_Id
+					ELSE NULL
+				END
+
+			FROM (
+				-- ===== Dịch vụ kỹ thuật =====
+				SELECT
+					Loai_IDRef = 'A',
+					IDRef = ycct.YeuCauChiTiet_Id,
+					NoiDung_Id = ycct.DichVu_Id,
+					NoiDung = dv.TenDichVu,
+					SoLuong = ycct.SoLuong,
+					DonGiaDoanhThu = ycct.DonGiaDoanhThu,
+					DonGiaHoTro = CASE WHEN CHARINDEX('.01', CAST(ycct.DonGiaHoTro AS VARCHAR(20))) > 0
+						THEN CAST(REPLACE(CAST(ycct.DonGiaHoTro AS VARCHAR(20)), '.01', '.00') AS DECIMAL(18, 3))
+						ELSE CAST(ycct.DonGiaHoTro AS DECIMAL(18, 3)) END,
+					DonGiaHoTroChiTra = ycct.DonGiaHoTroChiTra,
+					DonGiaThanhToan = ycct.DonGiaThanhToan,
+					PhongBan_Id = ISNULL(
+						CASE WHEN dv.NhomDichVu_Id = 27 THEN yc.NoiThucHien_Id ELSE yc.NoiYeuCau_id END,
+						ba.KhoaRa_Id),
+					NoiTru_ToaThuoc_ID = NULL,
+					Ngoaitru_ToaThuoc_ID = NULL,
+					TenDonViTinh = dv.DonViTinh,
+					BenhAn_Id = @benhan_id,
+					TiepNhan_Id = @tiepnhan_id,
+					Muc_Huong = ycct.MucHuong
+				FROM CLSYeuCauChiTiet ycct
+				LEFT JOIN CLSYeuCau yc ON ycct.CLSYeuCau_Id = yc.CLSYeuCau_Id
+				LEFT JOIN DM_DichVu dv ON dv.DichVu_Id = ycct.DichVu_Id
+				LEFT JOIN BenhAn ba ON ba.TiepNhan_Id = @tiepnhan_id
+				-- [TỐI ƯU #4] Thay OR bằng filter trực tiếp theo @tiepnhan_id
+				WHERE yc.TiepNhan_Id = @tiepnhan_id
+
+				UNION ALL
+
+				-- ===== Thuốc / Vật tư =====
+				SELECT
+					Loai_IDRef = 'I',
+					IDRef = ISNULL(clsvt.ID, xbn.ChungTuXuatBN_Id),
+					NoiDung_Id = ISNULL(clsvt.Duoc_Id, xbn.Duoc_Id),
+					NoiDung = td.TenDuoc,
+					SoLuong = CASE WHEN xbn.ToaThuocTra_Id IS NOT NULL THEN 0 - xbn.SoLuong ELSE xbn.SoLuong END,
+					DonGiaDoanhThu = xbn.DonGiaDoanhThu,
+					DonGiaHoTro = CASE WHEN CHARINDEX('.01', CAST(xbn.DonGiaHoTro AS VARCHAR(20))) > 0
+						THEN CAST(REPLACE(CAST(xbn.DonGiaHoTro AS VARCHAR(20)), '.01', '.00') AS DECIMAL(18, 3))
+						ELSE CAST(xbn.DonGiaHoTro AS DECIMAL(18, 3)) END,
+					DonGiaHoTroChiTra = xbn.DonGiaHoTroChiTra,
+					DonGiaThanhToan = xbn.DonGiaThanhToan,
+					PhongBan_Id = ISNULL(ISNULL(pb.PhongBan_Id, ISNULL(pb3.PhongBan_Id, pb1.PhongBan_Id)), pb4.phongban_id),
+					NoiTru_ToaThuoc_ID = CASE WHEN @benhan_id IS NOT NULL THEN xbn.ToaThuoc_Id ELSE NULL END,
+					Ngoaitru_ToaThuoc_ID = CASE WHEN @benhan_id IS NULL THEN xbn.ToaThuoc_Id ELSE NULL END,
+					TenDonViTinh = d.DonViTinh,
+					BenhAn_Id = @benhan_id,
+					TiepNhan_Id = @tiepnhan_id,
+					Muc_Huong = xbn.MucHuong
+				FROM ChungTuXuatBenhNhan xbn
+				LEFT JOIN DM_Duoc d ON d.Duoc_Id = xbn.Duoc_Id
+				LEFT JOIN DM_TenDuoc td ON td.TenDuoc_Id = d.TenDuoc_Id
+				LEFT JOIN ToaThuoc tt ON tt.ToaThuoc_Id = xbn.ToaThuocNgoaiTru_id
+				LEFT JOIN KhamBenh kb ON kb.KhamBenh_Id = tt.KhamBenh_Id
+				LEFT JOIN DM_PhongBan pb ON pb.PhongBan_Id = kb.PhongBan_Id
+				LEFT JOIN BenhAnPhauThuat_VTYT vtyt ON vtyt.BenhAnPhauThuat_VTYT_Id = xbn.BenhAnPhauThuat_VTYT_Id AND vtyt.duoc_id = xbn.duoc_id
+				LEFT JOIN DM_KhoDuoc k1 ON vtyt.khosudung_id = k1.khoduoc_id
+				LEFT JOIN DM_PhongBan pb3 ON pb3.PhongBan_Id = k1.phongban_id
+				LEFT JOIN KhamBenh_VTYT vt ON xbn.KhamBenh_VTYT_Id = vt.KhamBenh_VTYT_Id AND vt.duoc_id = xbn.duoc_id
+				LEFT JOIN KhamBenh kb1 ON vt.KhamBenh_Id = kb1.KhamBenh_Id
+				LEFT JOIN DM_PhongBan pb1 ON pb1.PhongBan_Id = kb1.PhongBan_Id
+				LEFT JOIN CLSGhiNhanHoaChat_VTYT clsvt ON xbn.CLSHoaChat_VTYT_Id = clsvt.id AND xbn.Duoc_Id = clsvt.duoc_id
+				LEFT JOIN dm_khoduoc k ON clsvt.KhoSuDung_Id = k.KhoDuoc_Id
+				LEFT JOIN DM_PhongBan pb4 ON pb4.PhongBan_Id = k.PhongBan_Id
+				-- [TỐI ƯU #4] Thay OR bằng filter trực tiếp
+				WHERE xbn.TiepNhan_Id = @tiepnhan_id AND xbn.mienphi = 0
+			) xnct
+
+			LEFT JOIN dbo.VienPhiNoiTru_Loai_IDRef LI ON LI.Loai_IDRef = xnct.Loai_IDRef
+
+			LEFT JOIN (
+				SELECT dndv.DichVu_Id, mbc.MoTa, mbc.ID,
+					CASE
+						WHEN mbc.TenField IN ('CK','CongKham','KB','TienKham') THEN '01'
+						WHEN mbc.TenField IN ('XN','XetNghiem','XNHH') THEN '03'
+						WHEN mbc.TenField IN ('Thuoc','OXY') THEN '16'
+						WHEN mbc.TenField IN ('TTPT','TT','TT_PT') THEN '06'
+						WHEN mbc.TenField IN ('ThuThuat') THEN '18'
+						WHEN mbc.TenField IN ('DVKT_Cao', 'KTC') THEN '07'
+						WHEN mbc.TenField = 'VC' THEN '11'
+						WHEN mbc.TenField IN ('MCPM','Mau','DT','LayMau','DTMD') THEN '08'
+						WHEN mbc.TenField IN ('CDHA','CDHA_TDCN') THEN '04'
+						WHEN mbc.TenField = 'TDCN' THEN '05'
+						WHEN mbc.TenField = 'K' THEN 'Khac'
+						WHEN mbc.TenField IN ('NGCK','Giuong','GB') THEN '12'
+						WHEN mbc.TenField = 'VTYT' THEN '10'
+						ELSE mbc.TenField
+					END AS TenField
+					, mbc.Ma
+				FROM dbo.DM_MauBaoCao mbc
+				JOIN dbo.DM_DinhNghiaDichVu dndv ON dndv.NhomBaoCao_Id = mbc.ID
+				WHERE MauBC = 'BCVP_097'
+			) map ON map.DichVu_Id = xnct.NoiDung_Id
+
+			LEFT JOIN dbo.TiepNhan tn ON tn.TiepNhan_Id = xnct.TiepNhan_Id
+			LEFT JOIN dbo.DM_BenhNhan bn ON bn.BenhNhan_Id = tn.BenhNhan_Id
+			LEFT JOIN DM_DoiTuong dt ON dt.DoiTuong_Id = tn.DoiTuong_Id
+			LEFT JOIN dbo.Lst_Dictionary ndt ON ndt.Dictionary_Id = dt.NhomDoiTuong_Id
+			LEFT JOIN dbo.Lst_Dictionary lst ON lst.Dictionary_Id = tn.TuyenKhamBenh_Id
+			LEFT JOIN dbo.DM_BenhVien ngt ON ngt.BenhVien_Id = tn.NoiGioiThieu_Id
+
+			LEFT JOIN DM_Duoc d ON d.Duoc_Id = xnct.NoiDung_Id AND li.PhanNhom = 'DU' AND ISNULL(D.BHYT, 0) = 1
+			LEFT JOIN DM_Duoc_HoatChat hc ON hc.HoatChat_Id = d.HoatChat_Id
+			-- [TỐI ƯU #7] Bỏ JOIN DM_LoaiDuoc trùng lặp (alias f trong gốc), chỉ giữ ld
+			LEFT JOIN dbo.DM_LoaiDuoc ld ON ld.LoaiDuoc_Id = d.LoaiDuoc_Id
+			LEFT JOIN dbo.DM_DonViTinh dvt ON dvt.DonViTinh_Id = d.DonViTinh_Id
+			LEFT JOIN dbo.DM_DichVu dv ON dv.DichVu_Id = xnct.NoiDung_Id AND li.PhanNhom = 'DV'
+			LEFT JOIN dbo.Lst_Dictionary dd ON dd.Dictionary_Id = d.DuongDung_Id
+			LEFT JOIN DM_BenhVien kcbbd ON tn.BenhVien_KCB_id = kcbbd.BenhVien_Id
+			LEFT JOIN ChungTuXuatBenhNhan xbn ON (xnct.IDRef = xbn.ChungTuXuatBN_Id AND xnct.Loai_IDRef = 'I')
+
+			-- Lấy ra ngày y lệnh
+			LEFT JOIN ToaThuoc thuoc ON thuoc.ToaThuoc_Id = xbn.ToaThuocNgoaiTru_id
+			LEFT JOIN NoiTru_ToaThuoc nttt ON xbn.ToaThuoc_Id = nttt.ToaThuoc_Id
+			LEFT JOIN NoiTru_KhamBenh ntkb ON nttt.khambenh_id = ntkb.khambenh_id
+
+			-- [TỐI ƯU #5] OUTER APPLY tính SUM(NoiTru_TraThuocChiTiet) 1 lần duy nhất
+			-- Phải đặt SAU JOIN nttt để nttt.toathuoc_id đã được bind
+			OUTER APPLY (
+				SELECT SoLuongTra = CAST(SUM(ISNULL(SoLuong, 0)) AS DECIMAL(18, 3))
+				FROM NoiTru_TraThuocChiTiet
+				WHERE ToaThuoc_Id = nttt.toathuoc_id
+			) traThuoc
+			LEFT JOIN BenhAnPhauThuat_VTYT PTVT ON xbn.BenhAnPhauThuat_VTYT_ID = PTVT.BenhAnPhauThuat_VTYT_Id
+			LEFT JOIN BenhAnPhauThuat BAPT ON PTVT.BenhAnPhauThuat_Id = BAPT.BenhAnPhauThuat_Id
+			LEFT JOIN KhamBenh_VTYT kbvt ON xbn.KhamBenh_VTYT_Id = kbvt.KhamBenh_VTYT_Id AND li.PhanNhom = 'DU' AND kbvt.Duoc_Id = d.Duoc_Id
+			LEFT JOIN KhamBenh kb1 ON kbvt.KhamBenh_Id = kb1.KhamBenh_Id
+			LEFT JOIN CLSYeuCauChiTiet yctt ON yctt.YeuCauChiTiet_Id = xnct.IDRef AND xnct.Loai_IDRef = 'A'
+			LEFT JOIN CLSYeuCau yc ON yc.CLSYeuCau_Id = yctt.CLSYeuCau_Id
+			LEFT JOIN vw_NhanVien bskbvt ON bskbvt.NhanVien_Id = kb1.BacSiKham_Id
+			LEFT JOIN KhamBenh kbtt ON kbtt.KhamBenh_Id = thuoc.KhamBenh_Id
+			LEFT JOIN vw_NhanVien bskbtt ON bskbtt.NhanVien_Id = kbtt.BacSiKham_Id
+
+			-- Mã khoa chỉ định thuốc
+			LEFT JOIN NoiTru_LuuTru ltru ON ltru.LuuTru_Id = ntkb.LuuTru_Id
+			LEFT JOIN DM_PhongBan pbthuoc ON pbthuoc.PhongBan_Id = ltru.PhongBan_Id
+			LEFT JOIN DM_PhongBan pbcdinh ON pbcdinh.PhongBan_Id = yc.NoiYeuCau_Id
+			LEFT JOIN DM_PhongBan pbkb1 ON pbkb1.PhongBan_Id = kb1.PhongBan_Id
+
+			-- Lấy ra Ma_Bac_Si
+			LEFT JOIN vw_NhanVien bstt ON bstt.NhanVien_Id = ntkb.BasSiKham_Id
+			LEFT JOIN vw_NhanVien bscls ON bscls.NhanVien_Id = yc.BacSiChiDinh_Id
+			LEFT JOIN Sys_Users us ON BAPT.NguoiTao_Id = us.User_Id
+			LEFT JOIN NhanVien_User_Mapping usmap ON us.User_Id = usmap.User_Id
+			LEFT JOIN vw_NhanVien bspt ON usmap.NhanVien_Id = bspt.NhanVien_Id
+
+			-- CLS HCVT ngoại trú
+			LEFT JOIN CLSGhiNhanHoaChat_VTYT HCVT ON xnct.IDRef = HCVT.Id AND xnct.Loai_IDRef = 'E'
+			LEFT JOIN CLSYeuCau YCHC ON HCVT.CLSYeuCau_Id = YCHC.CLSYeuCau_Id
+			LEFT JOIN CLSKetqua YCHCkq ON HCVT.CLSYeuCau_Id = YCHCkq.CLSYeuCau_Id
+			LEFT JOIN vw_NhanVien BSHCVT ON YCHCkq.BacSiKetLuan_id = BSHCVT.NhanVien_Id
+
+			-- CLS HCVT nội trú
+			LEFT JOIN CLSGhiNhanHoaChat_VTYT HCVTNT ON xbn.CLSHoaChat_VTYT_Id = HCVTNT.Id
+			LEFT JOIN CLSYeuCau YCHCNT ON HCVTNT.CLSYeuCau_Id = YCHCNT.CLSYeuCau_Id
+			LEFT JOIN CLSKetqua YCHCNTkq ON HCVTNT.CLSYeuCau_Id = YCHCNTkq.CLSYeuCau_Id
+			LEFT JOIN vw_NhanVien BSHCVTNT ON YCHCNTkq.bacsiketluan_id = BSHCVTNT.NhanVien_Id
+
+			LEFT JOIN MienGiam mg ON mg.TiepNhan_Id = tn.TiepNhan_Id
+
+			-- [TỐI ƯU #6] Thay correlated subquery trong JOIN kbm bằng CROSS APPLY
+			OUTER APPLY (
+				SELECT TOP 1 kbm2.*
+				FROM KhamBenh kbm2
+				WHERE kbm2.TiepNhan_Id = xnct.TiepNhan_Id
+				ORDER BY kbm2.KhamBenh_Id ASC
+			) kbm
+
+			LEFT JOIN dm_phongban pb ON pb.PhongBan_Id = kbm.PhongBan_Id
+			-- [TỐI ƯU #8] Bỏ 2 JOIN DM_ICD trùng (i, icd gốc), dùng 1 bc duy nhất
+			LEFT JOIN DM_ICD bc ON bc.ICD_ID = kbm.ChanDoanICD_Id
+			LEFT JOIN BenhAn ba ON xnct.BenhAn_Id = ba.BenhAn_Id
+			LEFT JOIN DM_ICD icd_nt ON icd_nt.ICD_Id = ba.ICD_BenhChinh
+
+			WHERE xnct.DonGiaHoTroChiTra > 0
+				AND (xnct.DonGiaHoTro * xnct.SoLuong) <> 0
+				AND (
+					(LI.PhanNhom = 'DU' AND ld.LoaiVatTu_Id IN ('T', 'H'))
+					OR map.TenField = '08'
+					OR map.TenField = '16'
+					OR map.TenField = 'OXY'
+					OR ld.MaLoaiDuoc IN ('OXY', 'OXY1', 'LD0143', 'VTYT003')
+				)
+				AND ISNULL(xbn.toathanhpho, 0) = 0
+
+			GROUP BY nttt.ToaThuoc_Id, li.PhanNhom,
+				CASE WHEN tn.NgayTiepNhan > '20250731' THEN DV.MaQuiDinh ELSE DV.MaQuiDinhCu END,
+				dv.InputCode, d.MaHoatChat, d.MaDuoc, d.BHYT,
+				xnct.DonGiaHoTroChiTra, ld.LoaiVatTu_Id, map.TenField,
+				ISNULL(CASE WHEN tn.NgayTiepNhan > '20250731' THEN DV.TenDichVu_En ELSE dv.TenQuiDinhCu END, DV.TenDichvU),
+				d.Ten_VTYT_917, d.TenDuocDayDu,
+				ISNULL(dvt.TenDonViTinh, N'Lần'), d.HamLuong, d.MaDuongDung, d.Attribute_3, d.Attribute_2,
+				xnct.DonGiaHoTro, pb.MaTheoQuiDinh,
+				ntkb.NgayKham, yc.ngayyeucau, ld.MaLoaiDuoc,
+				D.TenHang, D.ThoiGianHopDong, dt.TyLe_2, d.ThongTinThau, d.MaGoiThau,
+				pbcdinh.MaTheoQuiDinh, pbthuoc.MaTheoQuiDinh, pbkb1.MaTheoQuiDinh,
+				dd.Dictionary_Code,
+				REPLACE(
+					CONVERT(VARCHAR, COALESCE(kb1.ThoiGianKham, ntkb.ThoiGianKham, bapt.ThoiGianBatDau, yc.ThoiGianYeuCau, kbm.ketthucKham, ychc.thoigianyeucau), 112)
+					+ CONVERT(VARCHAR(5), COALESCE(kb1.ThoiGianKham, ntkb.ThoiGianKham, bapt.ThoiGianBatDau, yc.ThoiGianYeuCau, kbm.KetThucKham, ychc.thoigianyeucau), 108), ':', ''),
+				tn.TuyenKhamBenh_Id,
+				bc.ngoaidinhxuat, icd_nt.ngoaidinhxuat, tn.SoBHYT,
+				xnct.muc_huong, ISNULL('/' + nttt.GhiChu, '/' + thuoc.GhiChu),
+				bapt.CLSYeuCau_Id, YCHC.CLSYeuCau_Id,
+				ISNULL(nttt.GhiChu, thuoc.GhiChu),
+				thuoc.toathuoc_id,
+				xbn.DuocDieuKien_Id,
+				xbn.GiaTriMienGiam, mg.LyDo_ID,
+				bc.NgoaiDinhXuat, icd_nt.NgoaiDinhXuat,
+				xnct.DonGiaDoanhThu,
+				xbn.TyLeDieuKien,
+				-- MA_BAC_SI group
+				CASE
+					WHEN nttt.ToaThuoc_Id IS NOT NULL THEN bstt.SoChungChiHanhNghe
+					WHEN PTVT.BenhAnPhauThuat_VTYT_Id IS NOT NULL THEN bspt.SoChungChiHanhNghe
+					WHEN kbvt.KhamBenh_VTYT_Id IS NOT NULL THEN bskbvt.SoChungChiHanhNghe
+					WHEN thuoc.ToaThuoc_Id IS NOT NULL THEN bskbtt.SoChungChiHanhNghe
+					WHEN HCVT.Id IS NOT NULL THEN BSHCVT.SoChungChiHanhNghe
+					WHEN HCVTNT.Id IS NOT NULL THEN BSHCVTNT.SoChungChiHanhNghe
+					WHEN map.TenField IN ('08','16') AND li.PhanNhom = 'DV' THEN bscls.SoChungChiHanhNghe
+					ELSE NULL
+				END,
+				-- CHUC_DANH_ID group
+				CASE
+					WHEN nttt.ToaThuoc_Id IS NOT NULL THEN bstt.ChucDanh_Id
+					WHEN PTVT.BenhAnPhauThuat_VTYT_Id IS NOT NULL THEN bspt.ChucDanh_Id
+					WHEN kbvt.KhamBenh_VTYT_Id IS NOT NULL THEN bskbvt.ChucDanh_Id
+					WHEN thuoc.ToaThuoc_Id IS NOT NULL THEN bskbtt.ChucDanh_Id
+					WHEN HCVT.Id IS NOT NULL THEN BSHCVT.ChucDanh_Id
+					WHEN HCVTNT.Id IS NOT NULL THEN BSHCVTNT.ChucDanh_Id
+					WHEN map.TenField IN ('08','16') AND li.PhanNhom = 'DV' THEN bscls.ChucDanh_Id
+					ELSE NULL
+				END,
+				-- traThuoc (từ OUTER APPLY)
+				traThuoc.SoLuongTra
+		) xml2 WHERE SO_LUONG > 0
+	) xml2
+
+END
+
+-- Reset isolation level
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED

@@ -300,20 +300,17 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                     }
                 }
 
-                // Load các XML khác (XML11, XML13-15) nếu cần
+      
                 XML_Query_List.Add(XMLDataType.XML11, LoadSqlFromFile("XML11.sql", IDBenhNhan));
                 XML_Query_List.Add(XMLDataType.XML13, LoadSqlFromFile("XML13.sql", IDBenhNhan));
                 XML_Query_List.Add(XMLDataType.XML14, LoadSqlFromFile("XML14.sql", IDBenhNhan));
                 XML_Query_List.Add(XMLDataType.XML15, LoadSqlFromFile("XML15.sql", IDBenhNhan));
 
-                // Bước 4: Thực thi các queries song song (cùng lúc)
-                var xmlTasks = XML_Query_List
-                    .Where(q => !string.IsNullOrWhiteSpace(q.Value))
-                    .Select(q =>
-                    {
-                        return RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
-                    });
-                await Task.WhenAll(xmlTasks);
+                // Bước 4: Thực thi các queries tuần tự (lần lượt) để tránh ảnh hưởng đến hệ thống
+                foreach (var q in XML_Query_List.Where(q => !string.IsNullOrWhiteSpace(q.Value)))
+                {
+                    await RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+                }
 
                 // Bước 5: Load DsBenhNhanLoiMaMay sau khi đã có XML1
                 try
@@ -401,11 +398,11 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 {XMLDataType.XML15, LoadSqlFromFile("XML15.sql", IDBenhNhan) },
             };
 
-            // Thực thi các queries song song (cùng lúc)
-            var xmlTasksFallback = XML_Query_List
-                .Where(q => !string.IsNullOrWhiteSpace(q.Value))
-                .Select(q => RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll));
-            await Task.WhenAll(xmlTasksFallback);
+            // Thực thi các queries tuần tự (lần lượt) để tránh ảnh hưởng đến hệ thống
+            foreach (var q in XML_Query_List.Where(q => !string.IsNullOrWhiteSpace(q.Value)))
+            {
+                await RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+            }
 
             // Load DsBenhNhanLoiMaMay sau khi đã có XML1
             try
