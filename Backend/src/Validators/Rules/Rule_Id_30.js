@@ -19,9 +19,9 @@ const validateRule_Id_30 = async (patientData) => {
     try {
         // Lấy danh sách thuốc từ Xml2
         const dsThuoc = Array.isArray(patientData.Xml2) ? patientData.Xml2 : [];
-        
+
         // Kiểm tra xem bệnh nhân có thuốc mã 40.751 không
-        const thuoc40751 = dsThuoc.filter(thuoc => 
+        const thuoc40751 = dsThuoc.filter(thuoc =>
             thuoc.Ma_Thuoc && String(thuoc.Ma_Thuoc).trim() === '40.751'
         );
 
@@ -60,32 +60,31 @@ const validateRule_Id_30 = async (patientData) => {
 
         dsMaBenh = Array.from(new Set(dsMaBenh)); // loại trùng
 
-        // Kiểm tra điều kiện 1: Mã bệnh B15->B19 hoặc K70->K77
+        // Kiểm tra điều kiện 1: Mã bệnh B15->B19 hoặc K70->K77 (bao gồm mã con như K70.3, B15.0)
         const regexMaBenh1 = [
-            /^B1[5-9]$/i,  // B15->B19
-            /^K7[0-7]$/i   // K70->K77
+            /^B1[5-9](\.\d+)?$/i,  // B15->B19, B15.0, B16.1, ...
+            /^K7[0-7](\.\d+)?$/i   // K70->K77, K70.3, K71.1, ...
         ];
 
         const coMaBenhHopLe = dsMaBenh.some(ma => regexMaBenh1.some(regex => regex.test(ma)));
         if (coMaBenhHopLe) {
-            // Đúng, không cần kiểm tra tiếp
             return result;
         }
 
         // Kiểm tra điều kiện 2: Dịch vụ trong XML4
         const xml4_data = Array.isArray(patientData.Xml4) ? patientData.Xml4 : [];
         const dsDichVuCheck = ['23.0019.1493', '23.0020.1493'];
-        
+
         const dichVuHopLe = xml4_data.filter(item => {
             const maDichVu = item.Ma_Dich_Vu ? String(item.Ma_Dich_Vu).trim() : null;
             if (!dsDichVuCheck.includes(maDichVu)) {
                 return false;
             }
-            
+
             // So sánh Gia_Tri với mUC_BINH_THUONG
             const giaTri = item.Gia_Tri ? parseFloat(String(item.Gia_Tri).replace(/,/g, '')) : null;
             const mucBinhThuong = item.mUC_BINH_THUONG ? parseFloat(String(item.mUC_BINH_THUONG).replace(/,/g, '')) : null;
-            
+
             if (giaTri !== null && mucBinhThuong !== null) {
                 return giaTri > mucBinhThuong;
             }
@@ -93,14 +92,13 @@ const validateRule_Id_30 = async (patientData) => {
         });
 
         if (dichVuHopLe.length > 0) {
-            // Đúng, không cần kiểm tra tiếp
             return result;
         }
 
         // Kiểm tra điều kiện 3: Thuốc nhóm 1 hoặc nhóm 2
         // Nhóm 1: 40.308, 40.312, 40.313, 40.256, 40.310, 40.155, 40.30.230, 40.221, 40.227, 40.242, 40.238, 40.293, 40.292, 40.288, 40.142, 40.131
         const nhom1 = ['40.308', '40.312', '40.313', '40.256', '40.310', '40.155', '40.30.230', '40.221', '40.227', '40.242', '40.238', '40.293', '40.292', '40.288', '40.142', '40.131'];
-        
+
         // Nhóm 2: 40.48, 40.30.64, 40.30.61, 40.30, 40.37, 40.46
         const nhom2 = ['40.48', '40.30.64', '40.30.61', '40.30', '40.37', '40.46'];
 
@@ -109,25 +107,20 @@ const validateRule_Id_30 = async (patientData) => {
         function getNgayFromNgayYl(ngayYl) {
             if (!ngayYl) return null;
             const ngayStr = String(ngayYl).trim();
-            // Lấy 8 ký tự đầu (yyyyMMdd)
             return ngayStr.length >= 8 ? ngayStr.substring(0, 8) : ngayStr;
         }
 
         // Hàm chuyển đổi yyyyMMdd (hoặc yyyyMMddHHmm, yyyyMMddHHmmss) sang Date object
-        // Hỗ trợ: 8 ký tự (yyyyMMdd), 12 ký tự (yyyyMMddHHmm), 14 ký tự (yyyyMMddHHmmss)
-        // Chỉ lấy phần ngày để so sánh (bỏ qua giờ/phút)
         function parseDate(ngayStr) {
             if (!ngayStr) return null;
             const str = String(ngayStr).trim();
             if (str.length < 8) return null;
-            
-            // Lấy 8 ký tự đầu (yyyyMMdd) bất kể input có bao nhiêu ký tự
+
             const year = parseInt(str.substring(0, 4), 10);
-            const month = parseInt(str.substring(4, 6), 10) - 1; // Month is 0-indexed
+            const month = parseInt(str.substring(4, 6), 10) - 1;
             const day = parseInt(str.substring(6, 8), 10);
-            
+
             const parsedDate = new Date(year, month, day);
-            // Kiểm tra Date hợp lệ
             if (Number.isNaN(parsedDate.getTime())) return null;
             return parsedDate;
         }
@@ -157,12 +150,11 @@ const validateRule_Id_30 = async (patientData) => {
             });
 
             if (thuocNhom2.length === 0) {
-                // Không có thuốc nhóm 1 và nhóm 2 → SAI
                 thuoc40751.forEach(thuoc => {
                     result.isValid = false;
-                    result.errors.push({ 
-                        Id: thuoc.id || thuoc.Id, 
-                        Error: 'Thuốc 40.751 không đáp ứng điều kiện: không có mã bệnh B15-B19/K70-K77, không có dịch vụ 23.0019.1493/23.0020.1493 với GiaTri > mucbinhthuong, và không có thuốc nhóm 1 hoặc nhóm 2 hợp lệ' 
+                    result.errors.push({
+                        Id: thuoc.id || thuoc.Id,
+                        Error: 'Thuốc 40.751 không đáp ứng điều kiện: không có mã bệnh B15-B19/K70-K77, không có dịch vụ 23.0019.1493/23.0020.1493 với GiaTri > mucbinhthuong, và không có thuốc nhóm 1 hoặc nhóm 2 hợp lệ'
                     });
                 });
                 return result;
@@ -188,12 +180,11 @@ const validateRule_Id_30 = async (patientData) => {
             }
 
             if (!coThuocNhom2HopLe) {
-                // Không đáp ứng điều kiện nhóm 2 (cách 5 ngày) → SAI
                 thuoc40751.forEach(thuoc => {
                     result.isValid = false;
-                    result.errors.push({ 
-                        Id: thuoc.id || thuoc.Id, 
-                        Error: 'Thuốc 40.751 không đáp ứng điều kiện: thuốc nhóm 2 phải cách ngày y lệnh của thuốc 40.751 ít nhất 5 ngày' 
+                    result.errors.push({
+                        Id: thuoc.id || thuoc.Id,
+                        Error: 'Thuốc 40.751 không đáp ứng điều kiện: thuốc nhóm 2 phải cách ngày y lệnh của thuốc 40.751 ít nhất 5 ngày'
                     });
                 });
                 return result;
@@ -208,12 +199,11 @@ const validateRule_Id_30 = async (patientData) => {
         });
 
         if (dichVu180015.length === 0) {
-            // Không có dịch vụ 18.0015.0001 → SAI
             thuoc40751.forEach(thuoc => {
                 result.isValid = false;
-                result.errors.push({ 
-                    Id: thuoc.id || thuoc.Id, 
-                    Error: 'Thuốc 40.751 không đáp ứng điều kiện: không có dịch vụ 18.0015.0001 trong XML3' 
+                result.errors.push({
+                    Id: thuoc.id || thuoc.Id,
+                    Error: 'Thuốc 40.751 không đáp ứng điều kiện: không có dịch vụ 18.0015.0001 trong XML3'
                 });
             });
             return result;
@@ -223,24 +213,22 @@ const validateRule_Id_30 = async (patientData) => {
         const ketLuanHopLe = dichVu180015.some(item => {
             const ketLuan = item.ket_luan || item.ketluan || '';
             const ketLuanLower = String(ketLuan).toLowerCase();
-            return ketLuanLower.includes('gan nhiễm mỡ') || 
-                   ketLuanLower.includes('xơ gan') || 
+            return ketLuanLower.includes('gan nhiễm mỡ') ||
+                   ketLuanLower.includes('xơ gan') ||
                    ketLuanLower.includes('gan thô');
         });
 
         if (!ketLuanHopLe) {
-            // Không có ket_luan hợp lệ → SAI
             thuoc40751.forEach(thuoc => {
                 result.isValid = false;
-                result.errors.push({ 
-                    Id: thuoc.id || thuoc.Id, 
-                    Error: 'Thuốc 40.751 không đáp ứng điều kiện: dịch vụ 18.0015.0001 không có ket_luan chứa "gan nhiễm mỡ", "xơ gan", hoặc "gan thô"' 
+                result.errors.push({
+                    Id: thuoc.id || thuoc.Id,
+                    Error: 'Thuốc 40.751 không đáp ứng điều kiện: dịch vụ 18.0015.0001 không có ket_luan chứa "gan nhiễm mỡ", "xơ gan", hoặc "gan thô"'
                 });
             });
             return result;
         }
 
-        // Tất cả điều kiện đều đáp ứng → ĐÚNG
         return result;
 
     } catch (error) {
