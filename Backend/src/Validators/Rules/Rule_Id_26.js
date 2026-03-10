@@ -3,6 +3,11 @@
  * Thuốc 40.561 chỉ được sử dụng khi:
  * - Ma_Benh thuộc I60-I68, S06, S02 HOẶC
  * - Ma_Dich_Vu thuộc danh sách phẫu thuật thần kinh sọ não
+ *
+ * Nguồn Ma_Benh: XML1 (Ma_Benh_Chinh, Ma_Benh_Kt)
+ * Nguồn Ma_Dich_Vu: XML3
+ * XML2 không có Ma_Benh
+ *
  * @param {Object} patientData - Toàn bộ dữ liệu bệnh nhân
  * @returns {Object} - Kết quả validation
  */
@@ -51,44 +56,48 @@ const validateRule_Id_26 = async (patientData) => {
     const maBenhHopLe = ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I68', 'S06', 'S02'];
 
     try {
+        const xml1_data = patientData.Xml1 || [];
         const xml2_data = patientData.Xml2 || [];
         const xml3_data = patientData.Xml3 || [];
-        
-        // Lấy danh sách mã thuốc
+
+        // Lấy danh sách mã thuốc từ XML2
         const danhsachthuoc = xml2_data.map(item => item.Ma_Thuoc);
 
         // Nếu có mã thuốc 40.561 thì kiểm tra
         if (danhsachthuoc.includes('40.561')) {
-            // Lấy tất cả mã bệnh của các dịch vụ có mã 40.561
-            const maBenhLienQuan = xml2_data
-                .filter(item => item.Ma_Thuoc === '40.561')
-                .map(item => item.Ma_Benh)
-                .filter(Boolean);
+            const thuoc40561Rows = xml2_data.filter(item => item.Ma_Thuoc === '40.561');
 
-            // Kiểm tra mã bệnh hợp lệ
-            const coMaBenhHopLe = maBenhLienQuan.some(maBenhStr => {
-                const arrMaBenh = maBenhStr.split(';').map(s => s.trim().toUpperCase()).filter(Boolean);
-                return arrMaBenh.some(ma => maBenhHopLe.some(code => ma.startsWith(code)));
-            });
+            // 1. Thu thập Ma_Benh từ XML1: Ma_Benh_Chinh + Ma_Benh_Kt
+            const tatCaMaBenh = [...new Set(
+                xml1_data.flatMap(row => {
+                    const chinh = row.Ma_Benh_Chinh ?? row.Ma_benh_chinh;
+                    const kt = row.Ma_Benh_Kt ?? row.Ma_benh_kt;
+                    const arr = [];
+                    if (chinh) arr.push(String(chinh).trim());
+                    if (kt) arr.push(...String(kt).split(';').map(s => s.trim()).filter(Boolean));
+                    return arr;
+                })
+            )];
 
-            // Lấy tất cả mã dịch vụ từ XML3
-            const danhSachMaDichVu = xml3_data.map(item => item.Ma_Dich_Vu).filter(Boolean);
-            
-            // Kiểm tra mã dịch vụ hợp lệ
-            const coMaDichVuHopLe = danhSachMaDichVu.some(maDV => maDichVuHopLe.includes(maDV));
+            // 2. Kiểm tra có ít nhất 1 Ma_Benh hợp lệ không
+            const coMaBenhHopLe = tatCaMaBenh.some(ma => maBenhHopLe.some(code => ma.toUpperCase().startsWith(code)));
+
+            // 3. Kiểm tra Ma_Dich_Vu từ XML3 - có ít nhất 1 thuộc phẫu thuật thần kinh sọ não không
+            const danhSachMaDichVu = xml3_data.map(item => item.Ma_Dich_Vu ?? item.Ma_dich_vu).filter(Boolean);
+            const coMaDichVuHopLe = danhSachMaDichVu.some(maDV => maDichVuHopLe.includes(String(maDV).trim()));
 
             // Nếu không có mã bệnh hợp lệ VÀ không có mã dịch vụ hợp lệ thì báo lỗi
             if (!coMaBenhHopLe && !coMaDichVuHopLe) {
                 result.isValid = false;
-                xml2_data.filter(it => it.Ma_Thuoc === '40.561').forEach(it => {
-                    result.errors.push({ 
-                        Id: it.id || it.Id, 
-                        Error: 'Thuốc 40.561 không có mã bệnh hợp lệ (I60-I68, S06, S02) và không có mã dịch vụ phẫu thuật thần kinh sọ não hợp lệ' 
+                thuoc40561Rows.forEach(it => {
+                    result.errors.push({
+                        Id: it.id ?? it.Id,
+                        Error: 'Thuốc 40.561 không có mã bệnh hợp lệ (I60-I68, S06, S02) và không có mã dịch vụ phẫu thuật thần kinh sọ não hợp lệ'
                     });
                 });
                 result.message = 'Không hợp lệ thuốc 40.561 do thiếu mã bệnh hoặc mã dịch vụ phù hợp';
             }
-        }   
+        }
     } catch (error) {
         result.isValid = false;
         result.errors.push(`Lỗi khi validate Rule 26: ${error.message}`);
