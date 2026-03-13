@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống tổng hợp - Giám định BHYT | Tóm tắt bệnh án | Báo cáo số liệu</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; min-height: 100vh; }
+        .app { display: flex; flex-direction: column; height: 100vh; max-width: 1600px; margin: 0 auto; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.06); }
+
+        .header { display: flex; align-items: center; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e8ecf0; }
+        .menu-btn { width: 44px; height: 44px; border: 1px solid #e0e4e8; background: #fff; border-radius: 8px; cursor: pointer; font-size: 20px; margin-right: 16px; color: #5a6573; }
+        .menu-btn:hover { background: #f5f7f9; }
+        .logo { width: 56px; height: 56px; object-fit: contain; margin-right: 16px; background: #f8fafc; border-radius: 8px; }
+        .header-text h1 { font-size: 20px; color: #374151; font-weight: 600; }
+        .header-text p { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 220px; background: #fff; border-right: 1px solid #e5e7eb; overflow-y: auto; flex-shrink: 0; transition: width 0.2s; }
+        .sidebar.collapsed { width: 0; overflow: hidden; padding: 0; min-width: 0; }
+        .sidebar-profile { padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 12px; }
+        .sidebar-profile img { width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; }
+        .sidebar-profile .greeting { font-size: 14px; font-weight: 600; color: #374151; }
+        .nav-section { padding: 4px 0; }
+        .nav-group { margin-bottom: 2px; }
+        .nav-group-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; }
+        .nav-group-header:hover { color: #6b7280; }
+        .nav-group-header .arrow { font-size: 10px; transition: transform 0.2s; display: inline-block; }
+        .nav-group.collapsed .nav-group-header .arrow { transform: rotate(-90deg); }
+        .nav-group.collapsed .nav-group-items { display: none; }
+        .nav-group-items { padding: 2px 0; }
+        .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 28px; color: #4b5563; cursor: pointer; transition: all 0.12s; border: none; width: 100%; text-align: left; font-size: 13px; background: transparent; border-radius: 6px; margin: 0 8px; }
+        .nav-item:hover { background: #f3f4f6; color: #1e40af; }
+        .nav-item.active { background: #eff6ff; color: #1e40af; font-weight: 500; }
+        .nav-item .icon { font-size: 14px; width: 20px; text-align: center; opacity: 0.85; }
+
+        .content { flex: 1; overflow: auto; padding: 24px; background: #f8fafc; }
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+
+        .card { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; border: 1px solid #e8ecf0; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e8ecf0; }
+        .kpi-card .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; font-weight: 500; }
+        .kpi-card .value { font-size: 24px; font-weight: 700; color: #374151; }
+        .kpi-card .sub { font-size: 12px; margin-top: 8px; color: #6b7280; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .chart-card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #e8ecf0; }
+        .chart-card h3 { font-size: 15px; font-weight: 600; color: #374151; margin-bottom: 16px; }
+        .chart-placeholder { height: 180px; background: #f8fafc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 14px; }
+
+        .page-title { font-size: 20px; font-weight: 600; color: #374151; margin-bottom: 20px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #374151; margin: 16px 0 12px 0; }
+        .sub-section-title { font-size: 15px; font-weight: 600; color: #4b5563; margin: 12px 0 8px 0; }
+
+        .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 12px; }
+        .form-row-2 { grid-template-columns: repeat(2, 1fr); }
+        .form-row-1 { grid-template-columns: 1fr; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #e0e4e8; border-radius: 8px; font-size: 14px; background: #fff; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+
+        .date-range { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px; background: #fff; border-radius: 10px; border: 1px solid #e8ecf0; flex-wrap: wrap; }
+        .date-range label { font-size: 14px; font-weight: 500; color: #374151; }
+        .date-range input { padding: 8px 14px; border: 1px solid #e0e4e8; border-radius: 8px; font-size: 14px; }
+        .btn { padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; border: 1px solid #e0e4e8; background: #fff; }
+        .btn:hover { background: #f5f7f9; }
+        .btn-primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .toggle-group { display: flex; gap: 4px; padding: 4px; background: #f3f4f6; border-radius: 8px; }
+        .toggle-btn { padding: 10px 16px; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6b7280; }
+        .toggle-btn.active { background: #fff; color: #1f2937; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+        .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e8ecf0; }
+        .data-table th, .data-table td { border: 1px solid #e8ecf0; padding: 12px 16px; text-align: center; font-size: 14px; }
+        .data-table th { background: #f8fafc; font-weight: 600; color: #374151; }
+        .data-table tr:hover td { background: #f8fafc; }
+        .data-table input { width: 100%; border: none; padding: 4px; background: transparent; }
+        .data-table input:focus { outline: 1px solid #3b82f6; border-radius: 4px; }
+
+        .checkbox-row { display: flex; flex-wrap: wrap; gap: 16px 24px; margin: 0 0 12px 0; }
+        .checkbox-row label { display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; font-size: 14px; }
+        .search-box { padding: 12px 16px; border: 1px solid #e0e4e8; border-radius: 8px; font-size: 14px; width: 100%; max-width: 400px; margin-bottom: 12px; }
+        .chip { display: inline-block; padding: 4px 12px; background: #eff6ff; color: #1e40af; border-radius: 20px; font-size: 13px; font-weight: 500; }
+        .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 16px; border: 1px solid #e0e4e8; background: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .tab-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .list-item { padding: 12px 16px; border: 1px solid #e8ecf0; border-radius: 8px; margin-bottom: 8px; background: #fff; cursor: pointer; }
+        .list-item:hover { background: #f0f4f8; border-color: #3b82f6; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 15px; }
+        .footer { padding: 12px 24px; background: #f8fafc; border-top: 1px solid #e8ecf0; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; align-items: center; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .scroll-table { overflow-x: auto; }
+        .search-toolbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 16px; }
+        .search-row { display: flex; gap: 12px; align-items: center; }
+        .search-input { padding: 12px 16px; border: 1px solid #e0e4e8; border-radius: 8px; font-size: 16px; }
+        .ma-lk-results { margin-top: 16px; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .ma-lk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; }
+        .ma-lk-list { max-height: 200px; overflow-y: auto; }
+        .ma-lk-item { padding: 12px 16px; margin: 4px 0; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .ma-lk-item:hover { background: #f0f9ff; border-color: #3b82f6; }
+        .search-hint { font-size: 13px; color: #6b7280; font-style: italic; margin-top: 12px; }
+        .results-section { margin-top: 20px; border: 1px solid #e8ecf0; border-radius: 10px; overflow: hidden; }
+        .results-header { display: grid; grid-template-columns: 1fr 1.5fr 0.8fr 0.8fr 2fr 80px; gap: 12px; padding: 12px 16px; background: #f8fafc; font-weight: 600; font-size: 13px; color: #374151; }
+        .results-list { max-height: 400px; overflow-y: auto; }
+        .result-item { display: grid; grid-template-columns: 1fr 1.5fr 0.8fr 0.8fr 2fr 80px; gap: 12px; padding: 12px 16px; align-items: center; border-bottom: 1px solid #e8ecf0; font-size: 14px; }
+        .result-item:hover { background: #f5f5f5; }
+        .gender-badge { padding: 4px 10px; background: #e3f2fd; border-radius: 12px; font-size: 13px; }
+        .error-badge { padding: 6px 12px; background: #fee2e2; color: #dc2626; border-radius: 6px; font-size: 12px; }
+        .error-badge.success { background: #d1fae5; color: #059669; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        .empty-results { display: none; text-align: center; padding: 48px 24px; color: #9ca3af; }
+        .empty-results.visible { display: block; }
+        .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+        .empty-hint { font-size: 14px; margin-top: 4px; }
+        .tab-xml .tab-xml1 { background: #E6F4FF; }
+        .tab-xml .tab-xml2 { background: #FFF5E6; }
+        .tab-xml .tab-xml3 { background: #E8FFF3; }
+        .tab-xml .tab-xml4 { background: #FDEDF2; }
+        .tab-xml .tab-xml5 { background: #F3FDE8; }
+        .tab-xml .tab-btn.active { border: 2px solid #64748b; }
+        .tab-desc { font-size: 13px; color: #6b7280; margin-top: 12px; }
+        .xml-tab-content { display: none; margin-top: 16px; max-height: 400px; overflow-y: auto; }
+        .xml-tab-content.active { display: block; }
+        #xmlDetailSection { display: none; margin-top: 20px; padding: 16px; background: #fff; border: 1px solid #e8ecf0; border-radius: 10px; }
+        #xmlDetailSection.visible { display: block; }
+        .xml-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .xml-detail-header span { font-size: 15px; font-weight: 600; color: #374151; }
+        .btn-close-detail { padding: 6px 12px; font-size: 13px; background: #f3f4f6; color: #6b7280; border: 1px solid #e0e4e8; border-radius: 8px; cursor: pointer; }
+        .btn-close-detail:hover { background: #e5e7eb; }
+        .detail-loi-section { margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e8ecf0; }
+        .detail-loi-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .detail-loi-item { padding: 12px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+        .detail-loi-item:hover { background: #eff6ff; border-color: #3b82f6; }
+        .detail-loi-item.active { background: #EFF6FF; border-color: #3b82f6; font-weight: 500; }
+        .loi-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; background: #DC2626; color: #fff; border-radius: 50%; font-size: 12px; font-weight: 600; }
+        .detail-loi-item.active .loi-badge { background: #2563eb; }
+        .detail-nguyennhan { padding: 16px; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; }
+        .nguyennhan-content p { margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #78350F; }
+        .nguyennhan-content p:last-child { margin-bottom: 0; }
+        .detail-no-loi { padding: 16px; background: #D1FAE5; border: 1px solid #059669; border-radius: 8px; color: #065F46; font-size: 14px; }
+        .table-header-left { background: #E6F4FF !important; }
+        .table-header-right { background: #E8FFF3 !important; }
+        .dm-thuoc-header { font-size: 15px; font-weight: 600; color: #374151; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e8ecf0; }
+        .dm-thuoc-warning { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 16px; margin-top: 16px; }
+        .dm-thuoc-warning .section-title { color: #B45309; }
+        .thuoc-chongchidinh-row { background: #FEE2E2 !important; border-left: 4px solid #DC2626; }
+        .rule-badge { font-size: 11px; padding: 2px 8px; background: #DC2626; color: #fff; border-radius: 4px; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <button class="menu-btn" id="toggleSidebar">☰</button>
+            <img class="logo" src="WPF_GiamDinhBaoHiemYTe/Assets/Logo_benh_vien-removebg-preview.png" alt="Logo bệnh viện">
+            <div class="header-text">
+                <h1>HỆ THỐNG TỔNG HỢP BỆNH VIỆN</h1>
+                <p>Giám định BHYT • Tóm tắt bệnh án • Báo cáo số liệu</p>
+            </div>
+        </header>
+
+        <div class="main">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-profile">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle fill='%23e5e7eb' cx='32' cy='32' r='32'/%3E%3Ctext x='32' y='40' font-size='24' fill='%239ca3af' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E" alt="Avatar">
+                    <div class="greeting">Xin chào!</div>
+                </div>
+                <nav class="nav-section">
+                    <button class="nav-item active" data-page="dashboard" style="margin: 8px; padding-left: 12px;"><span class="icon">🏠</span> Trang chủ</button>
+                    <div class="nav-group">
+                        <div class="nav-group-header"><span>Giám định BHYT</span><span class="arrow">▼</span></div>
+                        <div class="nav-group-items">
+                            <button class="nav-item" data-page="timkiem"><span class="icon">🔍</span> Kiểm tra hồ sơ</button>
+                            <button class="nav-item" data-page="taibaocao"><span class="icon">📥</span> Tải báo cáo</button>
+                            <button class="nav-item" data-page="dm-dieukien"><span class="icon">📋</span> Điều kiện</button>
+                            <button class="nav-item" data-page="dm-thuoc"><span class="icon">💊</span> Danh mục thuốc</button>
+                        </div>
+                    </div>
+                    <div class="nav-group">
+                        <div class="nav-group-header"><span>Tóm tắt bệnh án</span><span class="arrow">▼</span></div>
+                        <div class="nav-group-items">
+                            <button class="nav-item" data-page="tomtat-benhan"><span class="icon">📝</span> Tóm tắt bệnh án</button>
+                            <button class="nav-item" data-page="phacdo-danhgia"><span class="icon">✓</span> Đánh giá phác đồ</button>
+                            <button class="nav-item" data-page="phacdo-danhmuc"><span class="icon">📑</span> Danh mục phác đồ</button>
+                            <button class="nav-item" data-page="phacdo-bangkiem"><span class="icon">☑</span> Danh mục bảng kiểm</button>
+                        </div>
+                    </div>
+                    <div class="nav-group">
+                        <div class="nav-group-header"><span>Báo cáo số liệu</span><span class="arrow">▼</span></div>
+                        <div class="nav-group-items">
+                            <button class="nav-item" data-page="baocao-bang1"><span class="icon">1</span> Bảng 1</button>
+                            <button class="nav-item" data-page="baocao-bang2"><span class="icon">2</span> Bảng 2</button>
+                            <button class="nav-item" data-page="baocao-bang3"><span class="icon">3</span> Bảng 3</button>
+                            <button class="nav-item" data-page="baocao-bang4"><span class="icon">4</span> Bảng 4</button>
+                        </div>
+                    </div>
+                    <button class="nav-item" data-page="taikhoan" style="margin: 8px; padding-left: 12px; margin-top: 12px; border-top: 1px solid #f3f4f6; padding-top: 12px;"><span class="icon">👤</span> Thông tin tài khoản</button>
+                </nav>
+            </aside>
+
+            <main class="content">
+                <!-- ========== TRANG CHỦ (DUY NHẤT) ========== -->
+                <div id="page-dashboard" class="page-content active">
+                    <h2 class="page-title">Trang chủ</h2>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 24px;">Tổng quan hệ thống Giám định BHYT • Tóm tắt bệnh án • Báo cáo số liệu</p>
+                    <div class="kpi-grid">
+                        <div class="kpi-card"><div class="label">TỔNG SỐ HỒ SƠ</div><div class="value">1,245</div><div class="sub">Trong ngày: 42 • Trong tháng: 1,203</div></div>
+                        <div class="kpi-card"><div class="label">ĐIỀU TRỊ NỘI TRÚ</div><div class="value">892</div><div class="sub">Trong ngày: 28 • Trong tháng: 864</div></div>
+                        <div class="kpi-card"><div class="label">TÌNH TRẠNG RA VIỆN</div><div class="value">156</div><div class="sub">Trong ngày: 5 • Trong tháng: 151</div></div>
+                        <div class="kpi-card"><div class="label">% BẢO HIỂM Y TẾ</div><div class="value">78%</div><div class="sub">Trong ngày: 78% • Trong tháng: 76%</div></div>
+                    </div>
+                    <div class="chart-row">
+                        <div class="chart-card"><h3>THỐNG KÊ HỒ SƠ KCB</h3><div class="chart-placeholder">Biểu đồ thống kê hồ sơ KCB</div></div>
+                        <div class="chart-card"><h3>THỐNG KÊ CHI PHÍ KCB</h3><div class="chart-placeholder">Biểu đồ chi phí KCB</div></div>
+                    </div>
+                    <div class="chart-card"><h3>TỔNG HỢP 20 BỆNH PHỔ BIẾN</h3><div class="chart-placeholder">Biểu đồ bệnh phổ biến</div></div>
+                </div>
+
+                <!-- ========== KIỂM TRA HỒ SƠ ========== -->
+                <div id="page-timkiem" class="page-content">
+                    <h2 class="page-title">Kiểm tra hồ sơ</h2>
+                    <div class="card">
+                        <div class="search-toolbar">
+                            <div class="toggle-group" id="searchModeToggle">
+                                <button class="toggle-btn active" data-mode="malk">🔗 Tìm theo Mã liên kết</button>
+                                <button class="toggle-btn" data-mode="mabn">👤 Tìm theo Mã bệnh nhân</button>
+                            </div>
+                            <div class="btn-group" style="margin: 0;">
+                                <button class="btn">Import Excel</button>
+                                <button class="btn">Export Excel</button>
+                                <button class="btn">Làm mới</button>
+                                <span class="chip">Kết quả: <span id="resultCount">2</span></span>
+                            </div>
+                        </div>
+                        <div id="searchByMaLk" class="search-block">
+                            <div class="search-row">
+                                <input type="text" class="search-input" placeholder="Nhập mã liên kết / số bệnh án" style="flex:1;">
+                                <button class="btn btn-primary">Tra cứu</button>
+                            </div>
+                        </div>
+                        <div id="searchByMaBn" class="search-block" style="display:none;">
+                            <div class="search-row">
+                                <input type="text" class="search-input" placeholder="Nhập mã bệnh nhân (Sovv - Số vào viện)" style="flex:1;">
+                                <button class="btn btn-primary">Tra cứu</button>
+                            </div>
+                            <div class="form-group" style="margin-top: 12px;">
+                                <label>Ngày vào (từ)</label>
+                                <input type="date" style="max-width: 200px;">
+                            </div>
+                            <div id="maLkResults" class="ma-lk-results" style="display:none;">
+                                <div class="ma-lk-header">
+                                    <span>✅ Tìm thấy <strong>3</strong> mã liên kết. Chọn một để xem chi tiết:</span>
+                                    <button class="btn-icon" title="Thu gọn">▼</button>
+                                </div>
+                                <div class="ma-lk-list">
+                                    <div class="ma-lk-item">LK001 - Nguyễn Văn A - 01/03/2025</div>
+                                    <div class="ma-lk-item">LK002 - Trần Thị B - 02/03/2025</div>
+                                    <div class="ma-lk-item">LK003 - Lê Văn C - 03/03/2025</div>
+                                </div>
+                            </div>
+                            <p class="search-hint" id="maBnHint">📋 Chưa có kết quả tìm kiếm. Nhập Ma_bn (Sovv) và chọn thời gian, sau đó click 'Tra cứu'.</p>
+                        </div>
+                        <div id="resultsSection" class="results-section">
+                            <div class="results-header">
+                                <span>Mã liên kết</span><span>Họ và tên</span><span>Giới tính</span><span>Ngày sinh</span><span>Nội dung lỗi</span><span>Chi tiết</span>
+                            </div>
+                            <div id="resultsList" class="results-list">
+                                <div class="result-item">
+                                    <span>LK001</span><span>Nguyễn Văn A</span><span class="gender-badge">Nam</span><span>1985</span>
+                                    <span class="error-badge">3 lỗi</span>
+                                    <button type="button" class="btn btn-sm btn-primary btn-xem-chitiet">👁 Xem</button>
+                                </div>
+                                <div class="result-item">
+                                    <span>LK002</span><span>Trần Thị B</span><span class="gender-badge">Nữ</span><span>1990</span>
+                                    <span class="error-badge success">Không có lỗi</span>
+                                    <button type="button" class="btn btn-sm btn-primary btn-xem-chitiet">👁 Xem</button>
+                                </div>
+                            </div>
+                            <div id="emptyState" class="empty-results">
+                                <div class="empty-icon">📋</div>
+                                <p>Chưa có dữ liệu</p>
+                                <p class="empty-hint">Nhập số bệnh án/số tiếp nhận rồi nhấn Tra cứu</p>
+                            </div>
+                        </div>
+                        <div id="xmlDetailSection">
+                            <div class="xml-detail-header">
+                                <span>Chi tiết – Mã LK: <strong id="detailMaLk">-</strong></span>
+                                <button type="button" class="btn-close-detail" id="btnCloseXmlDetail">✕ Đóng</button>
+                            </div>
+                            <div id="detailLoiSection" class="detail-loi-section">
+                                <div id="detailLoiTitle" class="section-title">Danh sách lỗi của bệnh nhân – Chọn lỗi để xem nguyên nhân</div>
+                                <div id="detailLoiList" class="detail-loi-list">
+                                    <div class="detail-loi-item active" data-loi="0">
+                                        <span class="loi-badge">1</span> Thuốc 40.561 không có mã bệnh hợp lệ (Rule 26)
+                                    </div>
+                                    <div class="detail-loi-item" data-loi="1">
+                                        <span class="loi-badge">2</span> Thuốc 40.751 không đáp ứng điều kiện (Rule 30)
+                                    </div>
+                                    <div class="detail-loi-item" data-loi="2">
+                                        <span class="loi-badge">3</span> Thiếu thông tin chẩn đoán ICD
+                                    </div>
+                                </div>
+                                <div id="detailNguyenNhan" class="detail-nguyennhan">
+                                    <div class="section-title">Nguyên nhân chi tiết</div>
+                                    <div id="nguyennhanContent" class="nguyennhan-content"></div>
+                                </div>
+                                <div id="detailNoLoi" class="detail-no-loi" style="display:none;">✅ Bệnh nhân không có lỗi giám định.</div>
+                            </div>
+                            <div class="tab-bar tab-xml">
+                                <button type="button" class="tab-btn tab-xml1 active" data-xml="1">XML1</button>
+                                <button type="button" class="tab-btn tab-xml2" data-xml="2">XML2</button>
+                                <button type="button" class="tab-btn tab-xml3" data-xml="3">XML3</button>
+                                <button type="button" class="tab-btn tab-xml4" data-xml="4">XML4</button>
+                                <button type="button" class="tab-btn tab-xml5" data-xml="5">XML5</button>
+                            </div>
+                            <p class="tab-desc">Chuyển tab để xem chi tiết dữ liệu từng XML. Tab có lỗi sẽ được đánh dấu màu đỏ.</p>
+                            <div id="xmlContent1" class="xml-tab-content active">
+                                <div class="section-title">XML1 – Thông tin hành chính & chẩn đoán</div>
+                                <div class="scroll-table">
+                                    <table class="data-table">
+                                        <thead><tr><th>Trường</th><th>Giá trị</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>Ma_Lk</td><td>12345_2025</td></tr>
+                                            <tr><td>SoBenhAn</td><td>12345/2025</td></tr>
+                                            <tr><td>Ma_Benh_Chinh</td><td>I63.9</td></tr>
+                                            <tr><td>Ma_Benh_Kt</td><td>E11.9; I10</td></tr>
+                                            <tr><td>ChanDoan_VaoKhoa</td><td>Nhồi máu não</td></tr>
+                                            <tr><td>ChanDoan_RaVien</td><td>Nhồi máu não, Đái tháo đường type 2</td></tr>
+                                            <tr><td>Ngay_Vao</td><td>01/03/2025</td></tr>
+                                            <tr><td>Ngay_Ra</td><td>05/03/2025</td></tr>
+                                            <tr><td>Ma_TheBHYT</td><td>CC1234567890123</td></tr>
+                                            <tr><td>MaCSKCB</td><td>01001</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="xmlContent2" class="xml-tab-content">
+                                <div class="section-title">XML2 – Danh sách thuốc</div>
+                                <div class="scroll-table">
+                                    <table class="data-table">
+                                        <thead><tr><th>STT</th><th>Mã thuốc</th><th>Tên thuốc</th><th>Đơn vị</th><th>Hàm lượng</th><th>Đường dùng</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th><th>Ngày YL</th></tr></thead>
+                                        <tbody>
+                                            <tr style="background:#FEE2E2;"><td>1</td><td>40.561</td><td>Thuốc Peptid</td><td>ống</td><td>10mg</td><td>Tiêm</td><td>2</td><td>850.000</td><td>1.700.000</td><td>02/03/2025</td></tr>
+                                            <tr><td>2</td><td>40.219</td><td>Azithromycin 500mg</td><td>viên</td><td>500mg</td><td>Uống</td><td>6</td><td>12.500</td><td>75.000</td><td>01/03/2025</td></tr>
+                                            <tr><td>3</td><td>40.751</td><td>Silygamma 90mg</td><td>viên</td><td>90mg</td><td>Uống</td><td>30</td><td>8.200</td><td>246.000</td><td>01/03/2025</td></tr>
+                                            <tr><td>4</td><td>40.001</td><td>Paracetamol 500mg</td><td>viên</td><td>500mg</td><td>Uống</td><td>20</td><td>500</td><td>10.000</td><td>01/03/2025</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="xmlContent3" class="xml-tab-content">
+                                <div class="section-title">XML3 – Danh sách dịch vụ kỹ thuật</div>
+                                <div class="scroll-table">
+                                    <table class="data-table">
+                                        <thead><tr><th>STT</th><th>Mã DV</th><th>Tên dịch vụ</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền BH</th><th>Ngày thực hiện</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>1</td><td>23.0001.0001</td><td>Chụp CT sọ não</td><td>1</td><td>1.200.000</td><td>1.080.000</td><td>02/03/2025</td></tr>
+                                            <tr><td>2</td><td>23.0002.0015</td><td>Siêu âm ổ bụng</td><td>1</td><td>150.000</td><td>135.000</td><td>01/03/2025</td></tr>
+                                            <tr><td>3</td><td>23.0003.0020</td><td>Điện tim</td><td>2</td><td>50.000</td><td>90.000</td><td>01/03/2025</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="xmlContent4" class="xml-tab-content">
+                                <div class="section-title">XML4 – Xét nghiệm</div>
+                                <div class="scroll-table">
+                                    <table class="data-table">
+                                        <thead><tr><th>STT</th><th>Mã XN</th><th>Tên xét nghiệm</th><th>Kết quả</th><th>Đơn vị</th><th>Ngày thực hiện</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>1</td><td>XN.001</td><td>Công thức máu</td><td>Bình thường</td><td>-</td><td>01/03/2025</td></tr>
+                                            <tr><td>2</td><td>XN.002</td><td>Đường huyết</td><td>7.2</td><td>mmol/L</td><td>01/03/2025</td></tr>
+                                            <tr><td>3</td><td>XN.003</td><td>Chức năng gan</td><td>AST: 28, ALT: 32</td><td>U/L</td><td>02/03/2025</td></tr>
+                                            <tr><td>4</td><td>XN.004</td><td>Đông máu cơ bản</td><td>PT: 12s, INR: 1.0</td><td>-</td><td>02/03/2025</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="xmlContent5" class="xml-tab-content">
+                                <div class="section-title">XML5 – Vật tư y tế</div>
+                                <div class="scroll-table">
+                                    <table class="data-table">
+                                        <thead><tr><th>STT</th><th>Mã VT</th><th>Tên vật tư</th><th>Đơn vị</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>1</td><td>VT.001</td><td>Bơm tiêm 10ml</td><td>Cái</td><td>5</td><td>3.000</td><td>15.000</td></tr>
+                                            <tr><td>2</td><td>VT.002</td><td>Kim luồn 18G</td><td>Cái</td><td>2</td><td>25.000</td><td>50.000</td></tr>
+                                            <tr><td>3</td><td>VT.003</td><td>Găng tay y tế</td><td>Đôi</td><td>10</td><td>2.500</td><td>25.000</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== TẢI BÁO CÁO ========== -->
+                <div id="page-taibaocao" class="page-content">
+                    <h2 class="page-title">Tải báo cáo</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Chọn loại báo cáo</label>
+                            <select><option>Báo cáo giám định</option><option>Báo cáo thống kê</option></select>
+                        </div>
+                        <div class="date-range">
+                            <label>Từ ngày:</label><input type="date">
+                            <label>Đến ngày:</label><input type="date">
+                            <button class="btn btn-primary">Tải xuống</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== DANH MỤC ĐIỀU KIỆN ========== -->
+                <div id="page-dm-dieukien" class="page-content">
+                    <h2 class="page-title">Danh mục điều kiện giám định</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Tìm kiếm điều kiện</label>
+                            <input type="text" class="search-box" placeholder="Tìm kiếm điều kiện...">
+                        </div>
+                        <div class="list-item">Điều kiện 1: Thông tin bệnh nhân đầy đủ</div>
+                        <div class="list-item">Điều kiện 2: Chẩn đoán ICD hợp lệ</div>
+                        <div class="list-item">Điều kiện 3: Ngày vào viện ≤ ngày ra viện</div>
+                        <div class="list-item">Điều kiện 4: Số thẻ BHYT đúng định dạng</div>
+                    </div>
+                </div>
+
+                <!-- ========== DANH MỤC THUỐC ========== -->
+                <div id="page-dm-thuoc" class="page-content">
+                    <h2 class="page-title">Danh mục thuốc – Kiểm tra chống chỉ định</h2>
+                    <div class="card">
+                        <div class="dm-thuoc-header">Tra cứu thuốc theo số bệnh án</div>
+                        <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">Nhập số bệnh án (SoBenhAn) để lấy danh sách thuốc bệnh nhân đã sử dụng từ XML2, sau đó hệ thống sẽ đối chiếu với bộ luật giám định để hiển thị các thuốc chống chỉ định hoặc không nên dùng chung.</p>
+                        <div class="form-row form-row-2" style="align-items: flex-end;">
+                            <div class="form-group">
+                                <label>Số bệnh án (SoBenhAn)</label>
+                                <input type="text" id="dmThuocSoBenhAn" placeholder="VD: 12345/2025 hoặc TN123456789...">
+                            </div>
+                            <div><button type="button" class="btn btn-primary" id="dmThuocTraCuu">Tra cứu</button></div>
+                        </div>
+                    </div>
+                    <div id="dmThuocResults" class="card" style="display: none;">
+                        <div class="dm-thuoc-header">Danh sách thuốc bệnh nhân đã sử dụng (từ XML2)</div>
+                        <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px;">Thông tin thuốc: Ma_Thuoc, Ten_Thuoc, Don_vi_tinh, Ham_luong, Duong_dung, Lieu_Dung, Cach_Dung, Ngay_YL, Ma_Khoa, Ma_Bac_Si</p>
+                        <div class="scroll-table">
+                            <table class="data-table" id="dmThuocTable">
+                                <thead>
+                                    <tr>
+                                        <th>Mã thuốc</th><th>Tên thuốc</th><th>Đơn vị</th><th>Hàm lượng</th><th>Đường dùng</th><th>Liều dùng</th><th>Ngày YL</th><th>Khoa</th><th>Bác sĩ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dmThuocTableBody">
+                                    <!-- Dữ liệu mẫu -->
+                                    <tr class="thuoc-chongchidinh-row">
+                                        <td>40.561</td><td>Thuốc Peptid (VD)</td><td>ống</td><td>10mg</td><td>Tiêm</td><td>1x1</td><td>05/03/2025</td><td>Ngoại TK</td><td>BS. A <span class="rule-badge">Rule 26</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>40.219</td><td>Azithromycin</td><td>viên</td><td>500mg</td><td>Uống</td><td>1x1</td><td>04/03/2025</td><td>Nội</td><td>BS. B</td>
+                                    </tr>
+                                    <tr class="thuoc-chongchidinh-row">
+                                        <td>40.751</td><td>Silygamma (Sylimarin)</td><td>viên</td><td>90mg</td><td>Uống</td><td>3x1</td><td>03/03/2025</td><td>Gan mật</td><td>BS. C <span class="rule-badge">Rule 30</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="dm-thuoc-warning">
+                            <div class="section-title">⚠ Thuốc chống chỉ định / Không nên dùng chung (từ bộ luật giám định)</div>
+                            <p style="font-size: 13px; color: #92400E; margin: 8px 0 12px 0;">Các dòng được tô đỏ là thuốc vi phạm quy định trong bộ luật. Bác sĩ có thể tham khảo để rút kinh nghiệm khi kê đơn.</p>
+                            <ul style="font-size: 13px; color: #78350F; margin-left: 20px; line-height: 1.8;">
+                                <li><strong>40.561</strong> (Rule 26): Thuốc Peptid – cần mã bệnh I60-I68/S06/S02 hoặc mã DV phẫu thuật TK sọ não</li>
+                                <li><strong>40.751</strong> (Rule 30): Sylimarin – cần mã bệnh gan mật B15-B19/K70-K77 hoặc điều kiện phù hợp</li>
+                                <li><strong>40.219</strong> (Rule 40): Azithromycin – kiểm tra liều/ngày, tương tác với thuốc khác</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== THÔNG TIN TÀI KHOẢN ========== -->
+                <div id="page-taikhoan" class="page-content">
+                    <h2 class="page-title">Thông tin tài khoản</h2>
+                    <div class="card">
+                        <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e8ecf0;">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle fill='%23e5e7eb' cx='32' cy='32' r='32'/%3E%3Ctext x='32' y='40' font-size='24' fill='%239ca3af' text-anchor='middle'%3E👤%3C/text%3E%3C/svg%3E" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%;">
+                            <div>
+                                <h3 style="font-size: 18px; color: #374151; margin-bottom: 4px;">Nguyễn Văn A</h3>
+                                <p style="font-size: 13px; color: #6b7280;">admin@benhvien.vn • Quản trị viên</p>
+                            </div>
+                        </div>
+                        <div class="section-title">Thông tin cá nhân</div>
+                        <div class="form-row form-row-2">
+                            <div class="form-group"><label>Họ và tên</label><input type="text" value="Nguyễn Văn A"></div>
+                            <div class="form-group"><label>Email</label><input type="email" value="admin@benhvien.vn"></div>
+                            <div class="form-group"><label>Số điện thoại</label><input type="tel" value="0901234567"></div>
+                            <div class="form-group"><label>Đơn vị / Khoa phòng</label><input type="text" value="Phòng Giám định BHYT"></div>
+                            <div class="form-group"><label>Chức vụ</label><input type="text" value="Quản trị viên"></div>
+                            <div class="form-group"><label>Ngày đăng ký</label><input type="text" value="15/01/2024" disabled></div>
+                        </div>
+                        <div class="section-title" style="margin-top: 24px;">Đổi mật khẩu</div>
+                        <div class="form-row form-row-1" style="max-width: 400px;">
+                            <div class="form-group"><label>Mật khẩu hiện tại</label><input type="password" placeholder="Nhập mật khẩu hiện tại"></div>
+                            <div class="form-group"><label>Mật khẩu mới</label><input type="password" placeholder="Nhập mật khẩu mới"></div>
+                            <div class="form-group"><label>Xác nhận mật khẩu mới</label><input type="password" placeholder="Nhập lại mật khẩu mới"></div>
+                        </div>
+                        <div style="margin-top: 20px; display: flex; gap: 12px;">
+                            <button class="btn btn-primary">Cập nhật thông tin</button>
+                            <button class="btn">Đổi mật khẩu</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== TÓM TẮT BỆNH ÁN ========== -->
+                <div id="page-tomtat-benhan" class="page-content">
+                    <h2 class="page-title">Tóm tắt bệnh án</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Số bệnh án / Mã y tế</label>
+                            <input type="text" placeholder="Nhập số bệnh án hoặc mã y tế...">
+                        </div>
+                        <div class="form-group">
+                            <label>Bác sĩ tóm tắt bệnh án</label>
+                            <input type="text" placeholder="Tên bác sĩ...">
+                        </div>
+                        <div class="form-group">
+                            <label>Số báo cáo</label>
+                            <input type="text" placeholder="Nhập số báo cáo...">
+                        </div>
+                        <div class="section-title">I. HÀNH CHÍNH</div>
+                        <div class="two-col">
+                            <div>
+                                <div class="form-group"><label>Tên bệnh nhân</label><input type="text"></div>
+                                <div class="form-group"><label>Giới tính</label><input type="text"></div>
+                                <div class="form-group"><label>Địa chỉ cư trú</label><input type="text"></div>
+                                <div class="form-group"><label>Số thẻ BHYT</label><input type="text"></div>
+                                <div class="form-group"><label>Số CCCD/Hộ chiếu/Mã định danh</label><input type="text"></div>
+                                <div class="form-group"><label>Vào viện ngày</label><input type="text"></div>
+                                <div class="form-group"><label>Ra viện ngày</label><input type="text"></div>
+                            </div>
+                            <div>
+                                <div class="form-group"><label>Ngày sinh</label><input type="text"></div>
+                                <div class="form-group"><label>Tuổi</label><input type="text"></div>
+                                <div class="form-group"><label>Dân tộc</label><input type="text"></div>
+                            </div>
+                        </div>
+                        <div class="section-title">II. CHẨN ĐOÁN</div>
+                        <div class="sub-section-title">1. Chẩn đoán vào viện</div>
+                        <div class="form-group"><label>Bệnh chính</label><input type="text"></div>
+                        <div class="form-group"><label>Bệnh kèm theo</label><input type="text"></div>
+                        <div class="form-group"><label>Mã ICD (vào viện - chính)</label><input type="text"></div>
+                        <div class="form-group"><label>Mã ICD (vào viện - kèm theo)</label><input type="text"></div>
+                        <div class="sub-section-title">2. Chẩn đoán ra viện</div>
+                        <div class="form-group"><label>Bệnh chính</label><input type="text"></div>
+                        <div class="form-group"><label>Bệnh kèm theo</label><input type="text"></div>
+                        <div class="form-group"><label>Mã ICD (ra viện - chính)</label><input type="text"></div>
+                        <div class="form-group"><label>Mã ICD (ra viện - kèm theo)</label><input type="text"></div>
+                        <div class="section-title">III. TÓM TẮT QUÁ TRÌNH ĐIỀU TRỊ</div>
+                        <div class="form-group"><label>Lý do vào viện</label><textarea rows="2"></textarea></div>
+                        <div class="form-group"><label>Quá trình bệnh lý và diễn biến lâm sàng</label><textarea rows="3" placeholder="Đặc điểm khởi phát, các triệu chứng lâm sàng, diễn biến bệnh"></textarea></div>
+                        <div class="form-group"><label>Tiền sử bệnh</label><textarea rows="2"></textarea></div>
+                        <div class="form-group"><label>Những dấu hiệu lâm sàng chính được ghi nhận</label><textarea rows="2"></textarea></div>
+                        <div class="form-group"><label>Tóm tắt kết quả xét nghiệm cận lâm sàng có giá trị chẩn đoán</label><textarea rows="2"></textarea></div>
+                        <div class="sub-section-title">Phương pháp điều trị</div>
+                        <div class="checkbox-row">
+                            <label><input type="checkbox"> Nội khoa: Không</label>
+                            <label><input type="checkbox"> Nội khoa: Có, ghi rõ <input type="text" placeholder="Hướng điều trị" style="width: 200px; margin-left: 8px;"></label>
+                        </div>
+                        <div class="checkbox-row">
+                            <label><input type="checkbox"> Phẫu thuật, thủ thuật: Không</label>
+                            <label><input type="checkbox"> Phẫu thuật, thủ thuật: Có, ghi rõ <input type="text" placeholder="Hướng điều trị" style="width: 200px; margin-left: 8px;"></label>
+                        </div>
+                        <div class="form-group"><label>Phương pháp điều trị</label><input type="text"></div>
+                        <div class="sub-section-title">Tình trạng người bệnh ra viện</div>
+                        <div class="checkbox-row">
+                            <label><input type="radio" name="ketqua"> Khỏi</label>
+                            <label><input type="radio" name="ketqua"> Đỡ</label>
+                            <label><input type="radio" name="ketqua"> Không thay đổi</label>
+                            <label><input type="radio" name="ketqua"> Nặng hơn</label>
+                            <label><input type="radio" name="ketqua"> Tử vong</label>
+                            <label><input type="radio" name="ketqua"> Tiên lượng nặng xin về</label>
+                            <label><input type="radio" name="ketqua"> Chưa xác định</label>
+                        </div>
+                        <div class="form-group"><label>Tình trạng ra viện</label><textarea rows="2"></textarea></div>
+                        <div class="form-group"><label>Hướng điều trị và các chế độ tiếp theo</label><textarea rows="2"></textarea></div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary">Tóm tắt bệnh án</button>
+                            <button class="btn">Xuất file</button>
+                            <button class="btn">Lưu tiến trình</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== ĐÁNH GIÁ PHÁC ĐỒ ========== -->
+                <div id="page-phacdo-danhgia" class="page-content">
+                    <h2 class="page-title">Đánh giá phác đồ điều trị</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Chọn phác đồ</label>
+                            <select><option>-- Chọn phác đồ --</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Số bệnh án</label>
+                            <input type="text" placeholder="Nhập số bệnh án...">
+                        </div>
+                        <div class="section-title">Bảng kiểm tra tiêu chí</div>
+                        <div class="scroll-table">
+                            <table class="data-table">
+                                <thead><tr><th>STT</th><th>Yêu cầu đạt được</th><th>Đạt</th><th>Không đạt</th><th>Không áp dụng</th><th>Lý do không đạt</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1</td><td>Tiêu chí 1</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="text"></td></tr>
+                                    <tr><td>2</td><td>Tiêu chí 2</td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="text"></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 16px;">Lưu đánh giá</button>
+                    </div>
+                </div>
+
+                <!-- ========== DANH MỤC PHÁC ĐỒ ========== -->
+                <div id="page-phacdo-danhmuc" class="page-content">
+                    <h2 class="page-title">Danh mục phác đồ</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Tìm kiếm phác đồ điều trị</label>
+                            <input type="text" class="search-box" placeholder="Tìm kiếm phác đồ điều trị...">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary">Thêm mới</button>
+                            <button class="btn">Làm mới</button>
+                        </div>
+                        <div class="scroll-table">
+                            <table class="data-table">
+                                <thead><tr><th>ID</th><th>Tên phác đồ</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1</td><td>Phác đồ điều trị tăng huyết áp</td><td>...</td><td><button class="btn">Sửa</button></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== DANH MỤC BẢNG KIỂM ========== -->
+                <div id="page-phacdo-bangkiem" class="page-content">
+                    <h2 class="page-title">Danh mục bảng kiểm</h2>
+                    <div class="card">
+                        <div class="form-group">
+                            <label>Tìm kiếm bảng kiểm</label>
+                            <input type="text" class="search-box" placeholder="Tìm kiếm bảng kiểm...">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary">Thêm mới</button>
+                            <button class="btn">Làm mới</button>
+                        </div>
+                        <div class="scroll-table">
+                            <table class="data-table">
+                                <thead><tr><th>ID</th><th>Tên bảng kiểm</th><th>Phác đồ liên kết</th><th>Thao tác</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1</td><td>Bảng kiểm tăng huyết áp</td><td>Phác đồ THA</td><td><button class="btn">Sửa</button></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== BÁO CÁO BẢNG 1 ========== -->
+                <div id="page-baocao-bang1" class="page-content">
+                    <h2 class="page-title">Bảng 1 - Hoạt động</h2>
+                    <div class="date-range">
+                        <label>Từ ngày:</label><input type="date" value="2025-03-01">
+                        <label>Đến ngày:</label><input type="date" value="2025-03-12">
+                        <button class="btn btn-primary">Lọc dữ liệu</button>
+                    </div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead><tr><th>Hoạt động</th><th>Đơn vị</th><th>Kế hoạch</th><th>Thực hiện</th><th>Tỷ lệ thực hiện/KH</th></tr></thead>
+                            <tbody>
+                                <tr><td>Khám bệnh</td><td>Lượt</td><td><input type="text" value="1200"></td><td><input type="text" value="1150"></td><td>95.8%</td></tr>
+                                <tr><td>Điều trị nội trú</td><td>Lượt</td><td><input type="text" value="800"></td><td><input type="text" value="765"></td><td>95.6%</td></tr>
+                                <tr><td>Phẫu thuật</td><td>Ca</td><td><input type="text" value="120"></td><td><input type="text" value="118"></td><td>98.3%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 16px;">Xuất báo cáo</button>
+                </div>
+
+                <!-- ========== BÁO CÁO BẢNG 2 ========== -->
+                <div id="page-baocao-bang2" class="page-content">
+                    <h2 class="page-title">Bảng 2 - Chỉ tiêu KH lượt tuần 12 / Công suất điều trị giường / TT HSBA</h2>
+                    <div class="date-range">
+                        <label>Từ ngày:</label><input type="date" value="2025-03-01">
+                        <label>Đến ngày:</label><input type="date" value="2025-03-12">
+                        <button class="btn btn-primary">Lọc dữ liệu</button>
+                    </div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th rowspan="2">TT</th><th rowspan="2">Khoa Phòng</th>
+                                    <th colspan="3">Chỉ tiêu KH lượt tuần 12</th><th colspan="3">Công suất điều trị giường</th><th colspan="3">TT HSBA</th></tr>
+                                <tr><th>NB/Tuần</th><th>Thực hiện</th><th>Tỷ lệ</th><th>KH</th><th>Ngày TH</th><th>Công suất</th><th>Kế hoạch</th><th>Thực hiện</th><th>Tỷ lệ</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1</td><td>Khoa Nội</td><td><input type="text"></td><td><input type="text"></td><td>-</td><td><input type="text"></td><td><input type="text"></td><td>-</td><td><input type="text"></td><td><input type="text"></td><td>-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 16px;">Xuất báo cáo</button>
+                </div>
+
+                <!-- ========== BÁO CÁO BẢNG 3 ========== -->
+                <div id="page-baocao-bang3" class="page-content">
+                    <h2 class="page-title">Bảng 3 - Phẫu thuật / Dịch vụ yêu cầu</h2>
+                    <div class="date-range">
+                        <label>Từ ngày:</label><input type="date" value="2025-03-01">
+                        <label>Đến ngày:</label><input type="date" value="2025-03-12">
+                        <button class="btn btn-primary">Lọc dữ liệu</button>
+                    </div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead><tr><th>TT</th><th>Khoa Phòng</th><th>Phẫu thuật - Kế hoạch</th><th>Phẫu thuật - Thực hiện</th><th>Tỷ lệ TH/KH</th><th>Dịch vụ yêu cầu - Tổng</th><th>Tỷ lệ DVYC/PT</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>Khoa Ngoại</td><td><input type="text"></td><td><input type="text"></td><td>-</td><td><input type="text"></td><td>-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px;"><strong>Tổng cộng:</strong></div>
+                    <button class="btn btn-primary" style="margin-top: 16px;">Xuất báo cáo</button>
+                </div>
+
+                <!-- ========== BÁO CÁO BẢNG 4 ========== -->
+                <div id="page-baocao-bang4" class="page-content">
+                    <h2 class="page-title">Bảng 4 - Phòng khám thường / Các khoa ngoại trú / Phòng có nhiều cổng vào / Phòng khám yêu cầu</h2>
+                    <div class="date-range">
+                        <label>Từ ngày:</label><input type="date" value="2025-03-01">
+                        <label>Đến ngày:</label><input type="date" value="2025-03-12">
+                        <button class="btn btn-primary">Lọc dữ liệu</button>
+                    </div>
+                    <div class="section-title">Phòng khám thường</div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead><tr><th>STT</th><th>Phòng Khám</th><th>Số ngày hoạt động</th><th>Chỉ tiêu ngày</th><th>Tháng</th><th>So với KH</th><th>Số lượng NV</th><th>Tỷ lệ NV</th><th>KH TB/HS</th><th>TB/HS BHYT</th><th>So sánh BHYT</th><th>KH TB/HS VP</th><th>TB/HS VP</th><th>So sánh VP</th></tr></thead>
+                            <tbody><tr><td>1</td><td>PK Đa khoa</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td>-</td><td><input type="text"></td><td>-</td><td><input type="text"></td><td><input type="text"></td><td>-</td><td><input type="text"></td><td><input type="text"></td><td>-</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="section-title">Các khoa ngoại trú</div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead><tr><th>Khoa Phòng</th><th>KH TB/HS</th><th>TB/HS BHYT</th><th>So sánh với chỉ tiêu</th></tr></thead>
+                            <tbody><tr><td>Khoa Nội</td><td><input type="text"></td><td><input type="text"></td><td>-</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="section-title">Các phòng có nhiều cổng vào</div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead><tr><th>Khoa Phòng</th><th>Tổng số nhập viện</th><th>Tháng</th><th>Tỷ lệ nhập viện</th></tr></thead>
+                            <tbody><tr><td>PK Đa khoa</td><td><input type="text"></td><td><input type="text"></td><td>-</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="section-title">Phòng khám yêu cầu</div>
+                    <div class="scroll-table">
+                        <table class="data-table">
+                            <thead><tr><th>STT</th><th>Phòng Khám yêu cầu</th><th>Số ngày hoạt động</th><th>Chỉ tiêu ngày</th><th>Tháng</th><th>So với KH</th><th>Số lượng</th><th>Tỷ lệ NV</th><th>KH TB/HS</th><th>TB/HS</th><th>So sánh</th></tr></thead>
+                            <tbody><tr><td>1</td><td>PK Yêu cầu</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td>-</td><td><input type="text"></td><td>-</td><td><input type="text"></td><td><input type="text"></td><td>-</td></tr></tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 16px;">Xuất báo cáo</button>
+                </div>
+            </main>
+        </div>
+
+        <footer class="footer">
+            <span>Hệ thống tổng hợp bệnh viện</span>
+            <span>© 2025 Zigisoft</span>
+            <span>Liên hệ: contact@zigisoft.com</span>
+        </footer>
+    </div>
+
+    <script>
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const page = this.getAttribute('data-page');
+                if (!page) return;
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+                const target = document.getElementById('page-' + page);
+                if (target) target.classList.add('active');
+            });
+        });
+        document.querySelectorAll('.nav-group-header').forEach(h => {
+            h.addEventListener('click', function() {
+                this.closest('.nav-group').classList.toggle('collapsed');
+            });
+        });
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        });
+        document.querySelectorAll('#searchModeToggle .toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#searchModeToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                var mode = this.getAttribute('data-mode');
+                document.getElementById('searchByMaLk').style.display = mode === 'malk' ? 'block' : 'none';
+                document.getElementById('searchByMaBn').style.display = mode === 'mabn' ? 'block' : 'none';
+            });
+        });
+
+        // Nội dung nguyên nhân cho từng lỗi (mock)
+        const nguyennhanData = {
+            0: '<p><strong>Rule 26</strong> – Thanh toán thuốc chứa hoạt chất Peptid không đúng quy định (TT 20/2022/TT-BYT)</p><p><strong>Nguyên nhân:</strong> Thuốc 40.561 được kê đơn nhưng không có mã bệnh I60-I68/S06/S02 hoặc mã dịch vụ phẫu thuật thần kinh sọ não hợp lệ. Bệnh nhân có Ma_Benh_Chinh = I63.9 (nhồi máu não) – mã I63 thuộc nhóm I60-I68 nên về lý thuyết hợp lệ, cần kiểm tra lại việc map Ma_Benh từ XML1.</p><p><strong>Vị trí lỗi:</strong> XML2, dòng thuốc 40.561, Ngày YL 02/03/2025.</p>',
+            1: '<p><strong>Rule 30</strong> – Thuốc Sylimarin (40.751) chỉ định không phù hợp tờ hướng dẫn</p><p><strong>Nguyên nhân:</strong> Thuốc 40.751 (Silygamma, Carsil 90mg, Fynkhepar) được kê nhưng không có mã bệnh gan mật B15-B19/K70-K77, không có dịch vụ xét nghiệm chức năng gan phù hợp, và không có thuốc nhóm 1 hoặc nhóm 2 hợp lệ trong khoảng 5 ngày.</p><p><strong>Vị trí lỗi:</strong> XML2, dòng thuốc 40.751, Ngày YL 01/03/2025.</p>',
+            2: '<p><strong>Thiếu thông tin chẩn đoán ICD</strong></p><p><strong>Nguyên nhân:</strong> Hồ sơ chưa có mã bệnh chính (Ma_Benh_Chinh) hoặc mã bệnh kèm theo (Ma_Benh_Kt) đúng định dạng ICD-10. Cần bổ sung chẩn đoán vào XML1 hoặc kiểm tra mapping từ bảng DM_ICD.</p><p><strong>Vị trí lỗi:</strong> XML1, trường Ma_Benh_Chinh / Ma_Benh_Kt.</p>'
+        };
+        // XML chi tiết: chỉ hiện khi bấm nút Xem
+        document.getElementById('resultsList').addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-xem-chitiet');
+            if (!btn) return;
+            const item = btn.closest('.result-item');
+            const maLk = item ? item.querySelector('span:first-child')?.textContent?.trim() : '-';
+            const hasError = item && item.querySelector('.error-badge.success') === null;
+            document.getElementById('detailMaLk').textContent = maLk;
+            document.getElementById('xmlDetailSection').classList.add('visible');
+            if (hasError) {
+                document.getElementById('detailLoiTitle').style.display = 'block';
+                document.getElementById('detailLoiList').style.display = 'flex';
+                document.getElementById('detailNguyenNhan').style.display = 'block';
+                document.getElementById('detailNoLoi').style.display = 'none';
+                document.querySelectorAll('.detail-loi-item').forEach((el, i) => { el.classList.toggle('active', i === 0); });
+                document.getElementById('nguyennhanContent').innerHTML = nguyennhanData[0];
+            } else {
+                document.getElementById('detailLoiTitle').style.display = 'none';
+                document.getElementById('detailLoiList').style.display = 'none';
+                document.getElementById('detailNguyenNhan').style.display = 'none';
+                document.getElementById('detailNoLoi').style.display = 'block';
+            }
+        });
+        document.getElementById('detailLoiList').addEventListener('click', function(e) {
+            const item = e.target.closest('.detail-loi-item');
+            if (!item) return;
+            document.querySelectorAll('.detail-loi-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            const idx = item.getAttribute('data-loi');
+            document.getElementById('nguyennhanContent').innerHTML = nguyennhanData[idx] || '';
+        });
+        document.getElementById('btnCloseXmlDetail').addEventListener('click', function() {
+            document.getElementById('xmlDetailSection').classList.remove('visible');
+        });
+        document.querySelectorAll('.tab-xml .tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const xml = this.getAttribute('data-xml');
+                document.querySelectorAll('.tab-xml .tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.xml-tab-content').forEach(c => c.classList.remove('active'));
+                const content = document.getElementById('xmlContent' + xml);
+                if (content) content.classList.add('active');
+            });
+        });
+
+        // DM Thuốc: Tra cứu theo số bệnh án
+        document.getElementById('dmThuocTraCuu').addEventListener('click', function() {
+            const soba = document.getElementById('dmThuocSoBenhAn').value.trim();
+            if (soba) {
+                document.getElementById('dmThuocResults').style.display = 'block';
+            } else {
+                alert('Vui lòng nhập số bệnh án.');
+            }
+        });
+    </script>
+</body>
+</html>

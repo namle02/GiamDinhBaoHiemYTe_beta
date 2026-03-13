@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị - Hệ thống tổng hợp bệnh viện</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; min-height: 100vh; }
+        .app { display: flex; flex-direction: column; height: 100vh; max-width: 1400px; margin: 0 auto; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.06); }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e8ecf0; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo { width: 48px; height: 48px; object-fit: contain; background: #f8fafc; border-radius: 8px; }
+        .header h1 { font-size: 18px; color: #374151; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .user-info { font-size: 14px; color: #6b7280; }
+        .btn { padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; border: 1px solid #e0e4e8; background: #fff; text-decoration: none; color: #374151; display: inline-block; }
+        .btn:hover { background: #f5f7f9; }
+        .btn-primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-danger { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .btn-danger:hover { background: #b91c1c; }
+        .content { flex: 1; overflow: auto; padding: 24px; background: #f8fafc; }
+        .page-title { font-size: 22px; font-weight: 600; color: #374151; margin-bottom: 24px; }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid #e8ecf0; }
+        .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-box { padding: 10px 16px; border: 1px solid #e0e4e8; border-radius: 8px; font-size: 14px; width: 280px; }
+        .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #e8ecf0; }
+        .data-table th, .data-table td { border: 1px solid #e8ecf0; padding: 14px 16px; text-align: left; font-size: 14px; }
+        .data-table th { background: #f8fafc; font-weight: 600; color: #374151; }
+        .data-table tr:hover td { background: #f8fafc; }
+        .data-table .actions { display: flex; gap: 8px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #d1fae5; color: #059669; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .modal h3 { font-size: 18px; margin-bottom: 20px; color: #374151; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #e0e4e8; border-radius: 8px; font-size: 14px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-left">
+                <img class="logo" src="WPF_GiamDinhBaoHiemYTe/Assets/Logo_benh_vien-removebg-preview.png" alt="Logo">
+                <h1>Quản trị hệ thống</h1>
+            </div>
+            <div class="header-right">
+                <span class="user-info">Admin (admin@hospital.vn)</span>
+                <a href="UI_Login.html" class="btn">Đăng xuất</a>
+                <a href="UI_Combined_Mockup.html" class="btn">Về trang chính</a>
+            </div>
+        </header>
+        <div class="content">
+            <h1 class="page-title">Quản lý tài khoản</h1>
+            <div class="card">
+                <div class="toolbar">
+                    <input type="text" class="search-box" placeholder="Tìm theo tên đăng nhập, email, họ tên...">
+                    <button class="btn btn-primary" onclick="openModal()">+ Thêm tài khoản</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên đăng nhập</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Phòng ban</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>admin</td>
+                                <td>Quản trị viên</td>
+                                <td>admin@hospital.vn</td>
+                                <td>admin</td>
+                                <td>IT</td>
+                                <td><span class="badge badge-success">Hoạt động</span></td>
+                                <td>01/01/2025</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn" onclick="openModal(1)">Sửa</button>
+                                        <button class="btn btn-danger">Khóa</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>nv_bs01</td>
+                                <td>Nguyễn Văn Bác sĩ</td>
+                                <td>bs01@hospital.vn</td>
+                                <td>bac_si</td>
+                                <td>Khoa Nội</td>
+                                <td><span class="badge badge-success">Hoạt động</span></td>
+                                <td>15/02/2025</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn" onclick="openModal(2)">Sửa</button>
+                                        <button class="btn btn-danger">Khóa</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>nv_kt01</td>
+                                <td>Trần Thị Kế toán</td>
+                                <td>kt01@hospital.vn</td>
+                                <td>ke_toan</td>
+                                <td>Kế toán</td>
+                                <td><span class="badge badge-danger">Đã khóa</span></td>
+                                <td>20/02/2025</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn" onclick="openModal(3)">Sửa</button>
+                                        <button class="btn btn-primary">Mở khóa</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm/Sửa tài khoản -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 id="modalTitle">Thêm tài khoản mới</h3>
+            <form id="accountForm">
+                <div class="form-group">
+                    <label>Tên đăng nhập *</label>
+                    <input type="text" name="username" placeholder="Nhập tên đăng nhập" required>
+                </div>
+                <div class="form-group" id="passwordGroup">
+                    <label>Mật khẩu *</label>
+                    <input type="password" name="password" placeholder="Nhập mật khẩu">
+                </div>
+                <div class="form-group">
+                    <label>Họ tên *</label>
+                    <input type="text" name="fullname" placeholder="Nhập họ tên" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" placeholder="email@hospital.vn" required>
+                </div>
+                <div class="form-group">
+                    <label>Vai trò</label>
+                    <select name="role">
+                        <option value="admin">Quản trị viên</option>
+                        <option value="bac_si">Bác sĩ</option>
+                        <option value="ke_toan">Kế toán</option>
+                        <option value="nhan_vien">Nhân viên</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Phòng ban</label>
+                    <input type="text" name="department" placeholder="VD: Khoa Nội, Kế toán...">
+                </div>
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select name="status">
+                        <option value="active">Hoạt động</option>
+                        <option value="locked">Đã khóa</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById('modalOverlay').classList.add('show');
+            document.getElementById('modalTitle').textContent = id ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản mới';
+            document.getElementById('passwordGroup').style.display = id ? 'none' : 'block';
+        }
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+        document.getElementById('accountForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            closeModal();
+        });
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>
