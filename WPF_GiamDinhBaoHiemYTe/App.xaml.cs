@@ -57,22 +57,14 @@ public partial class App : Application
     {
         try
         {
-            await System.Threading.Tasks.Task.Delay(2500); // Đợi UI và mạng ổn định
+            await System.Threading.Tasks.Task.Delay(1000); // Đợi UI và mạng ổn định
             var updateService = serviceProvider.GetRequiredService<IUpdateService>();
-            var (hasUpdate, latestVersion, _, _) = await updateService.CheckForUpdatesAsync();
-            if (!hasUpdate || string.IsNullOrEmpty(latestVersion))
+            var (hasUpdate, latestVersion, downloadUrl, _) = await updateService.CheckForUpdatesAsync();
+            if (!hasUpdate || string.IsNullOrEmpty(latestVersion) || string.IsNullOrEmpty(downloadUrl))
                 return;
-            await Current.Dispatcher.InvokeAsync(() =>
-            {
-                try
-                {
-                    WeakReferenceMessenger.Default.Send(new ShowUpdateNotificationMessage(latestVersion));
-                }
-                catch
-                {
-                    // Bỏ qua nếu không gửi được message
-                }
-            }, System.Windows.Threading.DispatcherPriority.Normal);
+
+            // Tự động tải và cài đặt cập nhật
+            await updateService.DownloadAndInstallAsync(downloadUrl, latestVersion, null);
         }
         catch
         {

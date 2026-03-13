@@ -9,18 +9,13 @@ using WPF_GiamDinhBaoHiem.ViewModel.PageViewModel;
 
 namespace WPF_GiamDinhBaoHiem.ViewModel
 {
-    public partial class MainViewModel : ObservableObject, IRecipient<NavigationMessage>, IRecipient<ShowUpdateNotificationMessage>
+    public partial class MainViewModel : ObservableObject, IRecipient<NavigationMessage>
     {
         private readonly IServiceProvider serviceProvider;
 
         [ObservableProperty] SideBarVM sideBarVM;
         [ObservableProperty] object? currentPage;
 
-        /// <summary>Hiện/ẩn thông báo có phiên bản mới (panel trong MainWindow).</summary>
-        [ObservableProperty] bool showUpdateNotification;
-
-        /// <summary>Phiên bản mới để hiển thị trong thông báo.</summary>
-        [ObservableProperty] string updateNotificationVersion = "";
 
         public MainViewModel(IServiceProvider serviceProvider)
         {
@@ -30,24 +25,6 @@ namespace WPF_GiamDinhBaoHiem.ViewModel
             sideBarVM = serviceProvider.GetRequiredService<SideBarVM>();
         }
 
-        public void Receive(ShowUpdateNotificationMessage message)
-        {
-            UpdateNotificationVersion = message.LatestVersion;
-            ShowUpdateNotification = true;
-        }
-
-        [RelayCommand]
-        private void DismissUpdateNotification()
-        {
-            ShowUpdateNotification = false;
-        }
-
-        [RelayCommand]
-        private void GoToUpdatePage()
-        {
-            ShowUpdateNotification = false;
-            WeakReferenceMessenger.Default.Send(new NavigationMessage("QTHT_CapNhatPage"));
-        }
 
         public void Receive(NavigationMessage message)
         {

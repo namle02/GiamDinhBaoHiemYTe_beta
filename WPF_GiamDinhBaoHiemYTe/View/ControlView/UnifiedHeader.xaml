@@ -1,0 +1,56 @@
+<UserControl
+    x:Class="WPF_GiamDinhBaoHiem.View.ControlView.UnifiedHeader"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WPF_GiamDinhBaoHiem.View.ControlView"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <!--  Header thống nhất kết hợp 3 ứng dụng - Logo bệnh viện luôn hiển thị  -->
+    <materialDesign:ColorZone
+        Background="White"
+        Foreground="Black"
+        Mode="Custom">
+        <StackPanel Margin="16" Orientation="Horizontal">
+            <Button
+                Width="70"
+                Height="60"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                Command="{x:Static materialDesign:DrawerHost.OpenDrawerCommand}"
+                CommandParameter="{x:Static Dock.Left}"
+                Style="{StaticResource MaterialDesignFlatLightBgButton}">
+                <Button.Content>
+                    <materialDesign:PackIcon
+                        Width="35"
+                        Height="35"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Kind="Menu" />
+                </Button.Content>
+            </Button>
+            <!--  Logo bệnh viện - BẮT BUỘC không thiếu  -->
+            <Image
+                Width="70"
+                Height="70"
+                Margin="8,0"
+                Source="/Assets/Logo_benh_vien-removebg-preview.png"
+                Stretch="Uniform" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock
+                    FontSize="22"
+                    FontWeight="Bold"
+                    Foreground="#475c70"
+                    Text="HỆ THỐNG TỔNG HỢP BỆNH VIỆN"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Margin="0,2,0,0"
+                    FontSize="14"
+                    Foreground="#6b7c93"
+                    Text="Giám định BHYT • Tóm tắt bệnh án • Báo cáo số liệu"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </materialDesign:ColorZone>
+</UserControl>
