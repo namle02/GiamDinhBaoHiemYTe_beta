@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Reflection;
 using System.IO;
+using System.Threading;
+using System.Collections.Concurrent;
 using WPF_GiamDinhBaoHiem.Repos.Dto;
 using WPF_GiamDinhBaoHiem.Repos.Mappers.Interface;
 using WPF_GiamDinhBaoHiem.Repos.Model;
@@ -21,6 +23,9 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         private readonly IConfigReader _configReader;
         // Biến để lưu kết quả từ GoogleSheetService
         private object? _googleSheetData;
+
+        // Cache lưu trữ nội dung SQL đọc từ ổ cứng
+        private static readonly ConcurrentDictionary<string, string> _sqlCache = new();
 
         // Property để truy cập dữ liệu GoogleSheet từ bên ngoài
         public object? GoogleSheetData => _googleSheetData;
@@ -37,44 +42,56 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         {
             try
             {
-                // Lấy đường dẫn thư mục chứa assembly hiện tại
-                string? assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                string sqlFilePath = string.Empty;
-                
-                if (!string.IsNullOrEmpty(assemblyPath))
+                if (!_sqlCache.TryGetValue(fileName, out string sqlContent))
                 {
-                    sqlFilePath = Path.Combine(assemblyPath, "sql", fileName);
-                }
-                
-                // Nếu không tìm thấy trong thư mục assembly, thử tìm trong thư mục hiện tại
-                if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
-                {
-                    string? currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                    if (!string.IsNullOrEmpty(currentDir))
+                    // Lấy đường dẫn thư mục chứa assembly hiện tại
+                    string? assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                    string sqlFilePath = string.Empty;
+
+                    if (!string.IsNullOrEmpty(assemblyPath))
                     {
-                        sqlFilePath = Path.Combine(currentDir, "sql", fileName);
+                        sqlFilePath = Path.Combine(assemblyPath, "sql", fileName);
                     }
-                }
-                
-                // Nếu vẫn không tìm thấy, thử tìm trong thư mục gốc của project
-                if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
-                {
-                    string? projectRoot = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                    while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "sql")))
+
+                    // Nếu không tìm thấy trong thư mục assembly, thử tìm trong thư mục hiện tại
+                    if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
                     {
-                        projectRoot = Directory.GetParent(projectRoot)?.FullName;
+                        string? currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                        if (!string.IsNullOrEmpty(currentDir))
+                        {
+                            sqlFilePath = Path.Combine(currentDir, "sql", fileName);
+                        }
                     }
-                    if (!string.IsNullOrEmpty(projectRoot))
+
+                    // Nếu vẫn không tìm thấy, thử tìm trong thư mục gốc của project
+                    if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
                     {
-                        sqlFilePath = Path.Combine(projectRoot, "Repos", "Mappers", "Implement", "sql", fileName);
+                        string? projectRoot = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                        while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "sql")))
+                        {
+                            projectRoot = Directory.GetParent(projectRoot)?.FullName;
+                        }
+                        if (!string.IsNullOrEmpty(projectRoot))
+                        {
+                            sqlFilePath = Path.Combine(projectRoot, "Repos", "Mappers", "Implement", "sql", fileName);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(sqlFilePath) && File.Exists(sqlFilePath))
+                    {
+                        sqlContent = File.ReadAllText(sqlFilePath);
+                        _sqlCache.TryAdd(fileName, sqlContent);
+                    }
+                    else
+                    {
+                        sqlContent = string.Empty;
                     }
                 }
 
-                if (!string.IsNullOrEmpty(sqlFilePath) && File.Exists(sqlFilePath))
+                if (!string.IsNullOrEmpty(sqlContent))
                 {
-                    string sql = File.ReadAllText(sqlFilePath);
                     // Thay thế {IDBenhNhan} bằng giá trị thực tế
-                    return sql.Replace("{IDBenhNhan}", idBenhNhan);
+                    return sqlContent.Replace("{IDBenhNhan}", idBenhNhan);
                 }
                 else
                 {
@@ -94,47 +111,53 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
         {
             try
             {
-                // Lấy đường dẫn thư mục chứa assembly hiện tại
-                string? assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                string sqlFilePath = string.Empty;
-                
-                if (!string.IsNullOrEmpty(assemblyPath))
+                if (!_sqlCache.TryGetValue(fileName, out string sqlContent))
                 {
-                    sqlFilePath = Path.Combine(assemblyPath, "sql", fileName);
-                }
-                
-                // Nếu không tìm thấy trong thư mục assembly, thử tìm trong thư mục hiện tại
-                if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
-                {
-                    string? currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                    if (!string.IsNullOrEmpty(currentDir))
+                    // Lấy đường dẫn thư mục chứa assembly hiện tại
+                    string? assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                    string sqlFilePath = string.Empty;
+
+                    if (!string.IsNullOrEmpty(assemblyPath))
                     {
-                        sqlFilePath = Path.Combine(currentDir, "sql", fileName);
+                        sqlFilePath = Path.Combine(assemblyPath, "sql", fileName);
                     }
-                }
-                
-                // Nếu vẫn không tìm thấy, thử tìm trong thư mục gốc của project
-                if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
-                {
-                    string? projectRoot = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                    while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "sql")))
+
+                    // Nếu không tìm thấy trong thư mục assembly, thử tìm trong thư mục hiện tại
+                    if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
                     {
-                        projectRoot = Directory.GetParent(projectRoot)?.FullName;
+                        string? currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                        if (!string.IsNullOrEmpty(currentDir))
+                        {
+                            sqlFilePath = Path.Combine(currentDir, "sql", fileName);
+                        }
                     }
-                    if (!string.IsNullOrEmpty(projectRoot))
+
+                    // Nếu vẫn không tìm thấy, thử tìm trong thư mục gốc của project
+                    if (string.IsNullOrEmpty(sqlFilePath) || !File.Exists(sqlFilePath))
                     {
-                        sqlFilePath = Path.Combine(projectRoot, "Repos", "Mappers", "Implement", "sql", fileName);
+                        string? projectRoot = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                        while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "sql")))
+                        {
+                            projectRoot = Directory.GetParent(projectRoot)?.FullName;
+                        }
+                        if (!string.IsNullOrEmpty(projectRoot))
+                        {
+                            sqlFilePath = Path.Combine(projectRoot, "Repos", "Mappers", "Implement", "sql", fileName);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(sqlFilePath) && File.Exists(sqlFilePath))
+                    {
+                        sqlContent = File.ReadAllText(sqlFilePath);
+                        _sqlCache.TryAdd(fileName, sqlContent);
+                    }
+                    else
+                    {
+                        sqlContent = string.Empty;
                     }
                 }
 
-                if (!string.IsNullOrEmpty(sqlFilePath) && File.Exists(sqlFilePath))
-                {
-                    return File.ReadAllText(sqlFilePath);
-                }
-                else
-                {
-                    return string.Empty;
-                }
+                return sqlContent;
             }
             catch
             {
@@ -306,10 +329,24 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 XML_Query_List.Add(XMLDataType.XML14, LoadSqlFromFile("XML14.sql", IDBenhNhan));
                 XML_Query_List.Add(XMLDataType.XML15, LoadSqlFromFile("XML15.sql", IDBenhNhan));
 
-                // Bước 4: Thực thi các queries tuần tự (lần lượt) để tránh ảnh hưởng đến hệ thống
-                foreach (var q in XML_Query_List.Where(q => !string.IsNullOrWhiteSpace(q.Value)))
+                // Bước 4: Thực thi các queries song song để tăng tốc, dùng SemaphoreSlim giới hạn (Max 5 query cùng lúc) chống quá tải DB
+                using (var semaphore = new SemaphoreSlim(5))
                 {
-                    await RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+                    var tasks = XML_Query_List.Where(q => !string.IsNullOrWhiteSpace(q.Value))
+                        .Select(async q =>
+                        {
+                            await semaphore.WaitAsync();
+                            try
+                            {
+                                await RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        });
+
+                    await Task.WhenAll(tasks);
                 }
 
                 // Bước 5: Load DsBenhNhanLoiMaMay sau khi đã có XML1
@@ -398,10 +435,24 @@ namespace WPF_GiamDinhBaoHiem.Repos.Mappers.Implement
                 {XMLDataType.XML15, LoadSqlFromFile("XML15.sql", IDBenhNhan) },
             };
 
-            // Thực thi các queries tuần tự (lần lượt) để tránh ảnh hưởng đến hệ thống
-            foreach (var q in XML_Query_List.Where(q => !string.IsNullOrWhiteSpace(q.Value)))
+            // Thực thi các queries song song có kiểm soát (Max 5 query cùng lúc)
+            using (var semaphore = new SemaphoreSlim(5))
             {
-                await RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+                var tasks = XML_Query_List.Where(q => !string.IsNullOrWhiteSpace(q.Value))
+                    .Select(async q =>
+                    {
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            await RunXmlQueryAsync(q.Key, q.Value, patient, connectionStringForAll);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+
+                await Task.WhenAll(tasks);
             }
 
             // Load DsBenhNhanLoiMaMay sau khi đã có XML1

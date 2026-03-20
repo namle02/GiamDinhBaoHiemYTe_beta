@@ -235,7 +235,7 @@
                                     Grid.Column="1"
                                     VerticalAlignment="Center"
                                     FontSize="18"
-                                    Text="Danh mục thuốc" />
+                                    Text="Danh mục thuốc rule " />
                             </Grid>
                         </Button.Content>
                     </Button>

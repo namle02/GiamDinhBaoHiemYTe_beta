@@ -1,4 +1,5 @@
 SET NOCOUNT ON;
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 DECLARE @Sobenhan NVARCHAR(20) = N'{IDBenhNhan}'
 
@@ -17,9 +18,9 @@ FROM	dbo.BenhAn ba (nolock)
 WHERE	ba.BenhAn_Id = @BenhAn_Id
 
 -- ========== PHẦN 2: Query chính ==========
--- GIỮ NGUYÊN logic xncpct UNION ALL, chỉ bỏ biến/function/join thừa
-	select * from (
-		SELECT	[ID] = row_number () OVER (ORDER BY (SELECT 1))
+-- GIỮ NGUYÊN logic xncpct UNION ALL, bỏ select * 
+	SELECT
+		[ID] = row_number () OVER (ORDER BY (SELECT 1))
 	            , [MA_LK] = @Ma_Lk
 				, [STT] = row_number () over (order by (select 1))
 				, [MA_DICH_VU] = left (isnull(left(isnull(con2.maquidinh,con.MaQuiDinh),12), case when tn.NgayTiepNhan > '20250731' then DV.MaQuiDinh else DV.MaQuiDinhCu end),15)					
@@ -173,5 +174,5 @@ WHERE	ba.BenhAn_Id = @BenhAn_Id
 			and ndv.LoaiDichVu_Id = 2	
 			and ct.ketqua is not null
 			and bsi.SoChungChiHanhNghe is not null
-	) Xml4
-	order by ma_dich_vu
+			and ct.ketqua is not null
+			and bsi.SoChungChiHanhNghe is not null

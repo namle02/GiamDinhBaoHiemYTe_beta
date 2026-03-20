@@ -4,7 +4,8 @@
 -- Tối ưu: temp table, CTE, bỏ SELECT *, cache UDF, NOLOCK đồng nhất
 -- =============================================
 
-SET NOCOUNT ON
+SET NOCOUNT ON;
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 -- ========== PHẦN 1: Khai báo biến ==========
 DECLARE @Sobenhan NVARCHAR(20) = N'{IDBenhNhan}'
@@ -287,21 +288,13 @@ GROUP BY ToaThuoc_Id
 
 			, Ma_Khoa = isnull(pb.MaTheoQuiDinh,pbRa.MaTheoQuiDinh)
 
-			-- ===== PHẦN 7: Sử dụng get_ma_giuong - giữ nguyên logic nhưng gọi trực tiếp =====
+			-- ===== PHẦN 7: Loại bỏ get_ma_giuong UDF để tránh nghẽn CPU =====
 			, Ma_Giuong = left (case when map.TenField in ('12','02') then  isnull(gb.MoTa ,case 
 							when map.TenField='12' then 
-								case 
-								when  [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id)<> '' then 
-								LEFT( [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id),14)
-								else 'H001' 
-								end
+								ISNULL(LEFT(gb.MoTa, 14), 'H001')
 							when map.TenField='02' then 
-								case 
-								when  [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id)<> '' then 
-								LEFT( [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id),14)
-								else 'H001' 
-								end
-							else LEFT( [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id),14) 
+								ISNULL(LEFT(gb.MoTa, 14), 'H001')
+							else LEFT(gb.MoTa, 14) 
 							end)
 					else 
 						null	
@@ -660,18 +653,10 @@ group by xncpct.NoiTru_ToaThuoc_ID, CAST(kq.MoTa_Text AS NVARCHAR(MAX)), li.Phan
 									else NULL end
 		, left (case when map.TenField in ('12','02') then  isnull(gb.MoTa ,case 
 							when map.TenField='12' then 
-								case 
-								when  [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id)<> '' then 
-								LEFT( [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id),14)
-								else 'H001' 
-								end
+								ISNULL(LEFT(gb.MoTa, 14), 'H001')
 							when map.TenField='02' then 
-								case 
-								when  [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id)<> '' then 
-								LEFT( [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id),14)
-								else 'H001' 
-								end
-							else LEFT( [dbo].[get_ma_giuong](@BenhAn_Id,xncpct.phongban_id),14) 
+								ISNULL(LEFT(gb.MoTa, 14), 'H001')
+							else LEFT(gb.MoTa, 14) 
 							end)
 					else 
 						null	
